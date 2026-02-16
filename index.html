@@ -12,16 +12,16 @@
 </head>
 <body>
     <nav>
-        <a href="#" class="logo" onclick="go('home')">ForgAuto</a>
+        <a href="#home" class="logo" onclick="go('home'); return false;">ForgAuto</a>
         <div class="nav-center">
             <input type="text" id="search" placeholder="Search parts, make, model..." onkeyup="search(event)">
         </div>
         <div class="nav-right">
-            <a href="#" onclick="go('browse')">Browse</a>
-            <a href="#" onclick="go('designers')">Hire Designer</a>
-            <a href="#" onclick="go('printshops')">Print Shop</a>
-            <a href="#" onclick="go('sell')" class="btn">Sell Parts</a>
-            <a href="#" onclick="go('login')" class="btn btn-outline" id="loginBtn">Login</a>
+            <a href="#browse" onclick="go('browse'); return false;">Browse</a>
+            <a href="#designers" onclick="go('designers'); return false;">Hire Designer</a>
+            <a href="#printshops" onclick="go('printshops'); return false;">Print Shop</a>
+            <a href="#sell" onclick="go('sell'); return false;" class="btn">Sell Parts</a>
+            <a href="#login" onclick="go('login'); return false;" class="btn btn-outline" id="loginBtn">Login</a>
         </div>
     </nav>
 

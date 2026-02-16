@@ -1,7 +1,7 @@
 // ForgAuto — 3D Marketplace for Cars
 // Version: 3.0 - Full Backend Integration
 
-const VERSION = '3.2';
+const VERSION = '3.3';
 const API_URL = 'https://forgauto-api.warwideweb.workers.dev'; // Cloudflare Worker API
 
 // State
@@ -159,7 +159,7 @@ const printShops = [
     { name: "Proto3D Thailand", address: "789 Rama IV, Bangkok", distance: "5.8 km", rating: 4.9, reviews: 234, phone: "+66 2 345 6789", email: "orders@proto3d.th", verified: true, instantQuote: true, printAndShip: true, turnaround: "1-2 days" }
 ];
 
-let view = 'home', filter = '', filterCat = '', filterMake = '', filterModel = '', uploadedPhotos = [], uploadedFile = null;
+let view = 'home', filter = '', filterCat = '', filterMake = '', filterModel = '', uploadedPhotos = [], uploadedPhotoFiles = [], uploadedFile = null;
 let parts = demoParts;
 let designers = demoDesigners;
 
@@ -823,7 +823,7 @@ async function handleCreateListing(e) {
     // Validate BOTH file and photos required
     const errors = [];
     if (!uploadedFile) errors.push({field: 'fileInput', msg: '3D file is required'});
-    if (uploadedPhotos.length === 0) errors.push({field: 'photoInput', msg: 'At least 1 photo is required'});
+    if (uploadedPhotoFiles.length === 0) errors.push({field: 'photoInput', msg: 'At least 1 photo is required'});
     
     if (errors.length > 0) {
         errors.forEach(err => {
@@ -844,6 +844,12 @@ async function handleCreateListing(e) {
     const model = make === 'Non-Specific' ? 'Any' : document.getElementById('partModel').value;
     
     try {
+        // Show upload progress
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = 'Uploading 3D file...';
+        submitBtn.disabled = true;
+        
         // First upload the 3D file
         const fileFormData = new FormData();
         fileFormData.append('file', uploadedFile);
@@ -860,6 +866,30 @@ async function handleCreateListing(e) {
         }
         const fileData = await fileRes.json();
         
+        // Upload photos to R2 (NOT as base64)
+        submitBtn.textContent = `Uploading photos (0/${uploadedPhotoFiles.length})...`;
+        const imageUrls = [];
+        for (let i = 0; i < uploadedPhotoFiles.length; i++) {
+            submitBtn.textContent = `Uploading photos (${i + 1}/${uploadedPhotoFiles.length})...`;
+            const photoFormData = new FormData();
+            photoFormData.append('file', uploadedPhotoFiles[i]);
+            
+            const photoRes = await fetch(`${API_URL}/api/upload/photo`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${authToken}` },
+                body: photoFormData
+            });
+            
+            if (!photoRes.ok) {
+                const errData = await photoRes.json().catch(() => ({}));
+                throw new Error(errData.error || `Failed to upload photo ${i + 1}`);
+            }
+            const photoData = await photoRes.json();
+            imageUrls.push(photoData.url);
+        }
+        
+        submitBtn.textContent = 'Creating listing...';
+        
         const listing = {
             title: document.getElementById('partTitle').value,
             description: document.getElementById('partDesc').value,
@@ -873,7 +903,7 @@ async function handleCreateListing(e) {
             material: document.getElementById('partMaterial').value,
             infill: document.getElementById('partInfill').value,
             featured: document.getElementById('featuredCheckbox').checked,
-            images: uploadedPhotos
+            images: imageUrls  // Now URLs, not base64!
         };
         
         const result = await api('/api/parts', {
@@ -883,11 +913,21 @@ async function handleCreateListing(e) {
         
         // Clear uploaded data after successful creation
         uploadedPhotos = [];
+        uploadedPhotoFiles = [];
         uploadedFile = null;
+        
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
         
         alert('Listing created! (Payment integration with Stripe coming soon)');
         go('dashboard');
     } catch (err) {
+        // Reset button
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.textContent = 'Create Listing';
+            submitBtn.disabled = false;
+        }
         alert('Error: ' + err.message);
     }
 }
@@ -1125,25 +1165,38 @@ async function profileView(id) {
 }
 
 function cardHTML(p, showPremiered = false, showFeatured = false, showIncomplete = false) {
-    // Use actual images - placeholder only shows part title on dark background
-    const img = p.images?.[0] || p.img || `https://placehold.co/600x450/1a1a1a/444?text=${encodeURIComponent(p.title || 'Part')}`;
+    // Get first valid image - skip data: URLs (old corrupt base64)
+    let img = null;
+    if (p.images && p.images.length > 0) {
+        // Find first URL that's NOT a data: URL (which are corrupt)
+        img = p.images.find(url => url && !url.startsWith('data:'));
+    }
+    if (!img && p.img && !p.img.startsWith('data:')) {
+        img = p.img;
+    }
+    // Fallback: use a nice gradient placeholder (no text on black boxes!)
+    if (!img) {
+        img = `https://placehold.co/600x450/2563eb/ffffff?text=No+Photo`;
+    }
+    
     const isIncomplete = p.status === 'incomplete';
     const cardClass = `card ${isIncomplete ? 'card-incomplete' : ''}`;
     
     // Build missing info warning
     let missingInfo = [];
     if (!p.file_url) missingInfo.push('3D File');
-    if (!p.images || p.images.length === 0) missingInfo.push('Photos');
+    const hasValidImage = p.images && p.images.some(url => url && !url.startsWith('data:'));
+    if (!hasValidImage) missingInfo.push('Photos');
     
     return `<div class="${cardClass}" onclick="go('part', ${p.id}); return false;">
         <div class="card-image">
-            <img src="${img}" alt="${p.title}" onerror="this.onerror=null;this.src='https://placehold.co/600x450/1a1a1a/444?text=${encodeURIComponent(p.title || 'Part')}'">
+            <img src="${img}" alt="${p.title}" onerror="this.onerror=null;this.src='https://placehold.co/600x450/2563eb/ffffff?text=No+Photo'">
             <span class="card-badge">${p.category || 'Part'}</span>
             ${isIncomplete && showIncomplete ? `<span class="incomplete-badge">MISSING INFO</span>` : ''}
         </div>
         <div class="card-body">
             <div class="card-title">${p.title}</div>
-            ${isIncomplete && showIncomplete ? `<div class="missing-info">Missing: ${missingInfo.join(', ')}</div>` : ''}
+            ${isIncomplete && showIncomplete && missingInfo.length ? `<div class="missing-info">Missing: ${missingInfo.join(', ')}</div>` : ''}
             <div class="card-meta">
                 <span class="card-cat">${p.make && p.make !== 'Non-Specific' ? p.make : ''}${p.model && p.model !== 'All' && p.model !== 'Any' ? ' ' + p.model : ''}</span>
                 <span class="card-price">$${(p.price || 0).toFixed(2)}</span>
@@ -1152,9 +1205,9 @@ function cardHTML(p, showPremiered = false, showFeatured = false, showIncomplete
     </div>`;
 }
 
-function handlePhotoUpload(event) { for (let file of event.target.files) { if (uploadedPhotos.length >= 10) break; const reader = new FileReader(); reader.onload = e => { uploadedPhotos.push(e.target.result); renderPhotoGrid(); }; reader.readAsDataURL(file); } }
+function handlePhotoUpload(event) { for (let file of event.target.files) { if (uploadedPhotos.length >= 10) break; uploadedPhotoFiles.push(file); const reader = new FileReader(); reader.onload = e => { uploadedPhotos.push(e.target.result); renderPhotoGrid(); }; reader.readAsDataURL(file); } }
 function renderPhotoGrid() { const grid = document.getElementById('photoGrid'); if (!grid) return; grid.innerHTML = uploadedPhotos.map((photo, i) => `<div class="photo-item"><img src="${photo}"><button class="photo-remove" onclick="removePhoto(${i})">x</button></div>`).join('') + (uploadedPhotos.length < 10 ? `<div class="photo-add" onclick="document.getElementById('photoInput').click()"><span class="photo-add-icon">+</span><span>Add</span></div>` : ''); }
-function removePhoto(index) { uploadedPhotos.splice(index, 1); renderPhotoGrid(); }
+function removePhoto(index) { uploadedPhotos.splice(index, 1); uploadedPhotoFiles.splice(index, 1); renderPhotoGrid(); }
 function useMyLocation() { if (navigator.geolocation) { navigator.geolocation.getCurrentPosition(pos => { document.getElementById('locationInput').value = `${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`; }); } }
 
 let currentPartData = null; // Store current part for viewer

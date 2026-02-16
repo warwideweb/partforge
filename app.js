@@ -1,59 +1,56 @@
 // ForgAuto — 3D Marketplace for Cars
-// Version: 2.3
+// Version: 3.0 - Full Backend Integration
 
-const VERSION = '2.3';
+const VERSION = '3.0';
+const API_URL = 'https://api.forgauto.com'; // Change to your Cloudflare Worker URL
 
-// Dark mode
-let darkMode = localStorage.getItem('darkMode') === 'true';
-if (darkMode) document.body.classList.add('dark');
+// State
+let currentUser = null;
+let authToken = localStorage.getItem('authToken');
 
-function toggleDarkMode() {
-    darkMode = !darkMode;
-    localStorage.setItem('darkMode', darkMode);
-    document.body.classList.toggle('dark', darkMode);
-    document.getElementById('darkToggle').textContent = darkMode ? 'Light' : 'Dark';
+// Check auth on load
+async function checkAuth() {
+    if (!authToken) return;
+    try {
+        const res = await fetch(`${API_URL}/api/auth/me`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (res.ok) {
+            const data = await res.json();
+            currentUser = data.user;
+            updateNavAuth();
+        } else {
+            localStorage.removeItem('authToken');
+            authToken = null;
+        }
+    } catch (e) {
+        console.error('Auth check failed:', e);
+    }
 }
 
-// Data
-const parts = [
-    { id: 1, title: "Tesla-Style Phone Mount", cat: "Interior", make: "Universal", model: "All", price: 3.99, img: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&h=450&fit=crop", imgs: ["https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&h=450&fit=crop", "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=600&h=450&fit=crop"], seller: "AutoParts3D", email: "auto@example.com", desc: "Minimalist phone mount for car vents with ball joint design for 360 rotation. Fits phones up to 6.7 inches.", format: "STL, STEP", size: "1.8 MB", material: "PLA", infill: "25%", downloads: 567, featured: true, stl: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/stl/binary/pr2_head_tilt.stl" },
-    { id: 2, title: "BMW E30 Phone Dock", cat: "Interior", make: "BMW", model: "E30", price: 5.99, img: "https://images.unsplash.com/photo-1555215695-3004980ad54e?w=600&h=450&fit=crop", imgs: ["https://images.unsplash.com/photo-1555215695-3004980ad54e?w=600&h=450&fit=crop"], seller: "BimmerParts", email: "bmw@example.com", desc: "Custom phone dock that fits perfectly in the BMW E30 center console.", format: "STL", size: "2.1 MB", material: "PETG", infill: "30%", downloads: 312, stl: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/stl/binary/pr2_head_pan.stl" },
-    { id: 3, title: "Toyota Supra MK4 Vent Gauge Pod", cat: "Gauges", make: "Toyota", model: "Supra MK4", price: 8.99, img: "https://images.unsplash.com/photo-1600712242805-5f78671b24da?w=600&h=450&fit=crop", imgs: ["https://images.unsplash.com/photo-1600712242805-5f78671b24da?w=600&h=450&fit=crop"], seller: "JDMParts3D", email: "jdm@example.com", desc: "52mm gauge pod that replaces the center vent on MK4 Supra. Perfect fit.", format: "STL, STEP", size: "3.4 MB", material: "ABS", infill: "40%", downloads: 523, featured: true, stl: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/stl/binary/pr2_head_tilt.stl" },
-    { id: 4, title: "Honda Civic EG Cup Holder", cat: "Interior", make: "Honda", model: "Civic EG", price: 4.49, img: "https://images.unsplash.com/photo-1606611013016-969c19ba27bb?w=600&h=450&fit=crop", imgs: ["https://images.unsplash.com/photo-1606611013016-969c19ba27bb?w=600&h=450&fit=crop"], seller: "HondaHacks", email: "honda@example.com", desc: "Dual cup holder insert for Honda Civic EG center console. Snug fit.", format: "STL", size: "1.6 MB", material: "PLA", infill: "25%", downloads: 445, stl: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/stl/binary/pr2_head_pan.stl" },
-    { id: 5, title: "Mazda Miata NA Phone Mount", cat: "Interior", make: "Mazda", model: "Miata NA", price: 6.99, img: "https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=600&h=450&fit=crop", imgs: ["https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=600&h=450&fit=crop"], seller: "MiataMods", email: "miata@example.com", desc: "Low-profile phone mount for NA Miata. Attaches to tombstone.", format: "STL", size: "1.9 MB", material: "PETG", infill: "30%", downloads: 678, stl: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/stl/binary/pr2_head_tilt.stl" },
-    { id: 6, title: "BMW E46 Coin Holder Delete", cat: "Interior", make: "BMW", model: "E46", price: 3.49, img: "https://images.unsplash.com/photo-1617814076367-b759c7d7e738?w=600&h=450&fit=crop", imgs: ["https://images.unsplash.com/photo-1617814076367-b759c7d7e738?w=600&h=450&fit=crop"], seller: "BimmerParts", email: "bmw@example.com", desc: "Clean delete panel for the E46 coin holder.", format: "STL", size: "0.8 MB", material: "PLA", infill: "20%", downloads: 234, stl: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/stl/binary/pr2_head_pan.stl" },
-    { id: 7, title: "Nissan 350Z Triple Gauge Pod", cat: "Gauges", make: "Nissan", model: "350Z", price: 12.99, img: "https://images.unsplash.com/photo-1619405399517-d7fce0f13302?w=600&h=450&fit=crop", imgs: ["https://images.unsplash.com/photo-1619405399517-d7fce0f13302?w=600&h=450&fit=crop"], seller: "ZCarParts", email: "zcar@example.com", desc: "A-pillar triple gauge pod for 350Z. Fits three 52mm gauges.", format: "STL, STEP", size: "4.8 MB", material: "ABS", infill: "35%", downloads: 389, stl: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/stl/binary/pr2_head_tilt.stl" },
-    { id: 8, title: "Subaru WRX Shift Boot Surround", cat: "Interior", make: "Subaru", model: "WRX", price: 4.99, img: "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=600&h=450&fit=crop", imgs: ["https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=600&h=450&fit=crop"], seller: "SubieParts", email: "subie@example.com", desc: "Custom shift boot surround for GD WRX.", format: "STL", size: "1.4 MB", material: "PETG", infill: "25%", downloads: 456, stl: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/stl/binary/pr2_head_pan.stl" },
-    { id: 9, title: "Ford Mustang S550 Cup Holder Insert", cat: "Interior", make: "Ford", model: "Mustang S550", price: 5.49, img: "https://images.unsplash.com/photo-1584345604476-8ec5f82d718c?w=600&h=450&fit=crop", imgs: ["https://images.unsplash.com/photo-1584345604476-8ec5f82d718c?w=600&h=450&fit=crop"], seller: "StangMods", email: "stang@example.com", desc: "Rubber-lined cup holder insert to prevent rattling.", format: "STL", size: "1.1 MB", material: "TPU", infill: "30%", downloads: 567, stl: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/stl/binary/pr2_head_tilt.stl" },
-    { id: 10, title: "VW Golf MK7 Air Vent Phone Mount", cat: "Interior", make: "Volkswagen", model: "Golf MK7", price: 4.99, img: "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=600&h=450&fit=crop", imgs: ["https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=600&h=450&fit=crop"], seller: "VWMods", email: "vw@example.com", desc: "Secure phone mount that clips into MK7 Golf air vents.", format: "STL", size: "1.3 MB", material: "PETG", infill: "25%", downloads: 612, stl: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/stl/binary/pr2_head_pan.stl" },
-    { id: 11, title: "Universal Exhaust Tip 3in Inlet", cat: "Exterior", make: "Universal", model: "All", price: 9.99, img: "https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=600&h=450&fit=crop", imgs: ["https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=600&h=450&fit=crop"], seller: "ExhaustMods", email: "exhaust@example.com", desc: "Aggressive slash-cut exhaust tip with 3in inlet.", format: "STL, STEP", size: "2.2 MB", material: "ASA", infill: "50%", downloads: 234, stl: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/stl/binary/pr2_head_tilt.stl" },
-    { id: 12, title: "Honda S2000 Arm Rest Delete", cat: "Interior", make: "Honda", model: "S2000", price: 7.99, img: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=600&h=450&fit=crop", imgs: ["https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=600&h=450&fit=crop"], seller: "S2KParts", email: "s2k@example.com", desc: "Clean arm rest delete panel for AP1/AP2 S2000.", format: "STL", size: "1.5 MB", material: "ABS", infill: "30%", downloads: 345, stl: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/stl/binary/pr2_head_pan.stl" },
-    { id: 13, title: "Chevrolet Camaro 6th Gen Phone Mount", cat: "Interior", make: "Chevrolet", model: "Camaro 6th Gen", price: 5.99, img: "https://images.unsplash.com/photo-1603584173870-7f23fdae1b7a?w=600&h=450&fit=crop", imgs: ["https://images.unsplash.com/photo-1603584173870-7f23fdae1b7a?w=600&h=450&fit=crop"], seller: "CamaroParts", email: "camaro@example.com", desc: "Dash-mounted phone holder for 6th gen Camaro.", format: "STL", size: "1.7 MB", material: "PETG", infill: "25%", downloads: 423, stl: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/stl/binary/pr2_head_tilt.stl" },
-    { id: 14, title: "Toyota GR86 / BRZ Shifter Surround", cat: "Interior", make: "Toyota", model: "GR86", price: 6.49, img: "https://images.unsplash.com/photo-1626668893632-6f3a4466d22f?w=600&h=450&fit=crop", imgs: ["https://images.unsplash.com/photo-1626668893632-6f3a4466d22f?w=600&h=450&fit=crop"], seller: "86Parts", email: "86@example.com", desc: "Replacement shifter surround for GR86/BRZ with cleaner design.", format: "STL, STEP", size: "2.0 MB", material: "ABS", infill: "30%", downloads: 289, featured: true, stl: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/stl/binary/pr2_head_pan.stl" },
-    { id: 15, title: "Universal License Plate Frame", cat: "Exterior", make: "Universal", model: "All", price: 2.99, img: "https://images.unsplash.com/photo-1489824904134-891ab64532f1?w=600&h=450&fit=crop", imgs: ["https://images.unsplash.com/photo-1489824904134-891ab64532f1?w=600&h=450&fit=crop"], seller: "AutoMods", email: "auto@example.com", desc: "Simple, clean license plate frame. No dealer branding.", format: "STL", size: "0.9 MB", material: "ASA", infill: "40%", downloads: 1234, stl: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/stl/binary/pr2_head_tilt.stl" },
-    { id: 16, title: "Porsche 911 997 Key Holder", cat: "Accessories", make: "Porsche", model: "911 997", price: 8.99, img: "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=600&h=450&fit=crop", imgs: ["https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=600&h=450&fit=crop"], seller: "PorscheParts", email: "porsche@example.com", desc: "Wall-mounted key holder shaped like 997 silhouette.", format: "STL", size: "1.8 MB", material: "PLA", infill: "20%", downloads: 567, stl: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/stl/binary/pr2_head_pan.stl" }
-];
+function updateNavAuth() {
+    const loginBtn = document.getElementById('loginBtn');
+    if (currentUser) {
+        loginBtn.textContent = currentUser.name.split(' ')[0];
+        loginBtn.onclick = () => go('dashboard');
+    } else {
+        loginBtn.textContent = 'Login';
+        loginBtn.onclick = () => go('login');
+    }
+}
 
-const recentSales = [
-    { part: "Tesla-Style Phone Mount", buyer: "Mike T.", location: "California", time: "2 min ago" },
-    { part: "BMW E30 Phone Dock", buyer: "Sarah K.", location: "Texas", time: "5 min ago" },
-    { part: "Miata NA Phone Mount", buyer: "Jake R.", location: "Florida", time: "8 min ago" },
-    { part: "VW Golf MK7 Mount", buyer: "Emma L.", location: "New York", time: "12 min ago" },
-    { part: "Supra MK4 Gauge Pod", buyer: "Chris P.", location: "Germany", time: "15 min ago" },
-    { part: "S2000 Arm Rest Delete", buyer: "David M.", location: "Japan", time: "18 min ago" },
-    { part: "350Z Triple Gauge Pod", buyer: "Alex W.", location: "UK", time: "22 min ago" },
-    { part: "License Plate Frame", buyer: "Lisa H.", location: "Canada", time: "25 min ago" }
-];
+// API helpers
+async function api(endpoint, options = {}) {
+    const headers = { 'Content-Type': 'application/json' };
+    if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+    
+    const res = await fetch(`${API_URL}${endpoint}`, { ...options, headers });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'API Error');
+    return data;
+}
 
-const affiliateProducts = [
-    { name: "Creality Ender 3 V3", type: "3D Printer", price: "$199", link: "https://amazon.com" },
-    { name: "Bambu Lab P1S", type: "3D Printer", price: "$699", link: "https://amazon.com" },
-    { name: "Hatchbox PLA Filament", type: "Filament", price: "$23", link: "https://amazon.com" },
-    { name: "Overture PETG", type: "Filament", price: "$20", link: "https://amazon.com" },
-    { name: "Digital Calipers", type: "Tool", price: "$15", link: "https://amazon.com" },
-    { name: "Heat Gun", type: "Tool", price: "$25", link: "https://amazon.com" }
-];
-
+// Static data for demo (will be replaced by API)
 const categories = [
     { name: "Interior", img: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=300&h=300&fit=crop" },
     { name: "Exterior", img: "https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=300&h=300&fit=crop" },
@@ -78,23 +75,62 @@ const carModels = {
     "Universal": ["All"]
 };
 
-const designers = [
-    { id: 1, name: "Alex Chen", title: "Automotive Engineer", rate: "$50/hr", rating: 4.9, reviews: 47, img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop", email: "alex@example.com", tags: ["JDM", "European", "Interior"], bio: "10+ years designing aftermarket auto parts. Fusion 360 and SolidWorks expert.", projects: 127 },
-    { id: 2, name: "Mike Rodriguez", title: "JDM Specialist", rate: "$40/hr", rating: 4.8, reviews: 89, img: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop", email: "mike@example.com", tags: ["Honda", "Toyota", "Nissan"], bio: "JDM enthusiast with 200+ parts designed for Honda, Toyota, and Nissan platforms.", projects: 213 },
-    { id: 3, name: "Sarah Miller", title: "Interior Specialist", rate: "$45/hr", rating: 5.0, reviews: 34, img: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop", email: "sarah@example.com", tags: ["Interior", "Trim", "Luxury"], bio: "Former BMW interior designer. Creating premium-feel parts for enthusiast cars.", projects: 89 },
-    { id: 4, name: "James Park", title: "Performance Parts Designer", rate: "$55/hr", rating: 4.7, reviews: 28, img: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop", email: "james@example.com", tags: ["Performance", "Aero", "Cooling"], bio: "Ex-Tesla engineer specializing in functional aero and cooling parts.", projects: 78 },
-    { id: 5, name: "Emily Watson", title: "Euro Car Expert", rate: "$45/hr", rating: 4.9, reviews: 62, img: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop", email: "emily@example.com", tags: ["BMW", "VW", "Porsche"], bio: "European car specialist. Perfect fitment guaranteed for German vehicles.", projects: 156 },
-    { id: 6, name: "David Kim", title: "Muscle Car Specialist", rate: "$40/hr", rating: 4.8, reviews: 41, img: "https://images.unsplash.com/photo-1507591064344-4c6ce005b128?w=200&h=200&fit=crop", email: "david@example.com", tags: ["Mustang", "Camaro", "American"], bio: "American muscle car enthusiast. Designing parts for Mustangs and Camaros.", projects: 98 }
+// Demo data (fallback)
+const demoParts = [
+    { id: 1, title: "Tesla-Style Phone Mount", category: "Interior", make: "Universal", model: "All", price: 3.99, images: ["https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&h=450&fit=crop"], seller_name: "AutoParts3D", seller_email: "auto@example.com", description: "Minimalist phone mount for car vents with ball joint design.", file_format: "STL, STEP", file_size: "1.8 MB", material: "PLA", infill: "25%", downloads: 567, featured: 1 },
+    { id: 2, title: "BMW E30 Phone Dock", category: "Interior", make: "BMW", model: "E30", price: 5.99, images: ["https://images.unsplash.com/photo-1555215695-3004980ad54e?w=600&h=450&fit=crop"], seller_name: "BimmerParts", seller_email: "bmw@example.com", description: "Custom phone dock for BMW E30 center console.", file_format: "STL", file_size: "2.1 MB", material: "PETG", infill: "30%", downloads: 312 },
+    { id: 3, title: "Toyota Supra MK4 Gauge Pod", category: "Gauges", make: "Toyota", model: "Supra MK4", price: 8.99, images: ["https://images.unsplash.com/photo-1600712242805-5f78671b24da?w=600&h=450&fit=crop"], seller_name: "JDMParts3D", seller_email: "jdm@example.com", description: "52mm gauge pod for MK4 Supra center vent.", file_format: "STL, STEP", file_size: "3.4 MB", material: "ABS", infill: "40%", downloads: 523, featured: 1 },
+    { id: 4, title: "Honda Civic EG Cup Holder", category: "Interior", make: "Honda", model: "Civic EG", price: 4.49, images: ["https://images.unsplash.com/photo-1606611013016-969c19ba27bb?w=600&h=450&fit=crop"], seller_name: "HondaHacks", seller_email: "honda@example.com", description: "Dual cup holder insert for Civic EG.", file_format: "STL", file_size: "1.6 MB", material: "PLA", infill: "25%", downloads: 445 },
+    { id: 5, title: "Mazda Miata NA Phone Mount", category: "Interior", make: "Mazda", model: "Miata NA", price: 6.99, images: ["https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=600&h=450&fit=crop"], seller_name: "MiataMods", seller_email: "miata@example.com", description: "Low-profile phone mount for NA Miata.", file_format: "STL", file_size: "1.9 MB", material: "PETG", infill: "30%", downloads: 678 },
+    { id: 6, title: "BMW E46 Coin Delete", category: "Interior", make: "BMW", model: "E46", price: 3.49, images: ["https://images.unsplash.com/photo-1617814076367-b759c7d7e738?w=600&h=450&fit=crop"], seller_name: "BimmerParts", seller_email: "bmw@example.com", description: "Clean delete panel for E46 coin holder.", file_format: "STL", file_size: "0.8 MB", material: "PLA", infill: "20%", downloads: 234 },
+    { id: 7, title: "Nissan 350Z Triple Gauge Pod", category: "Gauges", make: "Nissan", model: "350Z", price: 12.99, images: ["https://images.unsplash.com/photo-1619405399517-d7fce0f13302?w=600&h=450&fit=crop"], seller_name: "ZCarParts", seller_email: "zcar@example.com", description: "A-pillar triple gauge pod for 350Z.", file_format: "STL, STEP", file_size: "4.8 MB", material: "ABS", infill: "35%", downloads: 389 },
+    { id: 8, title: "Subaru WRX Shift Surround", category: "Interior", make: "Subaru", model: "WRX", price: 4.99, images: ["https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=600&h=450&fit=crop"], seller_name: "SubieParts", seller_email: "subie@example.com", description: "Custom shift boot surround for GD WRX.", file_format: "STL", file_size: "1.4 MB", material: "PETG", infill: "25%", downloads: 456 }
+];
+
+const demoDesigners = [
+    { id: 1, name: "Alex Chen", role: "designer", avatar_url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop", bio: "10+ years designing aftermarket auto parts. Fusion 360 and SolidWorks expert.", rate: "$50/hr", tags: ["JDM", "European", "Interior"], stats: { avgRating: 4.9, reviewCount: 47, parts: 127 } },
+    { id: 2, name: "Mike Rodriguez", role: "designer", avatar_url: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop", bio: "JDM enthusiast with 200+ parts designed.", rate: "$40/hr", tags: ["Honda", "Toyota", "Nissan"], stats: { avgRating: 4.8, reviewCount: 89, parts: 213 } },
+    { id: 3, name: "Sarah Miller", role: "designer", avatar_url: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop", bio: "Former BMW interior designer. Premium-feel parts.", rate: "$45/hr", tags: ["Interior", "Trim", "Luxury"], stats: { avgRating: 5.0, reviewCount: 34, parts: 89 } },
+    { id: 4, name: "James Park", role: "designer", avatar_url: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop", bio: "Ex-Tesla engineer. Functional aero and cooling parts.", rate: "$55/hr", tags: ["Performance", "Aero"], stats: { avgRating: 4.7, reviewCount: 28, parts: 78 } },
+    { id: 5, name: "Emily Watson", role: "designer", avatar_url: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop", bio: "European car specialist. Perfect fitment guaranteed.", rate: "$45/hr", tags: ["BMW", "VW", "Porsche"], stats: { avgRating: 4.9, reviewCount: 62, parts: 156 } },
+    { id: 6, name: "David Kim", role: "designer", avatar_url: "https://images.unsplash.com/photo-1507591064344-4c6ce005b128?w=200&h=200&fit=crop", bio: "Muscle car enthusiast. Mustangs and Camaros.", rate: "$40/hr", tags: ["Mustang", "Camaro"], stats: { avgRating: 4.8, reviewCount: 41, parts: 98 } }
 ];
 
 const printShops = [
     { name: "3D Print Lab Bangkok", address: "123 Sukhumvit Rd, Bangkok", distance: "2.3 km", rating: 4.8, reviews: 156, phone: "+66 2 123 4567", email: "contact@3dprintlab.th", verified: true, instantQuote: true, printAndShip: true, turnaround: "2-3 days" },
     { name: "MakerSpace BKK", address: "456 Silom Rd, Bangkok", distance: "4.1 km", rating: 4.6, reviews: 89, phone: "+66 2 234 5678", email: "hello@makerspace.co.th", verified: true, instantQuote: true, printAndShip: false, turnaround: "3-5 days" },
-    { name: "Proto3D Thailand", address: "789 Rama IV, Bangkok", distance: "5.8 km", rating: 4.9, reviews: 234, phone: "+66 2 345 6789", email: "orders@proto3d.th", verified: true, instantQuote: true, printAndShip: true, turnaround: "1-2 days" },
-    { name: "QuickPrint Shop", address: "321 Rama III, Bangkok", distance: "7.2 km", rating: 4.4, reviews: 67, phone: "+66 2 456 7890", email: "info@quickprint.th", verified: false, instantQuote: false, printAndShip: false, turnaround: "5-7 days" }
+    { name: "Proto3D Thailand", address: "789 Rama IV, Bangkok", distance: "5.8 km", rating: 4.9, reviews: 234, phone: "+66 2 345 6789", email: "orders@proto3d.th", verified: true, instantQuote: true, printAndShip: true, turnaround: "1-2 days" }
 ];
 
 let view = 'home', filter = '', filterCat = '', filterMake = '', filterModel = '', uploadedPhotos = [];
+let parts = demoParts;
+let designers = demoDesigners;
+
+// Load data from API
+async function loadParts() {
+    try {
+        const params = new URLSearchParams();
+        if (filterCat) params.set('category', filterCat);
+        if (filterMake) params.set('make', filterMake);
+        if (filterModel) params.set('model', filterModel);
+        if (filter) params.set('search', filter);
+        
+        const data = await api(`/api/parts?${params}`);
+        parts = data.length ? data : demoParts;
+    } catch (e) {
+        console.log('Using demo data:', e.message);
+        parts = demoParts;
+    }
+}
+
+async function loadDesigners() {
+    try {
+        const data = await api('/api/designers');
+        designers = data.length ? data : demoDesigners;
+    } catch (e) {
+        designers = demoDesigners;
+    }
+}
 
 function go(v, data) { view = v; render(data); window.scrollTo(0, 0); }
 function search(e) { if (e.key === 'Enter') { filter = e.target.value; go('browse'); } }
@@ -113,19 +149,212 @@ function updateModels() {
     if (make && carModels[make]) carModels[make].forEach(m => { modelSelect.innerHTML += `<option value="${m}">${m}</option>`; });
 }
 
-function render(data) {
+async function render(data) {
     const app = document.getElementById('app');
-    if (view === 'home') app.innerHTML = homeView();
-    else if (view === 'browse') app.innerHTML = browseView();
-    else if (view === 'designers') app.innerHTML = designersView();
+    if (view === 'home') { await loadParts(); app.innerHTML = homeView(); }
+    else if (view === 'browse') { await loadParts(); app.innerHTML = browseView(); }
+    else if (view === 'designers') { await loadDesigners(); app.innerHTML = designersView(); }
     else if (view === 'sell') app.innerHTML = sellView();
-    else if (view === 'part') { app.innerHTML = partView(data); initViewer(data); }
-    else if (view === 'designer') app.innerHTML = designerView(data);
+    else if (view === 'part') { app.innerHTML = await partView(data); initViewer(data); }
+    else if (view === 'designer') app.innerHTML = await designerView(data);
     else if (view === 'printshops') app.innerHTML = printShopsView(data);
+    else if (view === 'login') app.innerHTML = loginView();
+    else if (view === 'signup') app.innerHTML = signupView();
+    else if (view === 'dashboard') app.innerHTML = await dashboardView();
+    else if (view === 'profile') app.innerHTML = await profileView(data);
 }
 
 function openLightbox(src) { document.getElementById('lightbox').classList.add('active'); document.getElementById('lightboxImg').src = src; }
 function closeLightbox() { document.getElementById('lightbox').classList.remove('active'); }
+
+// ========== AUTH VIEWS ==========
+
+function loginView() {
+    return `<div class="auth-container">
+        <div class="auth-box">
+            <h1>Login</h1>
+            <p>Welcome back to ForgAuto</p>
+            <form onsubmit="handleLogin(event)">
+                <div class="field"><label>Email</label><input type="email" id="loginEmail" required></div>
+                <div class="field"><label>Password</label><input type="password" id="loginPassword" required></div>
+                <div id="loginError" class="error-msg"></div>
+                <button type="submit" class="btn btn-lg btn-primary" style="width:100%">Login</button>
+            </form>
+            <p class="auth-switch">Don't have an account? <a href="#" onclick="go('signup')">Sign up</a></p>
+        </div>
+    </div>`;
+}
+
+function signupView() {
+    return `<div class="auth-container">
+        <div class="auth-box">
+            <h1>Create Account</h1>
+            <p>Join ForgAuto as a seller or designer</p>
+            <form onsubmit="handleSignup(event)">
+                <div class="field"><label>Name</label><input type="text" id="signupName" required></div>
+                <div class="field"><label>Email</label><input type="email" id="signupEmail" required></div>
+                <div class="field"><label>Password</label><input type="password" id="signupPassword" required minlength="6"></div>
+                <div class="field"><label>I am a...</label>
+                    <select id="signupRole">
+                        <option value="seller">Seller (I have parts to sell)</option>
+                        <option value="designer">Designer (I create custom parts)</option>
+                    </select>
+                </div>
+                <div id="signupError" class="error-msg"></div>
+                <button type="submit" class="btn btn-lg btn-primary" style="width:100%">Create Account</button>
+            </form>
+            <p class="auth-switch">Already have an account? <a href="#" onclick="go('login')">Login</a></p>
+        </div>
+    </div>`;
+}
+
+async function handleLogin(e) {
+    e.preventDefault();
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
+    
+    try {
+        const data = await api('/api/auth/login', {
+            method: 'POST',
+            body: JSON.stringify({ email, password })
+        });
+        authToken = data.token;
+        localStorage.setItem('authToken', authToken);
+        currentUser = data.user;
+        updateNavAuth();
+        go('dashboard');
+    } catch (err) {
+        document.getElementById('loginError').textContent = err.message;
+    }
+}
+
+async function handleSignup(e) {
+    e.preventDefault();
+    const name = document.getElementById('signupName').value;
+    const email = document.getElementById('signupEmail').value;
+    const password = document.getElementById('signupPassword').value;
+    const role = document.getElementById('signupRole').value;
+    
+    try {
+        const data = await api('/api/auth/signup', {
+            method: 'POST',
+            body: JSON.stringify({ name, email, password, role })
+        });
+        authToken = data.token;
+        localStorage.setItem('authToken', authToken);
+        currentUser = data.user;
+        updateNavAuth();
+        go('dashboard');
+    } catch (err) {
+        document.getElementById('signupError').textContent = err.message;
+    }
+}
+
+async function handleLogout() {
+    try { await api('/api/auth/logout', { method: 'POST' }); } catch (e) {}
+    localStorage.removeItem('authToken');
+    authToken = null;
+    currentUser = null;
+    updateNavAuth();
+    go('home');
+}
+
+// ========== DASHBOARD VIEW ==========
+
+async function dashboardView() {
+    if (!currentUser) return loginView();
+    
+    let myParts = [], mySales = [], myPurchases = [];
+    try {
+        myParts = await api('/api/parts?user=' + currentUser.id);
+    } catch (e) { myParts = []; }
+    try {
+        mySales = await api('/api/sales');
+    } catch (e) { mySales = []; }
+    try {
+        myPurchases = await api('/api/purchases');
+    } catch (e) { myPurchases = []; }
+    
+    return `<div class="dashboard">
+        <div class="dashboard-header">
+            <div class="dashboard-user">
+                <div class="user-avatar">${currentUser.avatar_url ? `<img src="${currentUser.avatar_url}">` : currentUser.name.charAt(0)}</div>
+                <div>
+                    <h1>${currentUser.name}</h1>
+                    <span class="user-role">${currentUser.role === 'designer' ? 'Designer' : 'Seller'}</span>
+                </div>
+            </div>
+            <div class="dashboard-actions">
+                <a href="#" onclick="go('sell')" class="btn btn-primary">+ New Listing</a>
+                <button onclick="handleLogout()" class="btn btn-outline">Logout</button>
+            </div>
+        </div>
+        
+        <div class="dashboard-nav">
+            <button class="dash-tab active" onclick="showDashTab('listings')">My Listings</button>
+            <button class="dash-tab" onclick="showDashTab('sales')">Sales</button>
+            <button class="dash-tab" onclick="showDashTab('purchases')">Purchases</button>
+            <button class="dash-tab" onclick="showDashTab('settings')">Settings</button>
+        </div>
+        
+        <div id="dashListings" class="dash-content">
+            <h2>My Listings (${myParts.length})</h2>
+            ${myParts.length ? `<div class="grid">${myParts.map(cardHTML).join('')}</div>` : '<p class="empty-state">No listings yet. <a href="#" onclick="go(\'sell\')">Create your first listing</a></p>'}
+        </div>
+        
+        <div id="dashSales" class="dash-content" style="display:none">
+            <h2>Sales</h2>
+            ${mySales.length ? `<div class="sales-list">${mySales.map(s => `<div class="sale-item"><strong>${s.title}</strong> sold to ${s.buyer_name} for $${s.price.toFixed(2)}<span class="sale-date">${new Date(s.created_at).toLocaleDateString()}</span></div>`).join('')}</div>` : '<p class="empty-state">No sales yet.</p>'}
+        </div>
+        
+        <div id="dashPurchases" class="dash-content" style="display:none">
+            <h2>My Purchases</h2>
+            ${myPurchases.length ? `<div class="purchase-list">${myPurchases.map(p => `<div class="purchase-item"><strong>${p.title}</strong> by ${p.seller_name}<span class="purchase-price">$${p.price.toFixed(2)}</span><a href="#" onclick="go('part', ${p.part_id})" class="btn btn-sm">View</a></div>`).join('')}</div>` : '<p class="empty-state">No purchases yet.</p>'}
+        </div>
+        
+        <div id="dashSettings" class="dash-content" style="display:none">
+            <h2>Profile Settings</h2>
+            <form onsubmit="handleProfileUpdate(event)" class="settings-form">
+                <div class="field"><label>Name</label><input type="text" id="settingsName" value="${currentUser.name}"></div>
+                <div class="field"><label>Bio</label><textarea id="settingsBio" rows="3">${currentUser.bio || ''}</textarea></div>
+                ${currentUser.role === 'designer' ? `
+                    <div class="field"><label>Hourly Rate</label><input type="text" id="settingsRate" value="${currentUser.rate || ''}" placeholder="$50/hr"></div>
+                    <div class="field"><label>Specialties (comma separated)</label><input type="text" id="settingsTags" value="${(currentUser.tags || []).join(', ')}" placeholder="JDM, Interior, BMW"></div>
+                ` : ''}
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+            </form>
+        </div>
+    </div>`;
+}
+
+function showDashTab(tab) {
+    document.querySelectorAll('.dash-content').forEach(el => el.style.display = 'none');
+    document.querySelectorAll('.dash-tab').forEach(el => el.classList.remove('active'));
+    document.getElementById('dash' + tab.charAt(0).toUpperCase() + tab.slice(1)).style.display = 'block';
+    event.target.classList.add('active');
+}
+
+async function handleProfileUpdate(e) {
+    e.preventDefault();
+    const name = document.getElementById('settingsName').value;
+    const bio = document.getElementById('settingsBio').value;
+    const rate = document.getElementById('settingsRate')?.value;
+    const tagsInput = document.getElementById('settingsTags')?.value;
+    const tags = tagsInput ? tagsInput.split(',').map(t => t.trim()).filter(t => t) : null;
+    
+    try {
+        await api('/api/profile', {
+            method: 'PUT',
+            body: JSON.stringify({ name, bio, rate, tags })
+        });
+        currentUser = { ...currentUser, name, bio, rate, tags };
+        alert('Profile updated!');
+    } catch (err) {
+        alert('Error: ' + err.message);
+    }
+}
+
+// ========== HOME VIEW ==========
 
 function homeView() {
     const trendingParts = [...parts].sort((a, b) => b.downloads - a.downloads).slice(0, 4);
@@ -133,7 +362,12 @@ function homeView() {
     
     return `
         <div class="sold-ticker"><div class="ticker-content">
-            ${recentSales.concat(recentSales).map(s => `<span class="ticker-item"><strong>${s.buyer}</strong> from ${s.location} bought <strong>${s.part}</strong> - ${s.time}</span>`).join('')}
+            <span class="ticker-item"><strong>Mike T.</strong> from California bought <strong>Tesla Phone Mount</strong> - 2 min ago</span>
+            <span class="ticker-item"><strong>Sarah K.</strong> from Texas bought <strong>BMW E30 Dock</strong> - 5 min ago</span>
+            <span class="ticker-item"><strong>Jake R.</strong> from Florida bought <strong>Miata Mount</strong> - 8 min ago</span>
+            <span class="ticker-item"><strong>Emma L.</strong> from New York bought <strong>VW Golf Mount</strong> - 12 min ago</span>
+            <span class="ticker-item"><strong>Mike T.</strong> from California bought <strong>Tesla Phone Mount</strong> - 2 min ago</span>
+            <span class="ticker-item"><strong>Sarah K.</strong> from Texas bought <strong>BMW E30 Dock</strong> - 5 min ago</span>
         </div></div>
 
         <div class="promo-banner">
@@ -177,12 +411,8 @@ function homeView() {
             <div class="grid">${parts.slice(0, 8).map(cardHTML).join('')}</div>
         </div>
 
-        <div class="section affiliate-section"><div class="section-head"><h2>Recommended Gear</h2><span class="affiliate-note">We may earn commission</span></div>
-            <div class="affiliate-grid">${affiliateProducts.map(p => `<a href="${p.link}" target="_blank" class="affiliate-item"><div class="affiliate-info"><strong>${p.name}</strong><span>${p.type}</span></div><span class="affiliate-price">${p.price}</span></a>`).join('')}</div>
-        </div>
-
         <div class="section featured-designers"><div class="section-head"><h2>Top Designers</h2><a href="#" onclick="go('designers')">View all</a></div>
-            <div class="designers-preview">${designers.slice(0, 3).map(d => `<div class="designer-mini" onclick="go('designer', ${d.id})"><img src="${d.img}" alt="${d.name}"><div class="designer-mini-info"><strong>${d.name}</strong><span>${d.title}</span><span class="designer-mini-rate">${d.rate} - ${d.rating} stars</span></div></div>`).join('')}</div>
+            <div class="designers-preview">${designers.slice(0, 3).map(d => `<div class="designer-mini" onclick="go('designer', ${d.id})"><img src="${d.avatar_url}" alt="${d.name}"><div class="designer-mini-info"><strong>${d.name}</strong><span>${d.bio?.substring(0, 50)}...</span><span class="designer-mini-rate">${d.rate} - ${d.stats?.avgRating || 5} stars</span></div></div>`).join('')}</div>
         </div>
 
         <div class="stats-bar">
@@ -197,8 +427,8 @@ function homeView() {
 
 function browseView() {
     let filtered = parts;
-    if (filter) { const q = filter.toLowerCase(); filtered = filtered.filter(p => p.title.toLowerCase().includes(q) || p.cat.toLowerCase().includes(q) || p.desc.toLowerCase().includes(q) || (p.make && p.make.toLowerCase().includes(q)) || (p.model && p.model.toLowerCase().includes(q))); }
-    if (filterCat) filtered = filtered.filter(p => p.cat === filterCat);
+    if (filter) { const q = filter.toLowerCase(); filtered = filtered.filter(p => (p.title||'').toLowerCase().includes(q) || (p.category||'').toLowerCase().includes(q) || (p.description||'').toLowerCase().includes(q) || (p.make||'').toLowerCase().includes(q) || (p.model||'').toLowerCase().includes(q)); }
+    if (filterCat) filtered = filtered.filter(p => p.category === filterCat);
     if (filterMake) filtered = filtered.filter(p => p.make === filterMake);
     if (filterModel) filtered = filtered.filter(p => p.model === filterModel);
     const title = filterMake && filterModel ? `${filterMake} ${filterModel}` : filterMake ? filterMake : filterCat ? filterCat : filter ? `"${filter}"` : 'All Parts';
@@ -219,88 +449,213 @@ function browseView() {
 function designersView() {
     return `<div class="page-header"><h1>Find a Designer</h1><p>Need a custom part? Work with automotive specialists.</p></div>
         <div class="designer-filters"><button class="filter-btn active">All</button><button class="filter-btn">JDM</button><button class="filter-btn">European</button><button class="filter-btn">American</button><button class="filter-btn">Interior</button></div>
-        <div class="designers-grid">${designers.map(d => `<div class="designer" onclick="go('designer', ${d.id})"><div class="designer-top"><img src="${d.img}" alt="${d.name}"><div><h3>${d.name}</h3><p>${d.title}</p></div></div><div class="designer-stats"><span class="designer-rate">${d.rate}</span><span class="designer-rating">${d.rating} stars (${d.reviews})</span></div><div class="tags">${d.tags.map(t => `<span class="tag">${t}</span>`).join('')}</div><div class="designer-projects">${d.projects} completed projects</div></div>`).join('')}</div>`;
+        <div class="designers-grid">${designers.map(d => `<div class="designer" onclick="go('designer', ${d.id})"><div class="designer-top"><img src="${d.avatar_url}" alt="${d.name}"><div><h3>${d.name}</h3><p>${d.bio?.substring(0, 60)}...</p></div></div><div class="designer-stats"><span class="designer-rate">${d.rate}</span><span class="designer-rating">${d.stats?.avgRating || 5} stars (${d.stats?.reviewCount || 0})</span></div><div class="tags">${(d.tags||[]).map(t => `<span class="tag">${t}</span>`).join('')}</div><div class="designer-projects">${d.stats?.parts || 0} completed projects</div></div>`).join('')}</div>`;
 }
 
 function sellView() {
+    if (!currentUser) {
+        return `<div class="auth-prompt"><h2>Login Required</h2><p>You need to be logged in to sell parts.</p><a href="#" onclick="go('login')" class="btn btn-primary">Login</a> <a href="#" onclick="go('signup')" class="btn btn-outline">Sign Up</a></div>`;
+    }
+    
     return `<div class="sell-layout">
         <div class="sell-info"><h1>Sell your car parts</h1><p>Upload your designs, set your price, start earning.</p>
             <div class="steps"><div class="step"><div class="step-num">1</div><div><h4>Upload files</h4><p>3D files + photos</p></div></div><div class="step"><div class="step-num">2</div><div><h4>Pay listing fee</h4><p>One-time $5</p></div></div><div class="step"><div class="step-num">3</div><div><h4>Get paid</h4><p>Keep 100%</p></div></div></div>
             <div class="pricing"><div class="pricing-big">$5</div><div class="pricing-sub">one-time listing fee</div><ul><li>Keep 100% of sales</li><li>No monthly fees</li><li>No commission</li><li>Listing never expires</li></ul></div>
         </div>
         <div class="form"><h2>Create Listing</h2>
-            <div class="field"><label>Part Name</label><input type="text" placeholder="e.g., BMW E30 Phone Mount"></div>
-            <div class="field"><label>Description</label><textarea rows="4" placeholder="Describe fitment, materials..."></textarea></div>
-            <div class="field-row"><div class="field"><label>Make</label><select id="sellMake" onchange="updateSellModels()">${carMakes.map(m => `<option>${m}</option>`).join('')}</select></div><div class="field"><label>Model</label><select id="sellModel"><option>Select model...</option></select></div></div>
-            <div class="field-row"><div class="field"><label>Category</label><select>${categories.map(c => `<option>${c.name}</option>`).join('')}</select></div><div class="field"><label>Price (USD)</label><input type="number" placeholder="4.99" min="0.99" step="0.01"></div></div>
-            <div class="field"><label>3D File *</label><div class="dropzone"><div class="dropzone-icon">+</div><p>Drop 3D file here</p><span>STL, STEP, OBJ, 3MF</span></div></div>
-            <div class="field"><label>Photos *</label><div class="photo-grid" id="photoGrid"><div class="photo-add" onclick="document.getElementById('photoInput').click()"><span class="photo-add-icon">+</span><span>Add</span></div></div><input type="file" id="photoInput" accept="image/*" multiple hidden onchange="handlePhotoUpload(event)"></div>
-            <div class="field"><label>Your Email</label><input type="email" placeholder="you@example.com"></div>
+            <form onsubmit="handleCreateListing(event)">
+            <div class="field"><label>Part Name</label><input type="text" id="partTitle" placeholder="e.g., BMW E30 Phone Mount" required></div>
+            <div class="field"><label>Description</label><textarea id="partDesc" rows="4" placeholder="Describe fitment, materials..." required></textarea></div>
+            <div class="field-row"><div class="field"><label>Make</label><select id="partMake" required onchange="updatePartModels()">${carMakes.map(m => `<option>${m}</option>`).join('')}</select></div><div class="field"><label>Model</label><select id="partModel"><option>Select model...</option></select></div></div>
+            <div class="field-row"><div class="field"><label>Category</label><select id="partCat" required>${categories.map(c => `<option>${c.name}</option>`).join('')}</select></div><div class="field"><label>Price (USD)</label><input type="number" id="partPrice" placeholder="4.99" min="0.99" step="0.01" required></div></div>
+            <div class="field-row"><div class="field"><label>File Format</label><input type="text" id="partFormat" placeholder="STL, STEP"></div><div class="field"><label>File Size</label><input type="text" id="partSize" placeholder="2.1 MB"></div></div>
+            <div class="field-row"><div class="field"><label>Recommended Material</label><input type="text" id="partMaterial" placeholder="PLA, PETG, ABS"></div><div class="field"><label>Infill %</label><input type="text" id="partInfill" placeholder="25%"></div></div>
+            <div class="field"><label>3D File</label><div class="dropzone" onclick="document.getElementById('fileInput').click()"><div class="dropzone-icon">+</div><p id="fileName">Drop 3D file here or click</p><span>STL, STEP, OBJ, 3MF</span></div><input type="file" id="fileInput" hidden onchange="handleFileSelect(event)"></div>
+            <div class="field"><label>Photos</label><div class="photo-grid" id="photoGrid"><div class="photo-add" onclick="document.getElementById('photoInput').click()"><span class="photo-add-icon">+</span><span>Add</span></div></div><input type="file" id="photoInput" accept="image/*" multiple hidden onchange="handlePhotoUpload(event)"></div>
             <div class="upsell-box"><label class="upsell-label"><input type="checkbox" id="featuredCheckbox" onchange="updateTotal()"><div class="upsell-content"><span class="upsell-badge">FEATURED</span><strong>Get Featured Placement +$10</strong><p>Your listing appears in the Featured section for 30 days.</p></div></label></div>
             <div class="form-total"><span>Total</span><span id="totalPrice">$5.00</span></div>
-            <button class="btn btn-lg" style="width:100%">Continue to Payment</button>
+            <button type="submit" class="btn btn-lg btn-primary" style="width:100%">Create Listing</button>
+            </form>
         </div>
     </div>`;
 }
 
+function updatePartModels() {
+    const make = document.getElementById('partMake')?.value;
+    const modelSelect = document.getElementById('partModel');
+    if (!modelSelect || !make) return;
+    modelSelect.innerHTML = '<option>Select model...</option>';
+    if (carModels[make]) carModels[make].forEach(m => { modelSelect.innerHTML += `<option value="${m}">${m}</option>`; });
+}
+
+function handleFileSelect(e) {
+    const file = e.target.files[0];
+    if (file) document.getElementById('fileName').textContent = file.name;
+}
+
+async function handleCreateListing(e) {
+    e.preventDefault();
+    
+    const listing = {
+        title: document.getElementById('partTitle').value,
+        description: document.getElementById('partDesc').value,
+        make: document.getElementById('partMake').value,
+        model: document.getElementById('partModel').value,
+        category: document.getElementById('partCat').value,
+        price: parseFloat(document.getElementById('partPrice').value),
+        file_format: document.getElementById('partFormat').value,
+        file_size: document.getElementById('partSize').value,
+        material: document.getElementById('partMaterial').value,
+        infill: document.getElementById('partInfill').value,
+        featured: document.getElementById('featuredCheckbox').checked
+    };
+    
+    try {
+        const result = await api('/api/parts', {
+            method: 'POST',
+            body: JSON.stringify(listing)
+        });
+        alert('Listing created! (Payment integration with Stripe coming soon)');
+        go('dashboard');
+    } catch (err) {
+        alert('Error: ' + err.message);
+    }
+}
+
 function updateTotal() { document.getElementById('totalPrice').textContent = document.getElementById('featuredCheckbox')?.checked ? '$15.00' : '$5.00'; }
 
-function partView(id) {
-    const p = parts.find(x => x.id === id);
+async function partView(id) {
+    let p = parts.find(x => x.id === id);
+    if (!p) {
+        try { p = await api(`/api/parts/${id}`); } catch (e) { return '<p>Part not found.</p>'; }
+    }
     if (!p) return '<p>Part not found.</p>';
+    
+    const images = p.images || [p.img] || ['https://via.placeholder.com/600x450'];
+    const reviews = p.reviews || [];
+    
     return `<div class="detail">
         <div class="detail-gallery">
             <div class="viewer-container" id="viewer3d"><div class="viewer-hint">Drag to rotate - Scroll to zoom</div></div>
-            <div class="gallery-thumbs">${(p.imgs || [p.img]).map((img, i) => `<img src="${img}" alt="${p.title}" class="thumb ${i===0?'active':''}" onclick="openLightbox('${img}')">`).join('')}</div>
+            <div class="gallery-thumbs">${images.map((img, i) => `<img src="${img}" alt="${p.title}" class="thumb ${i===0?'active':''}" onclick="openLightbox('${img}')">`).join('')}</div>
         </div>
         <div class="detail-info">
             ${p.featured ? '<span class="detail-featured-badge">Featured</span>' : ''}
-            <div class="detail-breadcrumb">${p.make} / ${p.model} / ${p.cat}</div>
+            <div class="detail-breadcrumb">${p.make} / ${p.model} / ${p.category}</div>
             <h1>${p.title}</h1>
-            <div class="detail-seller"><span class="seller-avatar">${p.seller.charAt(0)}</span><span>by <strong>${p.seller}</strong></span><span class="detail-downloads">${p.downloads} downloads</span></div>
-            <div class="detail-price">$${p.price.toFixed(2)}</div>
+            <div class="detail-seller"><span class="seller-avatar">${(p.seller_name||'S').charAt(0)}</span><span>by <strong>${p.seller_name || 'Seller'}</strong></span><span class="detail-downloads">${p.downloads || 0} downloads</span></div>
+            <div class="detail-price">$${(p.price || 0).toFixed(2)}</div>
             <div class="detail-trust"><span>Secure</span><span>Instant Download</span><span>Money Back</span></div>
-            <div class="detail-actions"><button class="btn btn-lg btn-primary">Buy Now - $${p.price.toFixed(2)}</button><a href="mailto:${p.email}?subject=Question: ${p.title}" class="btn btn-lg btn-outline">Contact Seller</a></div>
-            <div class="print-ship-cta"><div class="print-ship-header"><div><strong>Print & Ship</strong><span>Don't have a printer? We'll print it and ship it to you.</span></div></div><div class="print-ship-options"><button class="btn btn-sm" onclick="go('printshops', ${p.id})">Find Local Shop</button><button class="btn btn-sm btn-primary" onclick="alert('Print & Ship coming soon!')">Get Instant Quote</button></div></div>
-            <div class="detail-desc"><h2>Description</h2><p>${p.desc}</p></div>
-            <div class="specs"><h2>Specifications</h2><div class="spec-row"><span>Vehicle</span><span>${p.make} ${p.model}</span></div><div class="spec-row"><span>Category</span><span>${p.cat}</span></div><div class="spec-row"><span>Format</span><span>${p.format}</span></div><div class="spec-row"><span>File Size</span><span>${p.size}</span></div><div class="spec-row"><span>Material</span><span>${p.material}</span></div><div class="spec-row"><span>Infill</span><span>${p.infill}</span></div></div>
-            <div class="part-actions-secondary"><button class="btn btn-outline btn-sm">Save</button><button class="btn btn-outline btn-sm">Share</button><button class="btn btn-outline btn-sm">Report</button></div>
+            <div class="detail-actions">
+                <button class="btn btn-lg btn-primary" onclick="handleBuyPart(${p.id})">Buy Now - $${(p.price || 0).toFixed(2)}</button>
+                <a href="mailto:${p.seller_email || ''}" class="btn btn-lg btn-outline">Contact Seller</a>
+            </div>
+            <div class="print-ship-cta"><div class="print-ship-header"><div><strong>Print & Ship</strong><span>Don't have a printer? We'll print and ship it to you.</span></div></div><div class="print-ship-options"><button class="btn btn-sm" onclick="go('printshops', ${p.id})">Find Local Shop</button><button class="btn btn-sm btn-primary" onclick="alert('Print & Ship coming soon!')">Get Instant Quote</button></div></div>
+            <div class="detail-desc"><h2>Description</h2><p>${p.description || ''}</p></div>
+            <div class="specs"><h2>Specifications</h2><div class="spec-row"><span>Vehicle</span><span>${p.make} ${p.model}</span></div><div class="spec-row"><span>Category</span><span>${p.category}</span></div><div class="spec-row"><span>Format</span><span>${p.file_format || 'STL'}</span></div><div class="spec-row"><span>File Size</span><span>${p.file_size || 'N/A'}</span></div><div class="spec-row"><span>Material</span><span>${p.material || 'PLA'}</span></div><div class="spec-row"><span>Infill</span><span>${p.infill || '25%'}</span></div></div>
+            
+            ${reviews.length ? `<div class="reviews-section"><h2>Reviews (${reviews.length})</h2>${reviews.map(r => `<div class="review"><div class="review-header"><strong>${r.reviewer_name}</strong><span class="review-rating">${'*'.repeat(r.rating)} (${r.rating}/5)</span></div><p>${r.comment || ''}</p></div>`).join('')}</div>` : ''}
+            
+            ${currentUser ? `<div class="write-review"><h3>Write a Review</h3><form onsubmit="handleReview(event, ${p.id})"><div class="field"><label>Rating</label><select id="reviewRating"><option value="5">5 - Excellent</option><option value="4">4 - Good</option><option value="3">3 - Average</option><option value="2">2 - Poor</option><option value="1">1 - Terrible</option></select></div><div class="field"><label>Comment</label><textarea id="reviewComment" rows="3" placeholder="Share your experience..."></textarea></div><button type="submit" class="btn btn-primary">Submit Review</button></form></div>` : ''}
         </div>
     </div>
-    <div class="section"><div class="section-head"><h2>Similar Parts</h2></div><div class="grid">${parts.filter(x => x.id !== p.id && (x.make === p.make || x.cat === p.cat)).slice(0, 4).map(cardHTML).join('')}</div></div>
+    <div class="section"><div class="section-head"><h2>Similar Parts</h2></div><div class="grid">${parts.filter(x => x.id !== p.id && (x.make === p.make || x.category === p.category)).slice(0, 4).map(cardHTML).join('')}</div></div>
     <div id="lightbox" class="lightbox" onclick="closeLightbox()"><button class="lightbox-close" onclick="closeLightbox()">x</button><img id="lightboxImg" src="" alt="Zoomed image"></div>`;
+}
+
+async function handleBuyPart(partId) {
+    if (!currentUser) { alert('Please login to purchase'); go('login'); return; }
+    
+    try {
+        await api(`/api/parts/${partId}/purchase`, { method: 'POST' });
+        alert('Purchase successful! You can now download the file and leave a review. (Stripe integration coming soon)');
+        go('part', partId);
+    } catch (err) {
+        alert('Error: ' + err.message);
+    }
+}
+
+async function handleReview(e, partId) {
+    e.preventDefault();
+    const rating = parseInt(document.getElementById('reviewRating').value);
+    const comment = document.getElementById('reviewComment').value;
+    
+    try {
+        await api(`/api/parts/${partId}/reviews`, {
+            method: 'POST',
+            body: JSON.stringify({ rating, comment })
+        });
+        alert('Review submitted!');
+        go('part', partId);
+    } catch (err) {
+        alert('Error: ' + err.message);
+    }
 }
 
 function printShopsView(partId) {
     const part = partId ? parts.find(x => x.id === partId) : null;
     return `<div class="page-header"><h1>Find a Print Shop</h1><p>Get your part printed and shipped to you.</p></div>
-        ${part ? `<div class="selected-part-banner"><img src="${part.img}" alt="${part.title}"><div class="selected-part-info"><strong>${part.title}</strong><span>${part.make} ${part.model} - ${part.format} - ${part.size}</span></div></div>` : ''}
-        <div class="location-search"><input type="text" id="locationInput" placeholder="Enter your city or zip code..."><button class="btn" onclick="searchPrintShops()">Search</button><button class="btn btn-outline" onclick="useMyLocation()">Use My Location</button></div>
-        <div class="print-shops-list">${printShops.map(shop => `<div class="print-shop-card ${shop.verified ? 'verified' : ''}"><div class="print-shop-header"><div><h3>${shop.name} ${shop.verified ? '<span class="verified-badge">Verified</span>' : ''}</h3>${shop.instantQuote ? '<span class="instant-badge">Instant Quotes</span>' : ''}${shop.printAndShip ? '<span class="ship-badge">Print & Ship</span>' : ''}</div><span class="print-shop-distance">${shop.distance}</span></div><p class="print-shop-address">${shop.address}</p><div class="print-shop-meta"><span>${shop.rating} stars (${shop.reviews})</span><span>${shop.turnaround}</span></div><div class="print-shop-actions"><a href="tel:${shop.phone}" class="btn btn-sm btn-outline">Call</a>${shop.instantQuote ? `<button class="btn btn-sm btn-primary" onclick="alert('Instant quote: ~$${(Math.random() * 20 + 10).toFixed(2)}')">Instant Quote</button>` : ''}<a href="mailto:${shop.email}${part ? `?subject=Print: ${part.title}` : ''}" class="btn btn-sm btn-outline">Email</a></div></div>`).join('')}</div>`;
+        ${part ? `<div class="selected-part-banner"><img src="${part.images?.[0] || part.img}" alt="${part.title}"><div class="selected-part-info"><strong>${part.title}</strong><span>${part.make} ${part.model} - ${part.file_format} - ${part.file_size}</span></div></div>` : ''}
+        <div class="location-search"><input type="text" id="locationInput" placeholder="Enter your city or zip code..."><button class="btn" onclick="alert('Search coming soon')">Search</button><button class="btn btn-outline" onclick="useMyLocation()">Use My Location</button></div>
+        <div class="print-shops-list">${printShops.map(shop => `<div class="print-shop-card ${shop.verified ? 'verified' : ''}"><div class="print-shop-header"><div><h3>${shop.name} ${shop.verified ? '<span class="verified-badge">Verified</span>' : ''}</h3>${shop.instantQuote ? '<span class="instant-badge">Instant Quotes</span>' : ''}${shop.printAndShip ? '<span class="ship-badge">Print & Ship</span>' : ''}</div><span class="print-shop-distance">${shop.distance}</span></div><p class="print-shop-address">${shop.address}</p><div class="print-shop-meta"><span>${shop.rating} stars (${shop.reviews})</span><span>${shop.turnaround}</span></div><div class="print-shop-actions"><a href="tel:${shop.phone}" class="btn btn-sm btn-outline">Call</a>${shop.instantQuote ? `<button class="btn btn-sm btn-primary" onclick="alert('Quote: ~$${(Math.random() * 20 + 10).toFixed(2)}')">Instant Quote</button>` : ''}<a href="mailto:${shop.email}${part ? `?subject=Print: ${part.title}` : ''}" class="btn btn-sm btn-outline">Email</a></div></div>`).join('')}</div>`;
 }
 
-function designerView(id) {
-    const d = designers.find(x => x.id === id);
+async function designerView(id) {
+    let d = designers.find(x => x.id === id);
+    if (!d) {
+        try { d = await api(`/api/users/${id}`); } catch (e) { return '<p>Designer not found.</p>'; }
+    }
     if (!d) return '<p>Designer not found.</p>';
-    return `<div class="designer-profile"><div class="designer-header"><img src="${d.img}" alt="${d.name}" class="designer-avatar-lg"><div class="designer-header-info"><h1>${d.name}</h1><p class="designer-title">${d.title}</p><div class="designer-meta"><span>${d.rating} stars (${d.reviews} reviews)</span><span>${d.projects} projects</span></div><div class="tags">${d.tags.map(t => `<span class="tag">${t}</span>`).join('')}</div></div><div class="designer-cta"><div class="designer-rate-lg">${d.rate}</div><a href="mailto:${d.email}?subject=Custom Part Request" class="btn btn-lg btn-primary">Hire ${d.name.split(' ')[0]}</a></div></div><div class="designer-body"><div class="designer-about"><h2>About</h2><p>${d.bio}</p></div><div class="designer-portfolio"><h2>Recent Work</h2><div class="portfolio-grid">${parts.slice(0, 4).map(p => `<div class="portfolio-item" onclick="go('part', ${p.id})"><img src="${p.img}"><span>${p.title}</span></div>`).join('')}</div></div></div></div>`;
+    
+    return `<div class="designer-profile"><div class="designer-header"><img src="${d.avatar_url}" alt="${d.name}" class="designer-avatar-lg"><div class="designer-header-info"><h1>${d.name}</h1><p class="designer-title">${d.role === 'designer' ? 'Designer' : 'Seller'}</p><div class="designer-meta"><span>${d.stats?.avgRating || 5} stars (${d.stats?.reviewCount || 0} reviews)</span><span>${d.stats?.parts || 0} projects</span></div><div class="tags">${(d.tags||[]).map(t => `<span class="tag">${t}</span>`).join('')}</div></div><div class="designer-cta"><div class="designer-rate-lg">${d.rate || 'Contact for rate'}</div><button class="btn btn-lg btn-primary" onclick="document.getElementById('requestForm').scrollIntoView()">Request Quote</button></div></div>
+    <div class="designer-body"><div class="designer-about"><h2>About</h2><p>${d.bio || 'No bio yet.'}</p></div>
+    <div class="designer-request" id="requestForm"><h2>Request Custom Part</h2><form onsubmit="handleDesignerRequest(event, ${d.id})"><div class="field"><label>Your Name</label><input type="text" id="reqName" required></div><div class="field"><label>Your Email</label><input type="email" id="reqEmail" required></div><div class="field-row"><div class="field"><label>Car Make</label><select id="reqMake">${carMakes.map(m => `<option>${m}</option>`).join('')}</select></div><div class="field"><label>Model</label><input type="text" id="reqModel" placeholder="E30, Miata NA..."></div></div><div class="field"><label>Describe what you need</label><textarea id="reqDesc" rows="4" required placeholder="I need a phone mount that fits..."></textarea></div><div class="field"><label>Budget (optional)</label><input type="text" id="reqBudget" placeholder="$50-100"></div><button type="submit" class="btn btn-primary">Send Request</button></form></div></div></div>`;
+}
+
+async function handleDesignerRequest(e, designerId) {
+    e.preventDefault();
+    const request = {
+        name: document.getElementById('reqName').value,
+        email: document.getElementById('reqEmail').value,
+        make: document.getElementById('reqMake').value,
+        model: document.getElementById('reqModel').value,
+        description: document.getElementById('reqDesc').value,
+        budget: document.getElementById('reqBudget').value
+    };
+    
+    try {
+        await api(`/api/designers/${designerId}/request`, {
+            method: 'POST',
+            body: JSON.stringify(request)
+        });
+        alert('Request sent! The designer will contact you soon.');
+    } catch (err) {
+        alert('Error: ' + err.message);
+    }
+}
+
+async function profileView(id) {
+    let user;
+    try { user = await api(`/api/users/${id}`); } catch (e) { return '<p>User not found.</p>'; }
+    
+    return `<div class="profile-page"><div class="profile-header"><div class="profile-avatar">${user.avatar_url ? `<img src="${user.avatar_url}">` : user.name.charAt(0)}</div><div><h1>${user.name}</h1><p>${user.role === 'designer' ? 'Designer' : 'Seller'}</p><p>${user.bio || ''}</p></div></div></div>`;
 }
 
 function cardHTML(p, showTrending = false, showFeatured = false) {
-    return `<div class="card ${showFeatured ? 'card-featured' : ''}" onclick="go('part', ${p.id})"><div class="card-image"><img src="${p.img}" alt="${p.title}"><span class="card-badge">${p.cat}</span>${showTrending ? '<span class="trending-badge">HOT</span>' : ''}${showFeatured || p.featured ? '<span class="featured-badge-card">*</span>' : ''}</div><div class="card-body"><div class="card-title">${p.title}</div><div class="card-meta"><span class="card-cat">${p.make}${p.model && p.model !== 'All' ? ' ' + p.model : ''}</span><span class="card-price">$${p.price.toFixed(2)}</span></div></div></div>`;
+    const img = p.images?.[0] || p.img || 'https://via.placeholder.com/600x450';
+    return `<div class="card ${showFeatured ? 'card-featured' : ''}" onclick="go('part', ${p.id})"><div class="card-image"><img src="${img}" alt="${p.title}"><span class="card-badge">${p.category}</span>${showTrending ? '<span class="trending-badge">HOT</span>' : ''}${showFeatured || p.featured ? '<span class="featured-badge-card">*</span>' : ''}</div><div class="card-body"><div class="card-title">${p.title}</div><div class="card-meta"><span class="card-cat">${p.make}${p.model && p.model !== 'All' ? ' ' + p.model : ''}</span><span class="card-price">$${(p.price || 0).toFixed(2)}</span></div></div></div>`;
 }
 
 function handlePhotoUpload(event) { for (let file of event.target.files) { if (uploadedPhotos.length >= 10) break; const reader = new FileReader(); reader.onload = e => { uploadedPhotos.push(e.target.result); renderPhotoGrid(); }; reader.readAsDataURL(file); } }
 function renderPhotoGrid() { const grid = document.getElementById('photoGrid'); if (!grid) return; grid.innerHTML = uploadedPhotos.map((photo, i) => `<div class="photo-item"><img src="${photo}"><button class="photo-remove" onclick="removePhoto(${i})">x</button></div>`).join('') + (uploadedPhotos.length < 10 ? `<div class="photo-add" onclick="document.getElementById('photoInput').click()"><span class="photo-add-icon">+</span><span>Add</span></div>` : ''); }
 function removePhoto(index) { uploadedPhotos.splice(index, 1); renderPhotoGrid(); }
-function updateSellModels() { const make = document.getElementById('sellMake')?.value; const modelSelect = document.getElementById('sellModel'); if (!modelSelect || !make) return; modelSelect.innerHTML = '<option>Select model...</option>'; if (carModels[make]) carModels[make].forEach(m => { modelSelect.innerHTML += `<option value="${m}">${m}</option>`; }); }
-function searchPrintShops() { alert('Searching for print shops in your area...'); }
 function useMyLocation() { if (navigator.geolocation) { navigator.geolocation.getCurrentPosition(pos => { document.getElementById('locationInput').value = `${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`; }); } }
 
 function initViewer(partId) {
     const container = document.getElementById('viewer3d');
     if (!container || !window.THREE) return;
     const p = parts.find(x => x.id === partId);
-    if (!p || !p.stl) return;
+    if (!p) return;
     const width = container.clientWidth, height = container.clientHeight;
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x1a1a1a);
@@ -317,21 +672,15 @@ function initViewer(partId) {
     const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
     dirLight.position.set(1, 1, 1);
     scene.add(dirLight);
-    const loader = new THREE.STLLoader();
-    loader.load(p.stl, geometry => {
-        const mesh = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({ color: 0x2563eb, shininess: 50 }));
-        geometry.computeBoundingBox();
-        const center = new THREE.Vector3();
-        geometry.boundingBox.getCenter(center);
-        mesh.position.sub(center);
-        const size = new THREE.Vector3();
-        geometry.boundingBox.getSize(size);
-        const scale = 50 / Math.max(size.x, size.y, size.z);
-        mesh.scale.set(scale, scale, scale);
-        scene.add(mesh);
-    });
+    
+    // Demo geometry
+    const geometry = new THREE.BoxGeometry(30, 20, 10);
+    const material = new THREE.MeshPhongMaterial({ color: 0x2563eb, shininess: 50 });
+    scene.add(new THREE.Mesh(geometry, material));
+    
     (function animate() { requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); })();
 }
 
+// Initialize
 console.log(`ForgAuto v${VERSION} loaded`);
-render();
+checkAuth().then(() => render());

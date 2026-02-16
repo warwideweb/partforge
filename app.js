@@ -1,30 +1,35 @@
 // ForgAuto — 3D Marketplace for Cars
+// Version: 2.0
+
+const VERSION = '2.0';
 
 // Data - Automotive Parts Only
 const parts = [
-    { id: 1, title: "Tesla-Style Phone Mount", cat: "Interior", make: "Universal", model: "All", price: 3.99, img: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&h=450&fit=crop", seller: "AutoParts3D", email: "auto@example.com", desc: "Minimalist phone mount for car vents with ball joint design for 360° rotation. Fits phones up to 6.7 inches.", format: "STL, STEP", size: "1.8 MB", material: "PLA", infill: "25%", downloads: 567, stl: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/stl/binary/pr2_head_tilt.stl" },
-    { id: 2, title: "BMW E30 Phone Dock", cat: "Interior", make: "BMW", model: "E30", price: 5.99, img: "https://images.unsplash.com/photo-1555215695-3004980ad54e?w=600&h=450&fit=crop", seller: "BimmerParts", email: "bmw@example.com", desc: "Custom phone dock that fits perfectly in the BMW E30 center console. Holds any phone securely.", format: "STL", size: "2.1 MB", material: "PETG", infill: "30%", downloads: 312, stl: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/stl/binary/pr2_head_pan.stl" },
-    { id: 3, title: "Toyota Supra MK4 Vent Gauge Pod", cat: "Gauges", make: "Toyota", model: "Supra MK4", price: 8.99, img: "https://images.unsplash.com/photo-1600712242805-5f78671b24da?w=600&h=450&fit=crop", seller: "JDMParts3D", email: "jdm@example.com", desc: "52mm gauge pod that replaces the center vent on MK4 Supra. Perfect fit, no modification needed.", format: "STL, STEP", size: "3.4 MB", material: "ABS", infill: "40%", downloads: 523, stl: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/stl/binary/pr2_head_tilt.stl" },
-    { id: 4, title: "Honda Civic EG Cup Holder", cat: "Interior", make: "Honda", model: "Civic EG", price: 4.49, img: "https://images.unsplash.com/photo-1606611013016-969c19ba27bb?w=600&h=450&fit=crop", seller: "HondaHacks", email: "honda@example.com", desc: "Dual cup holder insert for Honda Civic EG center console. Snug fit, no rattles.", format: "STL", size: "1.6 MB", material: "PLA", infill: "25%", downloads: 445, stl: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/stl/binary/pr2_head_pan.stl" },
-    { id: 5, title: "Mazda Miata NA Phone Mount", cat: "Interior", make: "Mazda", model: "Miata NA", price: 6.99, img: "https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=600&h=450&fit=crop", seller: "MiataMods", email: "miata@example.com", desc: "Low-profile phone mount for NA Miata. Attaches to the tombstone without blocking any vents.", format: "STL", size: "1.9 MB", material: "PETG", infill: "30%", downloads: 678, stl: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/stl/binary/pr2_head_tilt.stl" },
-    { id: 6, title: "BMW E46 Coin Holder Delete", cat: "Interior", make: "BMW", model: "E46", price: 3.49, img: "https://images.unsplash.com/photo-1617814076367-b759c7d7e738?w=600&h=450&fit=crop", seller: "BimmerParts", email: "bmw@example.com", desc: "Clean delete panel for the E46 coin holder. Perfect for mounting switches or leaving clean.", format: "STL", size: "0.8 MB", material: "PLA", infill: "20%", downloads: 234, stl: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/stl/binary/pr2_head_pan.stl" },
-    { id: 7, title: "Nissan 350Z Triple Gauge Pod", cat: "Gauges", make: "Nissan", model: "350Z", price: 12.99, img: "https://images.unsplash.com/photo-1619405399517-d7fce0f13302?w=600&h=450&fit=crop", seller: "ZCarParts", email: "zcar@example.com", desc: "A-pillar triple gauge pod for 350Z. Fits three 52mm gauges. Clean OEM-like fitment.", format: "STL, STEP", size: "4.8 MB", material: "ABS", infill: "35%", downloads: 389, stl: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/stl/binary/pr2_head_tilt.stl" },
-    { id: 8, title: "Subaru WRX Shift Boot Surround", cat: "Interior", make: "Subaru", model: "WRX", price: 4.99, img: "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=600&h=450&fit=crop", seller: "SubieParts", email: "subie@example.com", desc: "Custom shift boot surround for GD WRX. Accepts aftermarket shift boots with clean finish.", format: "STL", size: "1.4 MB", material: "PETG", infill: "25%", downloads: 456, stl: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/stl/binary/pr2_head_pan.stl" },
-    { id: 9, title: "Ford Mustang S550 Cup Holder Insert", cat: "Interior", make: "Ford", model: "Mustang S550", price: 5.49, img: "https://images.unsplash.com/photo-1584345604476-8ec5f82d718c?w=600&h=450&fit=crop", seller: "StangMods", email: "stang@example.com", desc: "Rubber-lined cup holder insert to prevent rattling. Fits S550 Mustang perfectly.", format: "STL", size: "1.1 MB", material: "TPU", infill: "30%", downloads: 567, stl: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/stl/binary/pr2_head_tilt.stl" },
-    { id: 10, title: "VW Golf MK7 Air Vent Phone Mount", cat: "Interior", make: "Volkswagen", model: "Golf MK7", price: 4.99, img: "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=600&h=450&fit=crop", seller: "VWMods", email: "vw@example.com", desc: "Secure phone mount that clips into MK7 Golf air vents. Doesn't block airflow.", format: "STL", size: "1.3 MB", material: "PETG", infill: "25%", downloads: 612, stl: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/stl/binary/pr2_head_pan.stl" },
-    { id: 11, title: "Universal Exhaust Tip 3\" Inlet", cat: "Exterior", make: "Universal", model: "All", price: 9.99, img: "https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=600&h=450&fit=crop", seller: "ExhaustMods", email: "exhaust@example.com", desc: "Aggressive slash-cut exhaust tip with 3\" inlet. Print in high-temp materials only.", format: "STL, STEP", size: "2.2 MB", material: "ASA", infill: "50%", downloads: 234, stl: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/stl/binary/pr2_head_tilt.stl" },
-    { id: 12, title: "Honda S2000 Arm Rest Delete", cat: "Interior", make: "Honda", model: "S2000", price: 7.99, img: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=600&h=450&fit=crop", seller: "S2KParts", email: "s2k@example.com", desc: "Clean arm rest delete panel for AP1/AP2 S2000. Reduces weight and cleans up interior.", format: "STL", size: "1.5 MB", material: "ABS", infill: "30%", downloads: 345, stl: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/stl/binary/pr2_head_pan.stl" },
-    { id: 13, title: "Chevrolet Camaro 6th Gen Phone Mount", cat: "Interior", make: "Chevrolet", model: "Camaro 6th Gen", price: 5.99, img: "https://images.unsplash.com/photo-1603584173870-7f23fdae1b7a?w=600&h=450&fit=crop", seller: "CamaroParts", email: "camaro@example.com", desc: "Dash-mounted phone holder for 6th gen Camaro. No adhesive needed, clips in securely.", format: "STL", size: "1.7 MB", material: "PETG", infill: "25%", downloads: 423, stl: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/stl/binary/pr2_head_tilt.stl" },
-    { id: 14, title: "Toyota GR86 / BRZ Shifter Surround", cat: "Interior", make: "Toyota", model: "GR86", price: 6.49, img: "https://images.unsplash.com/photo-1626668893632-6f3a4466d22f?w=600&h=450&fit=crop", seller: "86Parts", email: "86@example.com", desc: "Replacement shifter surround for GR86/BRZ with cleaner design. Direct OEM replacement.", format: "STL, STEP", size: "2.0 MB", material: "ABS", infill: "30%", downloads: 289, stl: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/stl/binary/pr2_head_pan.stl" },
-    { id: 15, title: "Universal License Plate Frame", cat: "Exterior", make: "Universal", model: "All", price: 2.99, img: "https://images.unsplash.com/photo-1489824904134-891ab64532f1?w=600&h=450&fit=crop", seller: "AutoMods", email: "auto@example.com", desc: "Simple, clean license plate frame. No dealer branding, just clean lines.", format: "STL", size: "0.9 MB", material: "ASA", infill: "40%", downloads: 1234, stl: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/stl/binary/pr2_head_tilt.stl" },
-    { id: 16, title: "Porsche 911 997 Key Holder", cat: "Accessories", make: "Porsche", model: "911 997", price: 8.99, img: "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=600&h=450&fit=crop", seller: "PorscheParts", email: "porsche@example.com", desc: "Wall-mounted key holder shaped like 997 silhouette. Great for the garage.", format: "STL", size: "1.8 MB", material: "PLA", infill: "20%", downloads: 567, stl: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/stl/binary/pr2_head_pan.stl" }
+    { id: 1, title: "Tesla-Style Phone Mount", cat: "Interior", make: "Universal", model: "All", price: 3.99, img: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&h=450&fit=crop", imgs: ["https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&h=450&fit=crop", "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=600&h=450&fit=crop"], seller: "AutoParts3D", email: "auto@example.com", desc: "Minimalist phone mount for car vents with ball joint design for 360° rotation. Fits phones up to 6.7 inches.", format: "STL, STEP", size: "1.8 MB", material: "PLA", infill: "25%", downloads: 567, stl: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/stl/binary/pr2_head_tilt.stl" },
+    { id: 2, title: "BMW E30 Phone Dock", cat: "Interior", make: "BMW", model: "E30", price: 5.99, img: "https://images.unsplash.com/photo-1555215695-3004980ad54e?w=600&h=450&fit=crop", imgs: ["https://images.unsplash.com/photo-1555215695-3004980ad54e?w=600&h=450&fit=crop"], seller: "BimmerParts", email: "bmw@example.com", desc: "Custom phone dock that fits perfectly in the BMW E30 center console. Holds any phone securely.", format: "STL", size: "2.1 MB", material: "PETG", infill: "30%", downloads: 312, stl: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/stl/binary/pr2_head_pan.stl" },
+    { id: 3, title: "Toyota Supra MK4 Vent Gauge Pod", cat: "Gauges", make: "Toyota", model: "Supra MK4", price: 8.99, img: "https://images.unsplash.com/photo-1600712242805-5f78671b24da?w=600&h=450&fit=crop", imgs: ["https://images.unsplash.com/photo-1600712242805-5f78671b24da?w=600&h=450&fit=crop"], seller: "JDMParts3D", email: "jdm@example.com", desc: "52mm gauge pod that replaces the center vent on MK4 Supra. Perfect fit, no modification needed.", format: "STL, STEP", size: "3.4 MB", material: "ABS", infill: "40%", downloads: 523, stl: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/stl/binary/pr2_head_tilt.stl" },
+    { id: 4, title: "Honda Civic EG Cup Holder", cat: "Interior", make: "Honda", model: "Civic EG", price: 4.49, img: "https://images.unsplash.com/photo-1606611013016-969c19ba27bb?w=600&h=450&fit=crop", imgs: ["https://images.unsplash.com/photo-1606611013016-969c19ba27bb?w=600&h=450&fit=crop"], seller: "HondaHacks", email: "honda@example.com", desc: "Dual cup holder insert for Honda Civic EG center console. Snug fit, no rattles.", format: "STL", size: "1.6 MB", material: "PLA", infill: "25%", downloads: 445, stl: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/stl/binary/pr2_head_pan.stl" },
+    { id: 5, title: "Mazda Miata NA Phone Mount", cat: "Interior", make: "Mazda", model: "Miata NA", price: 6.99, img: "https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=600&h=450&fit=crop", imgs: ["https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=600&h=450&fit=crop"], seller: "MiataMods", email: "miata@example.com", desc: "Low-profile phone mount for NA Miata. Attaches to the tombstone without blocking any vents.", format: "STL", size: "1.9 MB", material: "PETG", infill: "30%", downloads: 678, stl: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/stl/binary/pr2_head_tilt.stl" },
+    { id: 6, title: "BMW E46 Coin Holder Delete", cat: "Interior", make: "BMW", model: "E46", price: 3.49, img: "https://images.unsplash.com/photo-1617814076367-b759c7d7e738?w=600&h=450&fit=crop", imgs: ["https://images.unsplash.com/photo-1617814076367-b759c7d7e738?w=600&h=450&fit=crop"], seller: "BimmerParts", email: "bmw@example.com", desc: "Clean delete panel for the E46 coin holder. Perfect for mounting switches or leaving clean.", format: "STL", size: "0.8 MB", material: "PLA", infill: "20%", downloads: 234, stl: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/stl/binary/pr2_head_pan.stl" },
+    { id: 7, title: "Nissan 350Z Triple Gauge Pod", cat: "Gauges", make: "Nissan", model: "350Z", price: 12.99, img: "https://images.unsplash.com/photo-1619405399517-d7fce0f13302?w=600&h=450&fit=crop", imgs: ["https://images.unsplash.com/photo-1619405399517-d7fce0f13302?w=600&h=450&fit=crop"], seller: "ZCarParts", email: "zcar@example.com", desc: "A-pillar triple gauge pod for 350Z. Fits three 52mm gauges. Clean OEM-like fitment.", format: "STL, STEP", size: "4.8 MB", material: "ABS", infill: "35%", downloads: 389, stl: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/stl/binary/pr2_head_tilt.stl" },
+    { id: 8, title: "Subaru WRX Shift Boot Surround", cat: "Interior", make: "Subaru", model: "WRX", price: 4.99, img: "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=600&h=450&fit=crop", imgs: ["https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=600&h=450&fit=crop"], seller: "SubieParts", email: "subie@example.com", desc: "Custom shift boot surround for GD WRX. Accepts aftermarket shift boots with clean finish.", format: "STL", size: "1.4 MB", material: "PETG", infill: "25%", downloads: 456, stl: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/stl/binary/pr2_head_pan.stl" },
+    { id: 9, title: "Ford Mustang S550 Cup Holder Insert", cat: "Interior", make: "Ford", model: "Mustang S550", price: 5.49, img: "https://images.unsplash.com/photo-1584345604476-8ec5f82d718c?w=600&h=450&fit=crop", imgs: ["https://images.unsplash.com/photo-1584345604476-8ec5f82d718c?w=600&h=450&fit=crop"], seller: "StangMods", email: "stang@example.com", desc: "Rubber-lined cup holder insert to prevent rattling. Fits S550 Mustang perfectly.", format: "STL", size: "1.1 MB", material: "TPU", infill: "30%", downloads: 567, stl: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/stl/binary/pr2_head_tilt.stl" },
+    { id: 10, title: "VW Golf MK7 Air Vent Phone Mount", cat: "Interior", make: "Volkswagen", model: "Golf MK7", price: 4.99, img: "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=600&h=450&fit=crop", imgs: ["https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=600&h=450&fit=crop"], seller: "VWMods", email: "vw@example.com", desc: "Secure phone mount that clips into MK7 Golf air vents. Doesn't block airflow.", format: "STL", size: "1.3 MB", material: "PETG", infill: "25%", downloads: 612, stl: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/stl/binary/pr2_head_pan.stl" },
+    { id: 11, title: "Universal Exhaust Tip 3\" Inlet", cat: "Exterior", make: "Universal", model: "All", price: 9.99, img: "https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=600&h=450&fit=crop", imgs: ["https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=600&h=450&fit=crop"], seller: "ExhaustMods", email: "exhaust@example.com", desc: "Aggressive slash-cut exhaust tip with 3\" inlet. Print in high-temp materials only.", format: "STL, STEP", size: "2.2 MB", material: "ASA", infill: "50%", downloads: 234, stl: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/stl/binary/pr2_head_tilt.stl" },
+    { id: 12, title: "Honda S2000 Arm Rest Delete", cat: "Interior", make: "Honda", model: "S2000", price: 7.99, img: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=600&h=450&fit=crop", imgs: ["https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=600&h=450&fit=crop"], seller: "S2KParts", email: "s2k@example.com", desc: "Clean arm rest delete panel for AP1/AP2 S2000. Reduces weight and cleans up interior.", format: "STL", size: "1.5 MB", material: "ABS", infill: "30%", downloads: 345, stl: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/stl/binary/pr2_head_pan.stl" },
+    { id: 13, title: "Chevrolet Camaro 6th Gen Phone Mount", cat: "Interior", make: "Chevrolet", model: "Camaro 6th Gen", price: 5.99, img: "https://images.unsplash.com/photo-1603584173870-7f23fdae1b7a?w=600&h=450&fit=crop", imgs: ["https://images.unsplash.com/photo-1603584173870-7f23fdae1b7a?w=600&h=450&fit=crop"], seller: "CamaroParts", email: "camaro@example.com", desc: "Dash-mounted phone holder for 6th gen Camaro. No adhesive needed, clips in securely.", format: "STL", size: "1.7 MB", material: "PETG", infill: "25%", downloads: 423, stl: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/stl/binary/pr2_head_tilt.stl" },
+    { id: 14, title: "Toyota GR86 / BRZ Shifter Surround", cat: "Interior", make: "Toyota", model: "GR86", price: 6.49, img: "https://images.unsplash.com/photo-1626668893632-6f3a4466d22f?w=600&h=450&fit=crop", imgs: ["https://images.unsplash.com/photo-1626668893632-6f3a4466d22f?w=600&h=450&fit=crop"], seller: "86Parts", email: "86@example.com", desc: "Replacement shifter surround for GR86/BRZ with cleaner design. Direct OEM replacement.", format: "STL, STEP", size: "2.0 MB", material: "ABS", infill: "30%", downloads: 289, stl: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/stl/binary/pr2_head_pan.stl" },
+    { id: 15, title: "Universal License Plate Frame", cat: "Exterior", make: "Universal", model: "All", price: 2.99, img: "https://images.unsplash.com/photo-1489824904134-891ab64532f1?w=600&h=450&fit=crop", imgs: ["https://images.unsplash.com/photo-1489824904134-891ab64532f1?w=600&h=450&fit=crop"], seller: "AutoMods", email: "auto@example.com", desc: "Simple, clean license plate frame. No dealer branding, just clean lines.", format: "STL", size: "0.9 MB", material: "ASA", infill: "40%", downloads: 1234, stl: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/stl/binary/pr2_head_tilt.stl" },
+    { id: 16, title: "Porsche 911 997 Key Holder", cat: "Accessories", make: "Porsche", model: "911 997", price: 8.99, img: "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=600&h=450&fit=crop", imgs: ["https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=600&h=450&fit=crop"], seller: "PorscheParts", email: "porsche@example.com", desc: "Wall-mounted key holder shaped like 997 silhouette. Great for the garage.", format: "STL", size: "1.8 MB", material: "PLA", infill: "20%", downloads: 567, stl: "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/stl/binary/pr2_head_pan.stl" }
 ];
 
 const categories = [
-    { name: "Interior", img: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=300&h=300&fit=crop" },
-    { name: "Exterior", img: "https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=300&h=300&fit=crop" },
-    { name: "Gauges", img: "https://images.unsplash.com/photo-1619405399517-d7fce0f13302?w=300&h=300&fit=crop" },
-    { name: "Accessories", img: "https://images.unsplash.com/photo-1489824904134-891ab64532f1?w=300&h=300&fit=crop" }
+    { name: "Interior", icon: "🪑", img: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=300&h=300&fit=crop" },
+    { name: "Exterior", icon: "🚗", img: "https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=300&h=300&fit=crop" },
+    { name: "Gauges", icon: "🔢", img: "https://images.unsplash.com/photo-1619405399517-d7fce0f13302?w=300&h=300&fit=crop" },
+    { name: "Accessories", icon: "🔧", img: "https://images.unsplash.com/photo-1489824904134-891ab64532f1?w=300&h=300&fit=crop" },
+    { name: "Performance", icon: "⚡", img: "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=300&h=300&fit=crop" },
+    { name: "Lighting", icon: "💡", img: "https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=300&h=300&fit=crop" }
 ];
 
 const carMakes = ["BMW", "Chevrolet", "Ford", "Honda", "Mazda", "Nissan", "Porsche", "Subaru", "Toyota", "Volkswagen", "Universal"];
@@ -44,12 +49,19 @@ const carModels = {
 };
 
 const designers = [
-    { id: 1, name: "Alex Chen", title: "Automotive Engineer", rate: "$50/hr", img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop", email: "alex@example.com", tags: ["JDM", "European", "Interior"], bio: "10+ years designing aftermarket auto parts. Fusion 360 and SolidWorks expert. Specializing in interior trim pieces.", projects: 127 },
-    { id: 2, name: "Mike Rodriguez", title: "JDM Specialist", rate: "$40/hr", img: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop", email: "mike@example.com", tags: ["Honda", "Toyota", "Nissan"], bio: "JDM enthusiast with 200+ parts designed for Honda, Toyota, and Nissan platforms.", projects: 213 },
-    { id: 3, name: "Sarah Miller", title: "Interior Specialist", rate: "$45/hr", img: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop", email: "sarah@example.com", tags: ["Interior", "Trim", "Luxury"], bio: "Former BMW interior designer. Creating premium-feel parts for enthusiast cars.", projects: 89 },
-    { id: 4, name: "James Park", title: "Performance Parts Designer", rate: "$55/hr", img: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop", email: "james@example.com", tags: ["Performance", "Aero", "Cooling"], bio: "Ex-Tesla engineer specializing in functional aero and cooling parts.", projects: 78 },
-    { id: 5, name: "Emily Watson", title: "Euro Car Expert", rate: "$45/hr", img: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop", email: "emily@example.com", tags: ["BMW", "VW", "Porsche"], bio: "European car specialist. Perfect fitment guaranteed for German vehicles.", projects: 156 },
-    { id: 6, name: "David Kim", title: "Muscle Car Specialist", rate: "$40/hr", img: "https://images.unsplash.com/photo-1507591064344-4c6ce005b128?w=200&h=200&fit=crop", email: "david@example.com", tags: ["Mustang", "Camaro", "American"], bio: "American muscle car enthusiast. Designing parts for Mustangs and Camaros.", projects: 98 }
+    { id: 1, name: "Alex Chen", title: "Automotive Engineer", rate: "$50/hr", rating: 4.9, reviews: 47, img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop", email: "alex@example.com", tags: ["JDM", "European", "Interior"], bio: "10+ years designing aftermarket auto parts. Fusion 360 and SolidWorks expert. Specializing in interior trim pieces.", projects: 127 },
+    { id: 2, name: "Mike Rodriguez", title: "JDM Specialist", rate: "$40/hr", rating: 4.8, reviews: 89, img: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop", email: "mike@example.com", tags: ["Honda", "Toyota", "Nissan"], bio: "JDM enthusiast with 200+ parts designed for Honda, Toyota, and Nissan platforms.", projects: 213 },
+    { id: 3, name: "Sarah Miller", title: "Interior Specialist", rate: "$45/hr", rating: 5.0, reviews: 34, img: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop", email: "sarah@example.com", tags: ["Interior", "Trim", "Luxury"], bio: "Former BMW interior designer. Creating premium-feel parts for enthusiast cars.", projects: 89 },
+    { id: 4, name: "James Park", title: "Performance Parts Designer", rate: "$55/hr", rating: 4.7, reviews: 28, img: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop", email: "james@example.com", tags: ["Performance", "Aero", "Cooling"], bio: "Ex-Tesla engineer specializing in functional aero and cooling parts.", projects: 78 },
+    { id: 5, name: "Emily Watson", title: "Euro Car Expert", rate: "$45/hr", rating: 4.9, reviews: 62, img: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop", email: "emily@example.com", tags: ["BMW", "VW", "Porsche"], bio: "European car specialist. Perfect fitment guaranteed for German vehicles.", projects: 156 },
+    { id: 6, name: "David Kim", title: "Muscle Car Specialist", rate: "$40/hr", rating: 4.8, reviews: 41, img: "https://images.unsplash.com/photo-1507591064344-4c6ce005b128?w=200&h=200&fit=crop", email: "david@example.com", tags: ["Mustang", "Camaro", "American"], bio: "American muscle car enthusiast. Designing parts for Mustangs and Camaros.", projects: 98 }
+];
+
+// Sample print shops (would be fetched via API in production)
+const printShops = [
+    { name: "3D Print Lab Bangkok", address: "123 Sukhumvit Rd, Bangkok", distance: "2.3 km", rating: 4.8, reviews: 156, phone: "+66 2 123 4567", email: "contact@3dprintlab.th" },
+    { name: "MakerSpace BKK", address: "456 Silom Rd, Bangkok", distance: "4.1 km", rating: 4.6, reviews: 89, phone: "+66 2 234 5678", email: "hello@makerspace.co.th" },
+    { name: "Proto3D Thailand", address: "789 Rama IV, Bangkok", distance: "5.8 km", rating: 4.9, reviews: 234, phone: "+66 2 345 6789", email: "orders@proto3d.th" }
 ];
 
 let view = 'home';
@@ -57,6 +69,7 @@ let filter = '';
 let filterCat = '';
 let filterMake = '';
 let filterModel = '';
+let uploadedPhotos = [];
 
 function go(v, data) {
     view = v;
@@ -101,10 +114,20 @@ function render(data) {
     else if (view === 'sell') app.innerHTML = sellView();
     else if (view === 'part') { app.innerHTML = partView(data); initViewer(data); }
     else if (view === 'designer') app.innerHTML = designerView(data);
+    else if (view === 'printshops') app.innerHTML = printShopsView(data);
 }
 
 function homeView() {
     return `
+        <!-- Find a Designer Banner -->
+        <div class="promo-banner">
+            <div class="promo-content">
+                <span class="promo-badge">NEW</span>
+                <span class="promo-text">Need a custom part? <strong>Find a Designer</strong> to create it for you</span>
+            </div>
+            <a href="#" onclick="go('designers')" class="promo-cta">Browse Designers →</a>
+        </div>
+
         <div class="hero">
             <h1>3D parts for your car</h1>
             <p>The marketplace for automotive STL files. Buy instantly, sell and keep 100%.</p>
@@ -127,12 +150,33 @@ function homeView() {
                 <button class="btn" onclick="doSearch()">Find Parts</button>
             </div>
         </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <a href="#" onclick="go('browse')" class="quick-action">
+                <span class="quick-icon">🔍</span>
+                <span>Browse Parts</span>
+            </a>
+            <a href="#" onclick="go('designers')" class="quick-action">
+                <span class="quick-icon">✏️</span>
+                <span>Hire Designer</span>
+            </a>
+            <a href="#" onclick="go('sell')" class="quick-action">
+                <span class="quick-icon">💰</span>
+                <span>Sell Parts</span>
+            </a>
+            <a href="#" onclick="go('printshops')" class="quick-action">
+                <span class="quick-icon">🖨️</span>
+                <span>Find Print Shop</span>
+            </a>
+        </div>
         
         <div class="categories">
             <h2>Categories</h2>
-            <div class="cat-grid" style="grid-template-columns: repeat(4, 1fr);">
+            <div class="cat-grid">
                 ${categories.map(c => `
                     <a href="#" class="cat-item" onclick="filterCat='${c.name}';filter='';filterMake='';filterModel='';go('browse')">
+                        <div class="cat-icon">${c.icon}</div>
                         <img src="${c.img}" alt="${c.name}">
                         <span>${c.name}</span>
                     </a>
@@ -140,13 +184,17 @@ function homeView() {
             </div>
         </div>
         
-        <div class="section">
+        <div class="section makes-section">
             <div class="section-head">
                 <h2>Popular Makes</h2>
+                <a href="#" onclick="go('browse')">View all</a>
             </div>
-            <div style="display:flex;flex-wrap:wrap;gap:12px;">
+            <div class="makes-grid">
                 ${carMakes.filter(m => m !== 'Universal').map(m => `
-                    <a href="#" onclick="filterMake='${m}';filterModel='';filterCat='';filter='';go('browse')" style="padding:10px 20px;background:#f5f5f5;border-radius:8px;text-decoration:none;color:#111;font-weight:500;">${m}</a>
+                    <a href="#" onclick="filterMake='${m}';filterModel='';filterCat='';filter='';go('browse')" class="make-item">
+                        <span class="make-logo">${m.charAt(0)}</span>
+                        <span>${m}</span>
+                    </a>
                 `).join('')}
             </div>
         </div>
@@ -160,6 +208,48 @@ function homeView() {
                 ${parts.slice(0, 8).map(cardHTML).join('')}
             </div>
         </div>
+
+        <!-- Featured Designers -->
+        <div class="section featured-designers">
+            <div class="section-head">
+                <h2>Top Designers</h2>
+                <a href="#" onclick="go('designers')">View all</a>
+            </div>
+            <div class="designers-preview">
+                ${designers.slice(0, 3).map(d => `
+                    <div class="designer-mini" onclick="go('designer', ${d.id})">
+                        <img src="${d.img}" alt="${d.name}">
+                        <div class="designer-mini-info">
+                            <strong>${d.name}</strong>
+                            <span>${d.title}</span>
+                            <span class="designer-mini-rate">${d.rate} · ⭐ ${d.rating}</span>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+
+        <!-- Stats Bar -->
+        <div class="stats-bar">
+            <div class="stat">
+                <span class="stat-num">${parts.length}+</span>
+                <span class="stat-label">Parts Listed</span>
+            </div>
+            <div class="stat">
+                <span class="stat-num">${designers.length}</span>
+                <span class="stat-label">Designers</span>
+            </div>
+            <div class="stat">
+                <span class="stat-num">${carMakes.length - 1}</span>
+                <span class="stat-label">Car Brands</span>
+            </div>
+            <div class="stat">
+                <span class="stat-num">$5</span>
+                <span class="stat-label">Flat Fee</span>
+            </div>
+        </div>
+
+        <div class="version-tag">v${VERSION}</div>
     `;
 }
 
@@ -193,7 +283,7 @@ function browseView() {
                 <ul>
                     <li><a href="#" onclick="filterCat='';go('browse')" class="${!filterCat?'active':''}">All</a></li>
                     ${categories.map(c => `
-                        <li><a href="#" onclick="filterCat='${c.name}';go('browse')" class="${filterCat===c.name?'active':''}">${c.name}</a></li>
+                        <li><a href="#" onclick="filterCat='${c.name}';go('browse')" class="${filterCat===c.name?'active':''}">${c.icon} ${c.name}</a></li>
                     `).join('')}
                 </ul>
                 
@@ -214,6 +304,11 @@ function browseView() {
                         `).join('')}
                     </ul>
                 ` : ''}
+
+                <div class="sidebar-cta">
+                    <p>Don't have a printer?</p>
+                    <a href="#" onclick="go('printshops')" class="btn btn-outline" style="width:100%">Find Print Shop</a>
+                </div>
             </aside>
             <div>
                 <div class="browse-head">
@@ -230,10 +325,20 @@ function browseView() {
 
 function designersView() {
     return `
-        <div style="text-align:center;margin-bottom:48px">
-            <h1>Hire a Designer</h1>
-            <p style="color:var(--muted);margin-top:8px">Need a custom part for your car? Work with automotive specialists.</p>
+        <div class="page-header">
+            <h1>Find a Designer</h1>
+            <p>Need a custom part for your car? Work with automotive specialists who can bring your idea to life.</p>
         </div>
+        
+        <div class="designer-filters">
+            <button class="filter-btn active">All</button>
+            <button class="filter-btn">JDM</button>
+            <button class="filter-btn">European</button>
+            <button class="filter-btn">American</button>
+            <button class="filter-btn">Interior</button>
+            <button class="filter-btn">Performance</button>
+        </div>
+        
         <div class="designers-grid">
             ${designers.map(d => `
                 <div class="designer" onclick="go('designer', ${d.id})">
@@ -244,10 +349,14 @@ function designersView() {
                             <p>${d.title}</p>
                         </div>
                     </div>
-                    <div class="designer-rate">${d.rate}</div>
+                    <div class="designer-stats">
+                        <span class="designer-rate">${d.rate}</span>
+                        <span class="designer-rating">⭐ ${d.rating} (${d.reviews})</span>
+                    </div>
                     <div class="tags">
                         ${d.tags.map(t => `<span class="tag">${t}</span>`).join('')}
                     </div>
+                    <div class="designer-projects">${d.projects} completed projects</div>
                 </div>
             `).join('')}
         </div>
@@ -265,8 +374,8 @@ function sellView() {
                     <div class="step">
                         <div class="step-num">1</div>
                         <div>
-                            <h4>Upload your file</h4>
-                            <p>STL, STEP, OBJ, or 3MF</p>
+                            <h4>Upload your files</h4>
+                            <p>3D files + photos of printed parts</p>
                         </div>
                     </div>
                     <div class="step">
@@ -293,6 +402,19 @@ function sellView() {
                         <li>No monthly fees</li>
                         <li>No commission</li>
                         <li>Listing never expires</li>
+                        <li>Unlimited photos</li>
+                    </ul>
+                </div>
+
+                <div class="what-sells">
+                    <h3>What Sells Well</h3>
+                    <ul>
+                        <li>📱 Phone mounts & holders</li>
+                        <li>☕ Cup holder inserts</li>
+                        <li>🔢 Gauge pods & bezels</li>
+                        <li>🎛️ Switch panels & deletes</li>
+                        <li>🔧 Tool holders & organizers</li>
+                        <li>🔑 Key holders & accessories</li>
                     </ul>
                 </div>
             </div>
@@ -313,13 +435,15 @@ function sellView() {
                 <div class="field-row">
                     <div class="field">
                         <label>Make</label>
-                        <select>
+                        <select id="sellMake" onchange="updateSellModels()">
                             ${carMakes.map(m => `<option>${m}</option>`).join('')}
                         </select>
                     </div>
                     <div class="field">
                         <label>Model</label>
-                        <input type="text" placeholder="e.g., E30, Miata NA">
+                        <select id="sellModel">
+                            <option>Select model...</option>
+                        </select>
                     </div>
                 </div>
                 
@@ -327,7 +451,7 @@ function sellView() {
                     <div class="field">
                         <label>Category</label>
                         <select>
-                            ${categories.map(c => `<option>${c.name}</option>`).join('')}
+                            ${categories.map(c => `<option>${c.icon} ${c.name}</option>`).join('')}
                         </select>
                     </div>
                     <div class="field">
@@ -337,10 +461,33 @@ function sellView() {
                 </div>
                 
                 <div class="field">
-                    <label>3D File</label>
-                    <div class="dropzone">
-                        <p>Drop file here or click to browse</p>
-                        <span>STL, STEP, OBJ, 3MF</span>
+                    <label>3D File <span class="required">*</span></label>
+                    <div class="dropzone" id="fileDropzone">
+                        <div class="dropzone-icon">📦</div>
+                        <p>Drop 3D file here or click to browse</p>
+                        <span>STL, STEP, OBJ, 3MF (max 50MB)</span>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label>Photos <span class="required">*</span></label>
+                    <div class="photo-upload-area">
+                        <div class="photo-grid" id="photoGrid">
+                            <div class="photo-add" onclick="document.getElementById('photoInput').click()">
+                                <span class="photo-add-icon">+</span>
+                                <span>Add Photo</span>
+                            </div>
+                        </div>
+                        <input type="file" id="photoInput" accept="image/*" multiple hidden onchange="handlePhotoUpload(event)">
+                        <div class="field-hint">Add photos of your printed part. At least 1 required, up to 10 max. Show different angles, fitment, and quality.</div>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label>Print Settings (Optional)</label>
+                    <div class="field-row">
+                        <input type="text" placeholder="Material (e.g., PLA, PETG)">
+                        <input type="text" placeholder="Infill % (e.g., 25%)">
                     </div>
                 </div>
                 
@@ -356,6 +503,8 @@ function sellView() {
                 </div>
                 
                 <button class="btn btn-lg" style="width:100%">Continue to Payment</button>
+
+                <p class="form-note">By listing, you confirm you own the rights to this design.</p>
             </div>
         </div>
     `;
@@ -371,30 +520,120 @@ function partView(id) {
                 <div class="viewer-container" id="viewer3d">
                     <div class="viewer-hint">Drag to rotate • Scroll to zoom</div>
                 </div>
-                <img src="${p.img}" alt="${p.title}" style="margin-top:16px">
+                <div class="gallery-thumbs">
+                    ${(p.imgs || [p.img]).map((img, i) => `
+                        <img src="${img}" alt="${p.title}" class="thumb ${i===0?'active':''}" onclick="setMainImage(this, '${img}')">
+                    `).join('')}
+                </div>
             </div>
             <div class="detail-info">
+                <div class="detail-breadcrumb">${p.make} › ${p.model} › ${p.cat}</div>
                 <h1>${p.title}</h1>
-                <div class="detail-cat">${p.make} ${p.model} • ${p.cat} • by ${p.seller}</div>
+                <div class="detail-seller">
+                    <span class="seller-avatar">${p.seller.charAt(0)}</span>
+                    <span>by <strong>${p.seller}</strong></span>
+                    <span class="detail-downloads">📥 ${p.downloads} downloads</span>
+                </div>
                 <div class="detail-price">$${p.price.toFixed(2)}</div>
                 <div class="detail-actions">
-                    <button class="btn btn-lg">Buy Now — $${p.price.toFixed(2)}</button>
+                    <button class="btn btn-lg btn-primary">Buy Now — $${p.price.toFixed(2)}</button>
                     <a href="mailto:${p.email}?subject=Question: ${p.title}" class="btn btn-lg btn-outline">Contact Seller</a>
                 </div>
+
+                <!-- Find Print Shop -->
+                <div class="print-shop-cta">
+                    <div class="print-shop-icon">🖨️</div>
+                    <div class="print-shop-text">
+                        <strong>Don't have a 3D printer?</strong>
+                        <span>Find a print shop near you to make this part</span>
+                    </div>
+                    <a href="#" onclick="go('printshops', ${p.id})" class="btn btn-sm">Find Print Shop</a>
+                </div>
+
                 <div class="detail-desc">
                     <h2>Description</h2>
                     <p>${p.desc}</p>
                 </div>
                 <div class="specs">
+                    <h2>Specifications</h2>
                     <div class="spec-row"><span>Vehicle</span><span>${p.make} ${p.model}</span></div>
                     <div class="spec-row"><span>Category</span><span>${p.cat}</span></div>
                     <div class="spec-row"><span>Format</span><span>${p.format}</span></div>
                     <div class="spec-row"><span>File Size</span><span>${p.size}</span></div>
-                    <div class="spec-row"><span>Material</span><span>${p.material}</span></div>
+                    <div class="spec-row"><span>Recommended Material</span><span>${p.material}</span></div>
                     <div class="spec-row"><span>Infill</span><span>${p.infill}</span></div>
-                    <div class="spec-row"><span>Downloads</span><span>${p.downloads}</span></div>
+                </div>
+
+                <div class="part-actions-secondary">
+                    <button class="btn btn-outline btn-sm">❤️ Save</button>
+                    <button class="btn btn-outline btn-sm">📤 Share</button>
+                    <button class="btn btn-outline btn-sm">🚩 Report</button>
                 </div>
             </div>
+        </div>
+
+        <div class="section">
+            <div class="section-head">
+                <h2>Similar Parts</h2>
+            </div>
+            <div class="grid">
+                ${parts.filter(x => x.id !== p.id && (x.make === p.make || x.cat === p.cat)).slice(0, 4).map(cardHTML).join('')}
+            </div>
+        </div>
+    `;
+}
+
+function printShopsView(partId) {
+    const part = partId ? parts.find(x => x.id === partId) : null;
+    
+    return `
+        <div class="page-header">
+            <h1>Find a Print Shop</h1>
+            <p>Don't have a 3D printer? Find a local print shop to make your part.</p>
+        </div>
+
+        ${part ? `
+            <div class="selected-part-banner">
+                <img src="${part.img}" alt="${part.title}">
+                <div class="selected-part-info">
+                    <strong>${part.title}</strong>
+                    <span>${part.make} ${part.model} • ${part.format} • ${part.size}</span>
+                </div>
+            </div>
+        ` : ''}
+
+        <div class="location-search">
+            <input type="text" id="locationInput" placeholder="Enter your city or zip code...">
+            <button class="btn" onclick="searchPrintShops()">🔍 Search</button>
+            <button class="btn btn-outline" onclick="useMyLocation()">📍 Use My Location</button>
+        </div>
+
+        <div class="print-shops-list">
+            ${printShops.map(shop => `
+                <div class="print-shop-card">
+                    <div class="print-shop-header">
+                        <h3>${shop.name}</h3>
+                        <span class="print-shop-distance">${shop.distance}</span>
+                    </div>
+                    <p class="print-shop-address">📍 ${shop.address}</p>
+                    <div class="print-shop-rating">⭐ ${shop.rating} (${shop.reviews} reviews)</div>
+                    <div class="print-shop-actions">
+                        <a href="tel:${shop.phone}" class="btn btn-sm btn-outline">📞 Call</a>
+                        <a href="mailto:${shop.email}${part ? `?subject=Print Request: ${part.title}&body=Hi, I'd like to get a quote for printing this part: ${part.title} (${part.format}, ${part.size})` : ''}" class="btn btn-sm btn-primary">📧 Request Quote</a>
+                        <a href="https://maps.google.com/?q=${encodeURIComponent(shop.address)}" target="_blank" class="btn btn-sm btn-outline">🗺️ Directions</a>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+
+        <div class="print-tips">
+            <h3>Tips for Getting Your Part Printed</h3>
+            <ul>
+                <li><strong>Material matters:</strong> PETG for functional parts, PLA for decorative, ABS for high-temp areas</li>
+                <li><strong>Send the specs:</strong> Include recommended infill, layer height, and orientation</li>
+                <li><strong>Ask for a test print:</strong> Get a small section printed first to check fit</li>
+                <li><strong>Request multiple quotes:</strong> Prices can vary significantly between shops</li>
+            </ul>
         </div>
     `;
 }
@@ -404,29 +643,43 @@ function designerView(id) {
     if (!d) return '<p>Designer not found.</p>';
     
     return `
-        <div class="detail">
-            <div>
-                <div class="designer-top" style="margin-bottom:24px">
-                    <img src="${d.img}" alt="${d.name}" style="width:80px;height:80px">
-                    <div>
-                        <h1 style="font-size:24px;margin-bottom:4px">${d.name}</h1>
-                        <p style="color:var(--muted)">${d.title}</p>
+        <div class="designer-profile">
+            <div class="designer-header">
+                <img src="${d.img}" alt="${d.name}" class="designer-avatar-lg">
+                <div class="designer-header-info">
+                    <h1>${d.name}</h1>
+                    <p class="designer-title">${d.title}</p>
+                    <div class="designer-meta">
+                        <span class="designer-rating-lg">⭐ ${d.rating} (${d.reviews} reviews)</span>
+                        <span class="designer-projects-lg">${d.projects} projects completed</span>
+                    </div>
+                    <div class="tags">
+                        ${d.tags.map(t => `<span class="tag">${t}</span>`).join('')}
                     </div>
                 </div>
-                <div class="detail-desc">
+                <div class="designer-cta">
+                    <div class="designer-rate-lg">${d.rate}</div>
+                    <a href="mailto:${d.email}?subject=Custom Part Request" class="btn btn-lg btn-primary">Hire ${d.name.split(' ')[0]}</a>
+                    <a href="mailto:${d.email}" class="btn btn-lg btn-outline">Send Message</a>
+                </div>
+            </div>
+            
+            <div class="designer-body">
+                <div class="designer-about">
                     <h2>About</h2>
                     <p>${d.bio}</p>
                 </div>
-                <div class="tags" style="margin-top:24px">
-                    ${d.tags.map(t => `<span class="tag">${t}</span>`).join('')}
-                </div>
-            </div>
-            <div class="detail-info">
-                <div class="detail-price">${d.rate}</div>
-                <div style="color:var(--muted);margin-bottom:24px">${d.projects} completed projects</div>
-                <div class="detail-actions">
-                    <a href="mailto:${d.email}?subject=Custom Part Request" class="btn btn-lg">Hire ${d.name.split(' ')[0]}</a>
-                    <a href="mailto:${d.email}" class="btn btn-lg btn-outline">Send Message</a>
+                
+                <div class="designer-portfolio">
+                    <h2>Recent Work</h2>
+                    <div class="portfolio-grid">
+                        ${parts.slice(0, 4).map(p => `
+                            <div class="portfolio-item" onclick="go('part', ${p.id})">
+                                <img src="${p.img}" alt="${p.title}">
+                                <span>${p.title}</span>
+                            </div>
+                        `).join('')}
+                    </div>
                 </div>
             </div>
         </div>
@@ -436,7 +689,10 @@ function designerView(id) {
 function cardHTML(p) {
     return `
         <div class="card" onclick="go('part', ${p.id})">
-            <img src="${p.img}" alt="${p.title}">
+            <div class="card-image">
+                <img src="${p.img}" alt="${p.title}">
+                <span class="card-badge">${p.cat}</span>
+            </div>
             <div class="card-body">
                 <div class="card-title">${p.title}</div>
                 <div class="card-meta">
@@ -446,6 +702,82 @@ function cardHTML(p) {
             </div>
         </div>
     `;
+}
+
+// Photo upload handling
+function handlePhotoUpload(event) {
+    const files = event.target.files;
+    const grid = document.getElementById('photoGrid');
+    
+    for (let file of files) {
+        if (uploadedPhotos.length >= 10) break;
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            uploadedPhotos.push(e.target.result);
+            renderPhotoGrid();
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+function renderPhotoGrid() {
+    const grid = document.getElementById('photoGrid');
+    if (!grid) return;
+    
+    grid.innerHTML = uploadedPhotos.map((photo, i) => `
+        <div class="photo-item">
+            <img src="${photo}" alt="Photo ${i+1}">
+            <button class="photo-remove" onclick="removePhoto(${i})">×</button>
+        </div>
+    `).join('') + (uploadedPhotos.length < 10 ? `
+        <div class="photo-add" onclick="document.getElementById('photoInput').click()">
+            <span class="photo-add-icon">+</span>
+            <span>Add Photo</span>
+        </div>
+    ` : '');
+}
+
+function removePhoto(index) {
+    uploadedPhotos.splice(index, 1);
+    renderPhotoGrid();
+}
+
+function updateSellModels() {
+    const make = document.getElementById('sellMake')?.value;
+    const modelSelect = document.getElementById('sellModel');
+    if (!modelSelect || !make) return;
+    
+    modelSelect.innerHTML = '<option>Select model...</option>';
+    if (carModels[make]) {
+        carModels[make].forEach(m => {
+            modelSelect.innerHTML += `<option value="${m}">${m}</option>`;
+        });
+    }
+}
+
+function setMainImage(thumb, src) {
+    document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
+    thumb.classList.add('active');
+    // Could also update 3D viewer background or add image preview
+}
+
+function searchPrintShops() {
+    // Would integrate with Google Places API
+    alert('This would search for print shops in your area. In production, this connects to Google Places API.');
+}
+
+function useMyLocation() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(position => {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            document.getElementById('locationInput').value = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+            searchPrintShops();
+        });
+    } else {
+        alert('Geolocation not supported');
+    }
 }
 
 // 3D Viewer
@@ -527,4 +859,5 @@ function initViewer(partId) {
     });
 }
 
+console.log(`ForgAuto v${VERSION} loaded`);
 render();

@@ -639,15 +639,6 @@ function homeView() {
     const featuredParts = parts.filter(p => p.featured);
     
     return `
-        <div class="sold-ticker"><div class="ticker-content">
-            <span class="ticker-item"><strong>Mike T.</strong> from California bought <strong>Tesla Phone Mount</strong> - 2 min ago</span>
-            <span class="ticker-item"><strong>Sarah K.</strong> from Texas bought <strong>BMW E30 Dock</strong> - 5 min ago</span>
-            <span class="ticker-item"><strong>Jake R.</strong> from Florida bought <strong>Miata Mount</strong> - 8 min ago</span>
-            <span class="ticker-item"><strong>Emma L.</strong> from New York bought <strong>VW Golf Mount</strong> - 12 min ago</span>
-            <span class="ticker-item"><strong>Mike T.</strong> from California bought <strong>Tesla Phone Mount</strong> - 2 min ago</span>
-            <span class="ticker-item"><strong>Sarah K.</strong> from Texas bought <strong>BMW E30 Dock</strong> - 5 min ago</span>
-        </div></div>
-
         <div class="promo-banner">
             <div class="promo-content"><span class="promo-badge">NEW</span><span class="promo-text">Need a custom part? <strong>Find a Designer</strong> to create it for you</span></div>
             <a href="#" onclick="go('designers'); return false;" class="promo-cta">Browse Designers</a>
@@ -667,10 +658,9 @@ function homeView() {
                 <button class="btn" onclick="doSearch()">Find Parts</button>
             </div>
             <div class="trust-badges">
-                <span class="trust-badge">Secure Checkout</span>
-                <span class="trust-badge">Money Back Guarantee</span>
+                <span class="trust-badge">$5 Flat Listing Fee</span>
+                <span class="trust-badge">Keep 100% of Sales</span>
                 <span class="trust-badge">Instant Download</span>
-                <span class="trust-badge">Buyer Protection</span>
             </div>
         </div>
 
@@ -678,15 +668,16 @@ function homeView() {
             <div class="cat-grid">${categories.map(c => `<a href="#" class="cat-item" onclick="filterCat='${c.name}';go('browse'); return false;"><img src="${c.img}" alt="${c.name}"><span>${c.name}</span></a>`).join('')}</div>
         </div>
 
-        <div class="section"><div class="section-head"><h2>Premiered Parts</h2><a href="#" onclick="go('browse'); return false;">View all</a></div>
+        ${premieredParts.length ? `<div class="section"><div class="section-head"><h2>Premiered Parts</h2><a href="#" onclick="go('browse'); return false;">View all</a></div>
             <div class="grid">${premieredParts.map(p => cardHTML(p, true)).join('')}</div>
-        </div>
+        </div>` : ''}
 
-        ${featuredParts.length ? `<div class="section featured-section"><div class="section-head"><h2>Featured Parts</h2><span class="featured-badge">SPONSORED</span></div>
-            <div class="grid">${featuredParts.slice(0, 4).map(p => cardHTML(p, false, true)).join('')}</div></div>` : ''}
+        ${featuredParts.length ? `<div class="section featured-section"><div class="section-head"><h2>Featured Parts</h2></div>
+            <div class="grid">${featuredParts.slice(0, 4).map(p => cardHTML(p)).join('')}</div></div>` : ''}
         
-        <div class="section"><div class="section-head"><h2>New Parts</h2><a href="#" onclick="go('browse'); return false;">View all</a></div>
-            <div class="grid">${parts.slice(0, 8).map(cardHTML).join('')}</div>
+        <div class="section"><div class="section-head"><h2>New Parts</h2>${parts.length ? `<a href="#" onclick="go('browse'); return false;">View all</a>` : ''}</div>
+            ${parts.length ? `<div class="grid">${parts.slice(0, 8).map(cardHTML).join('')}</div>` : 
+            `<div class="empty-cta"><h3>Be the first to list a part</h3><p>Start selling your 3D automotive designs today.</p><a href="#" onclick="go('sell'); return false;" class="btn btn-lg btn-primary">Create Listing - $5</a></div>`}
         </div>
 
         <div class="section featured-designers"><div class="section-head"><h2>Top Designers</h2><a href="#" onclick="go('designers'); return false;">View all</a></div>
@@ -694,8 +685,8 @@ function homeView() {
         </div>
 
         <div class="stats-bar">
-            <div class="stat"><span class="stat-num">${parts.length}+</span><span class="stat-label">Parts Listed</span></div>
-            <div class="stat"><span class="stat-num">${designers.length}</span><span class="stat-label">Designers</span></div>
+            <div class="stat"><span class="stat-num">${parts.length}</span><span class="stat-label">${parts.length === 1 ? 'Part' : 'Parts'} Listed</span></div>
+            <div class="stat"><span class="stat-num">${designers.length}</span><span class="stat-label">${designers.length === 1 ? 'Designer' : 'Designers'}</span></div>
             <div class="stat"><span class="stat-num">${carMakes.length - 1}</span><span class="stat-label">Car Brands</span></div>
             <div class="stat"><span class="stat-num">$5</span><span class="stat-label">Flat Fee</span></div>
         </div>
@@ -713,9 +704,21 @@ function browseView() {
     
     return `<div class="browse">
         <aside class="sidebar">
-            <h3>Category</h3><ul><li><a href="#" onclick="filterCat='';go('browse'); return false;" class="${!filterCat?'active':''}">All</a></li>${categories.map(c => `<li><a href="#" onclick="filterCat='${c.name}';go('browse'); return false;" class="${filterCat===c.name?'active':''}">${c.name}</a></li>`).join('')}</ul>
-            <h3>Make</h3><ul><li><a href="#" onclick="filterMake='';filterModel='';go('browse'); return false;" class="${!filterMake?'active':''}">All Makes</a></li>${carMakes.map(m => `<li><a href="#" onclick="filterMake='${m}';filterModel='';go('browse'); return false;" class="${filterMake===m?'active':''}">${m}</a></li>`).join('')}</ul>
-            ${filterMake && carModels[filterMake] ? `<h3>Model</h3><ul><li><a href="#" onclick="filterModel='';go('browse'); return false;" class="${!filterModel?'active':''}">All Models</a></li>${carModels[filterMake].map(m => `<li><a href="#" onclick="filterModel='${m}';go('browse'); return false;" class="${filterModel===m?'active':''}">${m}</a></li>`).join('')}</ul>` : ''}
+            <h3>Category</h3>
+            <select class="filter-select" onchange="filterCat=this.value;go('browse');">
+                <option value="">All Categories</option>
+                ${categories.map(c => `<option value="${c.name}" ${filterCat===c.name?'selected':''}>${c.name}</option>`).join('')}
+            </select>
+            <h3>Make</h3>
+            <select class="filter-select" onchange="filterMake=this.value;filterModel='';go('browse');">
+                <option value="">All Makes</option>
+                ${carMakes.filter(m => m !== 'Non-Specific').map(m => `<option value="${m}" ${filterMake===m?'selected':''}>${m}</option>`).join('')}
+            </select>
+            ${filterMake && carModels[filterMake] ? `<h3>Model</h3>
+            <select class="filter-select" onchange="filterModel=this.value;go('browse');">
+                <option value="">All ${filterMake} Models</option>
+                ${carModels[filterMake].map(m => `<option value="${m}" ${filterModel===m?'selected':''}>${m}</option>`).join('')}
+            </select>` : ''}
             <div class="sidebar-cta"><p>Don't have a printer?</p><a href="#" onclick="go('printshops'); return false;" class="btn btn-outline" style="width:100%">Find Print Shop</a></div>
         </aside>
         <div><div class="browse-head"><h1>${title}</h1><span style="color:var(--muted)">${filtered.length} parts</span></div>
@@ -725,9 +728,20 @@ function browseView() {
 }
 
 function designersView() {
+    // Filter out invalid designers (no name, undefined bio, etc.)
+    const validDesigners = designers.filter(d => d.name && d.name !== 'undefined' && d.avatar_url && d.avatar_url.startsWith('http'));
+    
+    if (validDesigners.length === 0) {
+        return `<div class="page-header"><h1>Find a Designer</h1><p>Need a custom part? Work with automotive specialists.</p></div>
+            <div class="empty-state" style="text-align:center;padding:60px 20px;">
+                <h3>No designers yet</h3>
+                <p style="color:var(--muted);margin:12px 0 24px;">Are you a 3D designer? Join our platform.</p>
+                <a href="mailto:designers@forgauto.com" class="btn btn-primary">Apply to be a Designer</a>
+            </div>`;
+    }
+    
     return `<div class="page-header"><h1>Find a Designer</h1><p>Need a custom part? Work with automotive specialists.</p></div>
-        <div class="designer-filters"><button class="filter-btn active">All</button><button class="filter-btn">JDM</button><button class="filter-btn">European</button><button class="filter-btn">American</button><button class="filter-btn">Interior</button></div>
-        <div class="designers-grid">${designers.map(d => `<div class="designer" onclick="go('designer', ${d.id})"><div class="designer-top"><img src="${d.avatar_url}" alt="${d.name}"><div><h3>${d.name}</h3><p>${d.bio?.substring(0, 60)}...</p></div></div><div class="designer-stats"><span class="designer-rate">${d.rate}</span><span class="designer-rating">${d.stats?.avgRating || 5} stars (${d.stats?.reviewCount || 0})</span></div><div class="tags">${(d.tags||[]).map(t => `<span class="tag">${t}</span>`).join('')}</div><div class="designer-projects">${d.stats?.parts || 0} completed projects</div></div>`).join('')}</div>`;
+        <div class="designers-grid">${validDesigners.map(d => `<div class="designer" onclick="go('designer', ${d.id})"><div class="designer-top"><img src="${d.avatar_url}" alt="${d.name}" onerror="this.style.display='none'"><div><h3>${d.name}</h3><p>${d.bio ? d.bio.substring(0, 60) + '...' : ''}</p></div></div><div class="designer-stats"><span class="designer-rate">${d.rate || 'Contact for rate'}</span><span class="designer-rating">${d.stats?.avgRating || 5} stars</span></div><div class="tags">${(d.tags||[]).map(t => `<span class="tag">${t}</span>`).join('')}</div><div class="designer-projects">${d.stats?.parts || 0} projects</div></div>`).join('')}</div>`;
 }
 
 function sellView() {
@@ -884,7 +898,7 @@ async function partView(id) {
             <h1>${p.title}</h1>
             <div class="detail-seller"><span class="seller-avatar">${(p.seller_name||'S').charAt(0)}</span><span>by <strong>${p.seller_name || 'Seller'}</strong></span><span class="detail-downloads">${p.downloads || 0} downloads</span></div>
             <div class="detail-price">$${(p.price || 0).toFixed(2)}</div>
-            <div class="detail-trust"><span>Secure</span><span>Instant Download</span><span>Money Back</span></div>
+            <div class="detail-trust"><span>Secure Payment</span><span>Instant Download</span><span>$5 Flat Fee</span></div>
             <div class="detail-actions">
                 <button class="btn btn-lg btn-primary" onclick="handleBuyPart(${p.id})">Buy Now - $${(p.price || 0).toFixed(2)}</button>
                 <a href="mailto:${p.seller_email || ''}" class="btn btn-lg btn-outline">Contact Seller</a>
@@ -961,6 +975,7 @@ function printShopsView(partId) {
     return `<div class="page-header"><h1>Find a Print Shop</h1><p>Get your part printed and shipped to you.</p></div>
         ${part ? `<div class="selected-part-banner"><img src="${part.images?.[0] || part.img}" alt="${part.title}"><div class="selected-part-info"><strong>${part.title}</strong><span>${part.make} ${part.model} - ${part.file_format} - ${part.file_size}</span></div></div>` : ''}
         <div class="location-search"><input type="text" id="locationInput" placeholder="Enter your city or zip code..."><button class="btn" onclick="alert('Search coming soon')">Search</button><button class="btn btn-outline" onclick="useMyLocation()">Use My Location</button></div>
+        <div class="sample-disclaimer">Sample data — real print shops coming soon</div>
         <div class="print-shops-list">${printShops.map(shop => `<div class="print-shop-card ${shop.verified ? 'verified' : ''}"><div class="print-shop-header"><div><h3>${shop.name} ${shop.verified ? '<span class="verified-badge">Verified</span>' : ''}</h3>${shop.instantQuote ? '<span class="instant-badge">Instant Quotes</span>' : ''}${shop.printAndShip ? '<span class="ship-badge">Print & Ship</span>' : ''}</div><span class="print-shop-distance">${shop.distance}</span></div><p class="print-shop-address">${shop.address}</p><div class="print-shop-meta"><span>${shop.rating} stars (${shop.reviews})</span><span>${shop.turnaround}</span></div><div class="print-shop-actions"><a href="tel:${shop.phone}" class="btn btn-sm btn-outline">Call</a>${shop.instantQuote ? `<button class="btn btn-sm btn-primary" onclick="alert('Quote: ~$${(Math.random() * 20 + 10).toFixed(2)}')">Instant Quote</button>` : ''}<a href="mailto:${shop.email}${part ? `?subject=Print: ${part.title}` : ''}" class="btn btn-sm btn-outline">Email</a></div></div>`).join('')}</div>`;
 }
 
@@ -1028,7 +1043,7 @@ function cardHTML(p, showPremiered = false, showFeatured = false, showIncomplete
     // Use actual images - placeholder only shows part title on dark background
     const img = p.images?.[0] || p.img || `https://placehold.co/600x450/1a1a1a/444?text=${encodeURIComponent(p.title || 'Part')}`;
     const isIncomplete = p.status === 'incomplete';
-    const cardClass = `card ${showFeatured || p.featured ? 'card-featured' : ''} ${showPremiered ? 'card-premiered' : ''} ${isIncomplete ? 'card-incomplete' : ''}`;
+    const cardClass = `card ${isIncomplete ? 'card-incomplete' : ''}`;
     
     // Build missing info warning
     let missingInfo = [];
@@ -1040,8 +1055,6 @@ function cardHTML(p, showPremiered = false, showFeatured = false, showIncomplete
             <img src="${img}" alt="${p.title}" onerror="this.onerror=null;this.src='https://placehold.co/600x450/1a1a1a/444?text=${encodeURIComponent(p.title || 'Part')}'">
             <span class="card-badge">${p.category || 'Part'}</span>
             ${isIncomplete && showIncomplete ? `<span class="incomplete-badge">MISSING INFO</span>` : ''}
-            ${showPremiered || p.premiered ? '<span class="premiered-badge">PREMIERED</span>' : ''}
-            ${showFeatured || p.featured ? '<span class="featured-badge-card">FEATURED</span>' : ''}
         </div>
         <div class="card-body">
             <div class="card-title">${p.title}</div>

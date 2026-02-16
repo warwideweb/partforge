@@ -867,6 +867,9 @@ async function partView(id) {
     }
     if (!p) return '<p>Part not found.</p>';
     
+    // Store for 3D viewer
+    currentPartData = p;
+    
     const images = p.images || [p.img] || ['https://via.placeholder.com/600x450'];
     const reviews = p.reviews || [];
     
@@ -1037,10 +1040,14 @@ function renderPhotoGrid() { const grid = document.getElementById('photoGrid'); 
 function removePhoto(index) { uploadedPhotos.splice(index, 1); renderPhotoGrid(); }
 function useMyLocation() { if (navigator.geolocation) { navigator.geolocation.getCurrentPosition(pos => { document.getElementById('locationInput').value = `${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`; }); } }
 
+let currentPartData = null; // Store current part for viewer
+
 function initViewer(partId) {
     const container = document.getElementById('viewer3d');
     if (!container) return;
-    const p = parts.find(x => x.id === partId);
+    
+    // Use stored part data or fall back to parts array
+    const p = currentPartData || parts.find(x => x.id === partId);
     if (!p) return;
     
     // Check if THREE.js loaded
@@ -1052,7 +1059,7 @@ function initViewer(partId) {
     // Check if part has STL file URL
     const stlUrl = p.stl_url || p.file_url;
     if (!stlUrl) {
-        container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#666;flex-direction:column;text-align:center;padding:20px;"><span style="font-size:48px;margin-bottom:12px;">3D</span><span style="font-size:14px;">3D preview available after purchase</span><span style="font-size:12px;margin-top:8px;color:#555;">STL file included in download</span></div>';
+        container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#666;flex-direction:column;text-align:center;padding:20px;"><span style="font-size:48px;margin-bottom:12px;">3D</span><span style="font-size:14px;">No 3D file uploaded yet</span></div>';
         return;
     }
     

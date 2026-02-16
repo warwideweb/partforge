@@ -970,9 +970,23 @@ function useMyLocation() { if (navigator.geolocation) { navigator.geolocation.ge
 
 function initViewer(partId) {
     const container = document.getElementById('viewer3d');
-    if (!container || !window.THREE) return;
+    if (!container) return;
     const p = parts.find(x => x.id === partId);
     if (!p) return;
+    
+    // Check if THREE.js loaded
+    if (!window.THREE) {
+        container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#666;flex-direction:column;"><span style="font-size:40px;margin-bottom:12px;">3D</span><span>3D viewer loading failed</span></div>';
+        return;
+    }
+    
+    // Check if part has STL file URL
+    const stlUrl = p.stl_url || p.file_url;
+    if (!stlUrl) {
+        container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#666;flex-direction:column;text-align:center;padding:20px;"><span style="font-size:48px;margin-bottom:12px;">3D</span><span style="font-size:14px;">3D preview available after purchase</span><span style="font-size:12px;margin-top:8px;color:#555;">STL file included in download</span></div>';
+        return;
+    }
+    
     const width = container.clientWidth, height = container.clientHeight;
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x1a1a1a);
@@ -990,10 +1004,25 @@ function initViewer(partId) {
     dirLight.position.set(1, 1, 1);
     scene.add(dirLight);
     
-    // Demo geometry
-    const geometry = new THREE.BoxGeometry(30, 20, 10);
-    const material = new THREE.MeshPhongMaterial({ color: 0x2563eb, shininess: 50 });
-    scene.add(new THREE.Mesh(geometry, material));
+    // Load STL file
+    const loader = new THREE.STLLoader();
+    loader.load(stlUrl, function(geometry) {
+        geometry.computeBoundingBox();
+        geometry.center();
+        const material = new THREE.MeshPhongMaterial({ color: 0x2563eb, shininess: 50 });
+        const mesh = new THREE.Mesh(geometry, material);
+        
+        // Auto-scale to fit view
+        const box = geometry.boundingBox;
+        const size = Math.max(box.max.x - box.min.x, box.max.y - box.min.y, box.max.z - box.min.z);
+        const scale = 50 / size;
+        mesh.scale.set(scale, scale, scale);
+        
+        scene.add(mesh);
+    }, undefined, function(error) {
+        console.error('STL load error:', error);
+        container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#666;flex-direction:column;"><span style="font-size:40px;margin-bottom:12px;">3D</span><span>Failed to load 3D model</span></div>';
+    });
     
     (function animate() { requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); })();
 }

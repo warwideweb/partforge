@@ -1,7 +1,7 @@
 // ForgAuto — 3D Marketplace for Cars
 // Version: 3.0 - Full Backend Integration
 
-const VERSION = '3.3';
+const VERSION = '3.4';
 const API_URL = 'https://forgauto-api.warwideweb.workers.dev'; // Cloudflare Worker API
 
 // State
@@ -566,6 +566,13 @@ async function dashboardView() {
                     <div class="field"><label>Hourly Rate</label><input type="text" id="settingsRate" value="${currentUser.rate || ''}" placeholder="$50/hr"></div>
                     <div class="field"><label>Specialties (comma separated)</label><input type="text" id="settingsTags" value="${(currentUser.tags || []).join(', ')}" placeholder="JDM, Interior, BMW"></div>
                 ` : ''}
+                <div class="field notification-toggle">
+                    <label class="toggle-label">
+                        <input type="checkbox" id="settingsEmailNotify" ${currentUser.email_notify !== false ? 'checked' : ''}>
+                        <span>Email notifications for new messages</span>
+                    </label>
+                    <p class="field-hint">Get an email when someone contacts you about a listing</p>
+                </div>
                 <button type="submit" class="btn btn-primary">Save Changes</button>
             </form>
         </div>
@@ -586,13 +593,14 @@ async function handleProfileUpdate(e) {
     const rate = document.getElementById('settingsRate')?.value;
     const tagsInput = document.getElementById('settingsTags')?.value;
     const tags = tagsInput ? tagsInput.split(',').map(t => t.trim()).filter(t => t) : null;
+    const email_notify = document.getElementById('settingsEmailNotify')?.checked ?? true;
     
     try {
         await api('/api/profile', {
             method: 'PUT',
-            body: JSON.stringify({ name, bio, rate, tags })
+            body: JSON.stringify({ name, bio, rate, tags, email_notify })
         });
-        currentUser = { ...currentUser, name, bio, rate, tags };
+        currentUser = { ...currentUser, name, bio, rate, tags, email_notify };
         alert('Profile updated!');
     } catch (err) {
         alert('Error: ' + err.message);
@@ -670,7 +678,7 @@ function homeView() {
                 <button class="btn" onclick="doSearch()">Find Parts</button>
             </div>
             <div class="trust-badges">
-                <span class="trust-badge">$5 Flat Listing Fee</span>
+                <span class="trust-badge">$10 Flat Listing Fee</span>
                 <span class="trust-badge">Keep 100% of Sales</span>
                 <span class="trust-badge">Instant Download</span>
             </div>
@@ -689,7 +697,7 @@ function homeView() {
         
         <div class="section"><div class="section-head"><h2>New Parts</h2>${parts.length ? `<a href="#" onclick="go('browse'); return false;">View all</a>` : ''}</div>
             ${parts.length ? `<div class="grid">${parts.slice(0, 8).map(cardHTML).join('')}</div>` : 
-            `<div class="empty-cta"><h3>Be the first to list a part</h3><p>Start selling your 3D automotive designs today.</p><a href="#" onclick="go('sell'); return false;" class="btn btn-lg btn-primary">Create Listing - $5</a></div>`}
+            `<div class="empty-cta"><h3>Be the first to list a part</h3><p>Start selling your 3D automotive designs today.</p><a href="#" onclick="go('sell'); return false;" class="btn btn-lg btn-primary">Create Listing - $10</a></div>`}
         </div>
 
         <div class="section featured-designers"><div class="section-head"><h2>Top Designers</h2><a href="#" onclick="go('designers'); return false;">View all</a></div>
@@ -700,7 +708,7 @@ function homeView() {
             <div class="stat"><span class="stat-num">${parts.length}</span><span class="stat-label">${parts.length === 1 ? 'Part' : 'Parts'} Listed</span></div>
             <div class="stat"><span class="stat-num">${demoDesigners.length}</span><span class="stat-label">${demoDesigners.length === 1 ? 'Designer' : 'Designers'}</span></div>
             <div class="stat"><span class="stat-num">${carMakes.length - 1}</span><span class="stat-label">Car Brands</span></div>
-            <div class="stat"><span class="stat-num">$5</span><span class="stat-label">Flat Fee</span></div>
+            <div class="stat"><span class="stat-num">$10</span><span class="stat-label">Flat Fee</span></div>
         </div>
         <div class="version-tag">v${VERSION}</div>
     `;
@@ -759,8 +767,8 @@ function sellView() {
     
     return `<div class="sell-layout">
         <div class="sell-info"><h1>Sell your car parts</h1><p>Upload your designs, set your price, start earning.</p>
-            <div class="steps"><div class="step"><div class="step-num">1</div><div><h4>Upload files</h4><p>3D files + photos</p></div></div><div class="step"><div class="step-num">2</div><div><h4>Pay listing fee</h4><p>One-time $5</p></div></div><div class="step"><div class="step-num">3</div><div><h4>Get paid</h4><p>Keep 100%</p></div></div></div>
-            <div class="pricing"><div class="pricing-big">$5</div><div class="pricing-sub">one-time listing fee</div><ul><li>Keep 100% of sales</li><li>No monthly fees</li><li>No commission</li><li>Listing never expires</li></ul></div>
+            <div class="steps"><div class="step"><div class="step-num">1</div><div><h4>Upload files</h4><p>3D files + photos</p></div></div><div class="step"><div class="step-num">2</div><div><h4>Pay listing fee</h4><p>One-time $10</p></div></div><div class="step"><div class="step-num">3</div><div><h4>Get paid</h4><p>Keep 100%</p></div></div></div>
+            <div class="pricing"><div class="pricing-big">$10</div><div class="pricing-sub">one-time listing fee</div><ul><li>Keep 100% of sales</li><li>No monthly fees</li><li>No commission</li><li>Listing never expires</li></ul></div>
         </div>
         <div class="form"><h2>Create Listing</h2>
             <form onsubmit="handleCreateListing(event)">
@@ -772,8 +780,8 @@ function sellView() {
             <div class="field"><label>Infill % (recommended)</label><input type="text" id="partInfill" placeholder="25%"></div>
             <div class="field"><label>3D File</label><div class="dropzone" onclick="document.getElementById('fileInput').click()"><div class="dropzone-icon">+</div><p id="fileName">Drop 3D file here or click</p><span>STL, STEP, OBJ, 3MF</span></div><input type="file" id="fileInput" hidden onchange="handleFileSelect(event)"></div>
             <div class="field"><label>Photos <span class="required-star">*</span> (First photo = thumbnail)</label><div class="photo-grid" id="photoGrid"><div class="photo-add" onclick="document.getElementById('photoInput').click()"><span class="photo-add-icon">+</span><span>Add</span></div></div><input type="file" id="photoInput" accept="image/*" multiple hidden onchange="handlePhotoUpload(event)"><p class="field-hint">At least 1 photo required</p></div>
-            <div class="upsell-box"><label class="upsell-label"><input type="checkbox" id="featuredCheckbox" onchange="updateTotal()"><div class="upsell-content"><span class="upsell-badge">FEATURED</span><strong>Get Featured Placement +$10</strong><p>Your listing appears in the Featured section for 30 days.</p></div></label></div>
-            <div class="form-total"><span>Total</span><span id="totalPrice">$5.00</span></div>
+            <div class="upsell-box"><label class="upsell-label"><input type="checkbox" id="featuredCheckbox" onchange="updateTotal()"><div class="upsell-content"><span class="upsell-badge">FEATURED</span><strong>Get Featured Placement +$20</strong><p>Your listing appears in the Featured section for 30 days.</p></div></label></div>
+            <div class="form-total"><span>Total</span><span id="totalPrice">$10.00</span></div>
             <button type="submit" class="btn btn-lg btn-primary" style="width:100%">Create Listing</button>
             </form>
         </div>
@@ -932,7 +940,7 @@ async function handleCreateListing(e) {
     }
 }
 
-function updateTotal() { document.getElementById('totalPrice').textContent = document.getElementById('featuredCheckbox')?.checked ? '$15.00' : '$5.00'; }
+function updateTotal() { document.getElementById('totalPrice').textContent = document.getElementById('featuredCheckbox')?.checked ? '$30.00' : '$10.00'; }
 
 async function editView(partId) {
     if (!currentUser) return '<div class="auth-prompt"><h2>Login Required</h2><a href="#" onclick="go(\'login\'); return false;" class="btn btn-primary">Login</a></div>';
@@ -1016,12 +1024,12 @@ async function partView(id) {
             <h1>${p.title}</h1>
             <div class="detail-seller"><span class="seller-avatar">${(p.seller_name||'S').charAt(0)}</span><span>by <strong>${p.seller_name || 'Seller'}</strong></span><span class="detail-downloads">${p.downloads || 0} downloads</span></div>
             <div class="detail-price">$${(p.price || 0).toFixed(2)}</div>
-            <div class="detail-trust"><span>Secure Payment</span><span>Instant Download</span><span>$5 Flat Fee</span></div>
+            <div class="detail-trust"><span>Secure Payment</span><span>Instant Download</span><span>$10 Listing Fee</span></div>
             <div class="detail-actions">
                 ${p.purchased || (currentUser && currentUser.id === p.user_id) ? 
                     `<a href="${p.file_url}" download class="btn btn-lg btn-primary">Download File</a>` :
                     `<button class="btn btn-lg btn-primary" onclick="handleBuyPart(${p.id})">Buy Now - $${(p.price || 0).toFixed(2)}</button>`}
-                <a href="mailto:${p.seller_email || ''}" class="btn btn-lg btn-outline">Contact Seller</a>
+                <button class="btn btn-lg btn-outline" onclick="openContactModal(${p.user_id}, '${(p.seller_name || 'Seller').replace(/'/g, "\\'")}', '${(p.title || '').replace(/'/g, "\\'")}')">Contact Seller</button>
             </div>
             ${currentUser && currentUser.id === p.user_id ? `
             <div class="owner-actions">
@@ -1209,6 +1217,69 @@ function handlePhotoUpload(event) { for (let file of event.target.files) { if (u
 function renderPhotoGrid() { const grid = document.getElementById('photoGrid'); if (!grid) return; grid.innerHTML = uploadedPhotos.map((photo, i) => `<div class="photo-item"><img src="${photo}"><button class="photo-remove" onclick="removePhoto(${i})">x</button></div>`).join('') + (uploadedPhotos.length < 10 ? `<div class="photo-add" onclick="document.getElementById('photoInput').click()"><span class="photo-add-icon">+</span><span>Add</span></div>` : ''); }
 function removePhoto(index) { uploadedPhotos.splice(index, 1); uploadedPhotoFiles.splice(index, 1); renderPhotoGrid(); }
 function useMyLocation() { if (navigator.geolocation) { navigator.geolocation.getCurrentPosition(pos => { document.getElementById('locationInput').value = `${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`; }); } }
+
+// Contact Seller Modal
+function openContactModal(sellerId, sellerName, partTitle) {
+    if (!currentUser) { alert('Please login to contact sellers'); go('login'); return; }
+    if (currentUser.id === sellerId) { alert('This is your own listing'); return; }
+    
+    // Create modal
+    const modal = document.createElement('div');
+    modal.id = 'contactModal';
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="modal-box">
+            <button class="modal-close" onclick="closeContactModal()">×</button>
+            <h2>Contact Seller</h2>
+            <p class="modal-sub">Message <strong>${sellerName}</strong> about "${partTitle}"</p>
+            <form onsubmit="sendContactMessage(event, ${sellerId}, '${partTitle.replace(/'/g, "\\'")}')">
+                <div class="field">
+                    <label>Your Message</label>
+                    <textarea id="contactMessage" rows="4" placeholder="Hi, I have a question about this part..." required></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-outline" onclick="closeContactModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Send Message</button>
+                </div>
+            </form>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function closeContactModal() {
+    const modal = document.getElementById('contactModal');
+    if (modal) modal.remove();
+}
+
+async function sendContactMessage(e, sellerId, partTitle) {
+    e.preventDefault();
+    const content = document.getElementById('contactMessage').value.trim();
+    if (!content) return;
+    
+    const btn = e.target.querySelector('button[type="submit"]');
+    btn.textContent = 'Sending...';
+    btn.disabled = true;
+    
+    try {
+        await api('/api/messages', {
+            method: 'POST',
+            body: JSON.stringify({ 
+                recipient_id: sellerId, 
+                content: `[Re: ${partTitle}]\n\n${content}`,
+                notify_email: true  // Request email relay
+            })
+        });
+        closeContactModal();
+        alert('Message sent! The seller will also be notified by email.');
+        // Optionally go to conversation
+        go('conversation', sellerId);
+    } catch (err) {
+        alert('Error: ' + err.message);
+        btn.textContent = 'Send Message';
+        btn.disabled = false;
+    }
+}
 
 let currentPartData = null; // Store current part for viewer
 

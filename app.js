@@ -1,7 +1,7 @@
 // ForgAuto — 3D Marketplace for Cars
 // Version: 2.0
 
-const VERSION = '2.0';
+const VERSION = '2.1';
 
 // Data - Automotive Parts Only
 const parts = [
@@ -151,26 +151,6 @@ function homeView() {
             </div>
         </div>
 
-        <!-- Quick Actions -->
-        <div class="quick-actions">
-            <a href="#" onclick="go('browse')" class="quick-action">
-                <span class="quick-icon">🔍</span>
-                <span>Browse Parts</span>
-            </a>
-            <a href="#" onclick="go('designers')" class="quick-action">
-                <span class="quick-icon">✏️</span>
-                <span>Hire Designer</span>
-            </a>
-            <a href="#" onclick="go('sell')" class="quick-action">
-                <span class="quick-icon">💰</span>
-                <span>Sell Parts</span>
-            </a>
-            <a href="#" onclick="go('printshops')" class="quick-action">
-                <span class="quick-icon">🖨️</span>
-                <span>Find Print Shop</span>
-            </a>
-        </div>
-        
         <div class="categories">
             <h2>Categories</h2>
             <div class="cat-grid">
@@ -179,21 +159,6 @@ function homeView() {
                         <div class="cat-icon">${c.icon}</div>
                         <img src="${c.img}" alt="${c.name}">
                         <span>${c.name}</span>
-                    </a>
-                `).join('')}
-            </div>
-        </div>
-        
-        <div class="section makes-section">
-            <div class="section-head">
-                <h2>Popular Makes</h2>
-                <a href="#" onclick="go('browse')">View all</a>
-            </div>
-            <div class="makes-grid">
-                ${carMakes.filter(m => m !== 'Universal').map(m => `
-                    <a href="#" onclick="filterMake='${m}';filterModel='';filterCat='';filter='';go('browse')" class="make-item">
-                        <span class="make-logo">${m.charAt(0)}</span>
-                        <span>${m}</span>
                     </a>
                 `).join('')}
             </div>

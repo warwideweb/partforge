@@ -1,4 +1,4 @@
-# ForgAuto v3.1
+# ForgAuto v3.2
 
 The 3D marketplace for automotive parts. Buy and sell STL files for your car.
 
@@ -47,6 +47,14 @@ The 3D marketplace for automotive parts. Buy and sell STL files for your car.
 ---
 
 ## Version History
+
+### v3.2 (Feb 17, 2026)
+- Editable listings (owner can edit/delete)
+- Mobile-friendly responsive design
+- Improved 3D viewer with loading states
+- Download button after purchase
+- Better touch controls for 3D model
+- Fixed auth token for uploads
 
 ### v3.1 (Feb 17, 2026)
 - Fixed Hire Designer page (shows sample designers)

@@ -1,7 +1,7 @@
 // ForgAuto — 3D Marketplace for Cars
 // Version: 3.0 - Full Backend Integration
 
-const VERSION = '3.1';
+const VERSION = '3.2';
 const API_URL = 'https://forgauto-api.warwideweb.workers.dev'; // Cloudflare Worker API
 
 // State
@@ -252,6 +252,7 @@ async function render(data) {
     else if (view === 'browse') { await loadParts(); app.innerHTML = browseView(); }
     else if (view === 'designers') { await loadDesigners(); app.innerHTML = designersView(); }
     else if (view === 'sell') app.innerHTML = sellView();
+    else if (view === 'edit') app.innerHTML = await editView(data);
     else if (view === 'part') { app.innerHTML = await partView(data); initViewer(data); }
     else if (view === 'designer') app.innerHTML = await designerView(data);
     else if (view === 'printshops') app.innerHTML = printShopsView(data);
@@ -893,6 +894,60 @@ async function handleCreateListing(e) {
 
 function updateTotal() { document.getElementById('totalPrice').textContent = document.getElementById('featuredCheckbox')?.checked ? '$15.00' : '$5.00'; }
 
+async function editView(partId) {
+    if (!currentUser) return '<div class="auth-prompt"><h2>Login Required</h2><a href="#" onclick="go(\'login\'); return false;" class="btn btn-primary">Login</a></div>';
+    
+    let p;
+    try { p = await api(`/api/parts/${partId}`); } catch (e) { return '<p>Part not found.</p>'; }
+    if (!p || p.user_id !== currentUser.id) return '<p>Not authorized to edit this listing.</p>';
+    
+    return `<div class="sell-layout">
+        <div class="sell-info"><h1>Edit Listing</h1><p>Update your part details.</p></div>
+        <div class="form"><h2>${p.title}</h2>
+            <form onsubmit="handleEditListing(event, ${p.id})">
+            <div class="field"><label>Part Name</label><input type="text" id="editTitle" value="${p.title}" required></div>
+            <div class="field"><label>Description</label><textarea id="editDesc" rows="4" required>${p.description || ''}</textarea></div>
+            <div class="field-row"><div class="field"><label>Category</label><select id="editCat" required>${categories.map(c => `<option ${p.category===c.name?'selected':''}>${c.name}</option>`).join('')}</select></div><div class="field"><label>Price (USD)</label><input type="number" id="editPrice" value="${p.price}" min="0.99" step="0.01" required></div></div>
+            <div class="field-row"><div class="field"><label>Material</label><input type="text" id="editMaterial" value="${p.material || ''}"></div><div class="field"><label>Infill %</label><input type="text" id="editInfill" value="${p.infill || ''}"></div></div>
+            <button type="submit" class="btn btn-lg btn-primary" style="width:100%">Save Changes</button>
+            <a href="#" onclick="go('part', ${p.id}); return false;" class="btn btn-lg btn-outline" style="width:100%;margin-top:10px;">Cancel</a>
+            </form>
+        </div>
+    </div>`;
+}
+
+async function handleEditListing(e, partId) {
+    e.preventDefault();
+    try {
+        await api(`/api/parts/${partId}`, {
+            method: 'PUT',
+            body: JSON.stringify({
+                title: document.getElementById('editTitle').value,
+                description: document.getElementById('editDesc').value,
+                category: document.getElementById('editCat').value,
+                price: parseFloat(document.getElementById('editPrice').value),
+                material: document.getElementById('editMaterial').value,
+                infill: document.getElementById('editInfill').value
+            })
+        });
+        alert('Listing updated!');
+        go('part', partId);
+    } catch (err) {
+        alert('Error: ' + err.message);
+    }
+}
+
+async function handleDeletePart(partId) {
+    if (!confirm('Are you sure you want to delete this listing? This cannot be undone.')) return;
+    try {
+        await api(`/api/parts/${partId}`, { method: 'DELETE' });
+        alert('Listing deleted.');
+        go('dashboard');
+    } catch (err) {
+        alert('Error: ' + err.message);
+    }
+}
+
 async function partView(id) {
     // Always try API first to get real data, then fall back to demo
     let p = null;
@@ -923,9 +978,16 @@ async function partView(id) {
             <div class="detail-price">$${(p.price || 0).toFixed(2)}</div>
             <div class="detail-trust"><span>Secure Payment</span><span>Instant Download</span><span>$5 Flat Fee</span></div>
             <div class="detail-actions">
-                <button class="btn btn-lg btn-primary" onclick="handleBuyPart(${p.id})">Buy Now - $${(p.price || 0).toFixed(2)}</button>
+                ${p.purchased || (currentUser && currentUser.id === p.user_id) ? 
+                    `<a href="${p.file_url}" download class="btn btn-lg btn-primary">Download File</a>` :
+                    `<button class="btn btn-lg btn-primary" onclick="handleBuyPart(${p.id})">Buy Now - $${(p.price || 0).toFixed(2)}</button>`}
                 <a href="mailto:${p.seller_email || ''}" class="btn btn-lg btn-outline">Contact Seller</a>
             </div>
+            ${currentUser && currentUser.id === p.user_id ? `
+            <div class="owner-actions">
+                <button class="btn btn-outline" onclick="go('edit', ${p.id})">Edit Listing</button>
+                <button class="btn btn-outline btn-danger" onclick="handleDeletePart(${p.id})">Delete</button>
+            </div>` : ''}
             ${currentUser && currentUser.id === p.user_id && !p.premiered ? `
             <div class="boost-cta">
                 <div class="boost-header">
@@ -1107,55 +1169,106 @@ function initViewer(partId) {
     
     // Check if THREE.js loaded
     if (!window.THREE) {
-        container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#666;flex-direction:column;"><span style="font-size:40px;margin-bottom:12px;">3D</span><span>3D viewer loading failed</span></div>';
+        container.innerHTML = '<div class="viewer-loading"><span style="font-size:48px;">3D</span><p>3D viewer loading failed</p></div>';
         return;
     }
     
-    // Check if part has STL file URL
-    const stlUrl = p.stl_url || p.file_url;
-    if (!stlUrl) {
-        container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#666;flex-direction:column;text-align:center;padding:20px;"><span style="font-size:48px;margin-bottom:12px;">3D</span><span style="font-size:14px;">No 3D file uploaded yet</span></div>';
+    // Check if part has file URL
+    const fileUrl = p.stl_url || p.file_url;
+    if (!fileUrl) {
+        container.innerHTML = '<div class="viewer-loading"><span style="font-size:48px;">3D</span><p>No 3D file uploaded</p></div>';
         return;
     }
     
-    const width = container.clientWidth, height = container.clientHeight;
+    // Check if it's an STL file (only format Three.js can render natively)
+    const isSTL = fileUrl.toLowerCase().includes('.stl');
+    if (!isSTL) {
+        container.innerHTML = `<div class="viewer-loading"><span style="font-size:48px;">3D</span><p>Preview for ${p.file_format || 'this format'}</p><p style="font-size:12px;color:#666;">Full 3D view available for STL files</p></div>`;
+        return;
+    }
+    
+    // Show loading
+    container.innerHTML = '<div class="viewer-loading"><div class="viewer-loading-spinner"></div><p>Loading 3D model...</p></div>';
+    
+    const width = container.clientWidth || 400;
+    const height = container.clientHeight || 300;
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x1a1a1a);
-    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
-    camera.position.set(0, 0, 100);
+    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 2000);
+    camera.position.set(0, 0, 150);
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(width, height);
-    renderer.setPixelRatio(window.devicePixelRatio);
-    container.appendChild(renderer.domElement);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    
     const controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
     controls.autoRotate = true;
-    scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-    const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-    dirLight.position.set(1, 1, 1);
-    scene.add(dirLight);
+    controls.autoRotateSpeed = 2;
+    controls.enableZoom = true;
+    controls.enablePan = true;
+    
+    // Lighting
+    scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+    const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.8);
+    dirLight1.position.set(1, 1, 1);
+    scene.add(dirLight1);
+    const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.4);
+    dirLight2.position.set(-1, -1, -1);
+    scene.add(dirLight2);
     
     // Load STL file
     const loader = new THREE.STLLoader();
-    loader.load(stlUrl, function(geometry) {
+    loader.load(fileUrl, function(geometry) {
+        container.innerHTML = '';
+        container.appendChild(renderer.domElement);
+        
         geometry.computeBoundingBox();
         geometry.center();
-        const material = new THREE.MeshPhongMaterial({ color: 0x2563eb, shininess: 50 });
+        
+        const material = new THREE.MeshPhongMaterial({ 
+            color: 0x2563eb, 
+            shininess: 80,
+            specular: 0x444444
+        });
         const mesh = new THREE.Mesh(geometry, material);
         
         // Auto-scale to fit view
         const box = geometry.boundingBox;
         const size = Math.max(box.max.x - box.min.x, box.max.y - box.min.y, box.max.z - box.min.z);
-        const scale = 50 / size;
+        const scale = 60 / size;
         mesh.scale.set(scale, scale, scale);
         
         scene.add(mesh);
-    }, undefined, function(error) {
+        
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+        
+        // Handle resize
+        window.addEventListener('resize', () => {
+            const w = container.clientWidth;
+            const h = container.clientHeight;
+            camera.aspect = w / h;
+            camera.updateProjectionMatrix();
+            renderer.setSize(w, h);
+        });
+        
+    }, function(progress) {
+        // Progress callback
+        if (progress.total) {
+            const pct = Math.round((progress.loaded / progress.total) * 100);
+            const loadingDiv = container.querySelector('.viewer-loading p');
+            if (loadingDiv) loadingDiv.textContent = `Loading 3D model... ${pct}%`;
+        }
+    }, function(error) {
         console.error('STL load error:', error);
-        container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#666;flex-direction:column;"><span style="font-size:40px;margin-bottom:12px;">3D</span><span>Failed to load 3D model</span></div>';
+        container.innerHTML = '<div class="viewer-loading"><span style="font-size:48px;">3D</span><p>Failed to load model</p></div>';
     });
-    
-    (function animate() { requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); })();
 }
 
 // Initialize

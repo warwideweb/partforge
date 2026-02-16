@@ -1,7 +1,7 @@
 // ForgAuto — 3D Marketplace for Cars
 // Version: 3.0 - Full Backend Integration
 
-const VERSION = '3.4';
+const VERSION = '3.5';
 const API_URL = 'https://forgauto-api.warwideweb.workers.dev'; // Cloudflare Worker API
 
 // State
@@ -514,7 +514,7 @@ async function dashboardView() {
         
         <div id="dashListings" class="dash-content">
             <h2>My Listings (${myParts.length})</h2>
-            ${myParts.length ? `<div class="grid">${myParts.map(p => cardHTML(p, false, false, true)).join('')}</div>` : '<p class="empty-state">No listings yet. <a href="#" onclick="go(\'sell\'); return false;">Create your first listing</a></p>'}
+            ${myParts.length ? `<div class="grid">${myParts.map(p => sellerCardHTML(p)).join('')}</div>` : '<p class="empty-state">No listings yet. <a href="#" onclick="go(\'sell\'); return false;">Create your first listing</a></p>'}
         </div>
         
         <div id="dashMessages" class="dash-content" style="display:none">
@@ -655,8 +655,10 @@ async function handleAvatarUpload(event) {
 // ========== HOME VIEW ==========
 
 function homeView() {
-    const premieredParts = parts.filter(p => p.featured || p.premiered).slice(0, 4);
-    const featuredParts = parts.filter(p => p.featured);
+    // ONLY show parts with valid images in public views
+    const validParts = filterPublicParts(parts);
+    const premieredParts = validParts.filter(p => p.featured || p.premiered).slice(0, 4);
+    const featuredParts = validParts.filter(p => p.featured);
     
     return `
         <div class="promo-banner">
@@ -695,8 +697,8 @@ function homeView() {
         ${featuredParts.length ? `<div class="section featured-section"><div class="section-head"><h2>Featured Parts</h2></div>
             <div class="grid">${featuredParts.slice(0, 4).map(p => cardHTML(p)).join('')}</div></div>` : ''}
         
-        <div class="section"><div class="section-head"><h2>New Parts</h2>${parts.length ? `<a href="#" onclick="go('browse'); return false;">View all</a>` : ''}</div>
-            ${parts.length ? `<div class="grid">${parts.slice(0, 8).map(cardHTML).join('')}</div>` : 
+        <div class="section"><div class="section-head"><h2>New Parts</h2>${validParts.length ? `<a href="#" onclick="go('browse'); return false;">View all</a>` : ''}</div>
+            ${validParts.length ? `<div class="grid">${validParts.slice(0, 8).map(cardHTML).join('')}</div>` : 
             `<div class="empty-cta"><h3>Be the first to list a part</h3><p>Start selling your 3D automotive designs today.</p><a href="#" onclick="go('sell'); return false;" class="btn btn-lg btn-primary">Create Listing - $10</a></div>`}
         </div>
 
@@ -705,7 +707,7 @@ function homeView() {
         </div>
 
         <div class="stats-bar">
-            <div class="stat"><span class="stat-num">${parts.length}</span><span class="stat-label">${parts.length === 1 ? 'Part' : 'Parts'} Listed</span></div>
+            <div class="stat"><span class="stat-num">${validParts.length}</span><span class="stat-label">${validParts.length === 1 ? 'Part' : 'Parts'} Listed</span></div>
             <div class="stat"><span class="stat-num">${demoDesigners.length}</span><span class="stat-label">${demoDesigners.length === 1 ? 'Designer' : 'Designers'}</span></div>
             <div class="stat"><span class="stat-num">${carMakes.length - 1}</span><span class="stat-label">Car Brands</span></div>
             <div class="stat"><span class="stat-num">$10</span><span class="stat-label">Flat Fee</span></div>
@@ -715,7 +717,8 @@ function homeView() {
 }
 
 function browseView() {
-    let filtered = parts;
+    // Start with only parts that have valid images
+    let filtered = filterPublicParts(parts);
     if (filter) { const q = filter.toLowerCase(); filtered = filtered.filter(p => (p.title||'').toLowerCase().includes(q) || (p.category||'').toLowerCase().includes(q) || (p.description||'').toLowerCase().includes(q) || (p.make||'').toLowerCase().includes(q) || (p.model||'').toLowerCase().includes(q)); }
     if (filterCat) filtered = filtered.filter(p => p.category === filterCat);
     if (filterMake) filtered = filtered.filter(p => p.make === filterMake);
@@ -1054,7 +1057,7 @@ async function partView(id) {
             ${currentUser ? `<div class="write-review"><h3>Write a Review</h3><form onsubmit="handleReview(event, ${p.id})"><div class="field"><label>Rating</label><select id="reviewRating"><option value="5">5 - Excellent</option><option value="4">4 - Good</option><option value="3">3 - Average</option><option value="2">2 - Poor</option><option value="1">1 - Terrible</option></select></div><div class="field"><label>Comment</label><textarea id="reviewComment" rows="3" placeholder="Share your experience..."></textarea></div><button type="submit" class="btn btn-primary">Submit Review</button></form></div>` : ''}
         </div>
     </div>
-    <div class="section"><div class="section-head"><h2>Similar Parts</h2></div><div class="grid">${parts.filter(x => x.id !== p.id && (x.make === p.make || x.category === p.category)).slice(0, 4).map(cardHTML).join('')}</div></div>
+    <div class="section"><div class="section-head"><h2>Similar Parts</h2></div><div class="grid">${filterPublicParts(parts).filter(x => x.id !== p.id && (x.make === p.make || x.category === p.category)).slice(0, 4).map(cardHTML).join('')}</div></div>
     <div id="lightbox" class="lightbox" onclick="closeLightbox()"><button class="lightbox-close" onclick="closeLightbox()">x</button><img id="lightboxImg" src="" alt="Zoomed image"></div>`;
 }
 
@@ -1151,8 +1154,8 @@ async function profileView(id) {
     try { user = await api(`/api/users/${id}`); } catch (e) { return '<p>User not found.</p>'; }
     try { userParts = await api(`/api/parts?user=${id}`); } catch (e) { userParts = []; }
     
-    // Filter to only show active parts (not incomplete)
-    const activeParts = userParts.filter(p => p.status === 'active');
+    // Filter to only show parts with valid images (public profile)
+    const activeParts = filterPublicParts(userParts);
     
     return `<div class="profile-page">
         <div class="profile-header">
@@ -1172,39 +1175,87 @@ async function profileView(id) {
     </div>`;
 }
 
-function cardHTML(p, showPremiered = false, showFeatured = false, showIncomplete = false) {
-    // Get first valid image - skip data: URLs (old corrupt base64)
-    let img = null;
+// ============ IMAGE VALIDATION HELPERS ============
+
+// Check if a URL is a valid image URL (not base64, not placeholder)
+function isValidImageUrl(url) {
+    if (!url) return false;
+    if (url.startsWith('data:')) return false; // Corrupt base64
+    if (url.includes('placehold.co')) return false; // Placeholder
+    if (url.includes('placeholder')) return false;
+    return true;
+}
+
+// Get first valid image from a part
+function getValidImage(p) {
     if (p.images && p.images.length > 0) {
-        // Find first URL that's NOT a data: URL (which are corrupt)
-        img = p.images.find(url => url && !url.startsWith('data:'));
+        const valid = p.images.find(url => isValidImageUrl(url));
+        if (valid) return valid;
     }
-    if (!img && p.img && !p.img.startsWith('data:')) {
-        img = p.img;
-    }
-    // Fallback: use a nice gradient placeholder (no text on black boxes!)
-    if (!img) {
-        img = `https://placehold.co/600x450/2563eb/ffffff?text=No+Photo`;
-    }
+    if (p.img && isValidImageUrl(p.img)) return p.img;
+    return null;
+}
+
+// Check if part has valid image for public display
+function hasValidImage(p) {
+    return getValidImage(p) !== null;
+}
+
+// Filter parts to only those with valid images (for public views)
+function filterPublicParts(partsArray) {
+    return partsArray.filter(p => hasValidImage(p) && p.status === 'active');
+}
+
+// ============ CARD RENDERING ============
+
+// PUBLIC card - NEVER shows placeholder, only renders if valid image exists
+function cardHTML(p) {
+    const img = getValidImage(p);
+    // If no valid image, don't render card at all in public view
+    if (!img) return '';
     
-    const isIncomplete = p.status === 'incomplete';
-    const cardClass = `card ${isIncomplete ? 'card-incomplete' : ''}`;
-    
-    // Build missing info warning
-    let missingInfo = [];
-    if (!p.file_url) missingInfo.push('3D File');
-    const hasValidImage = p.images && p.images.some(url => url && !url.startsWith('data:'));
-    if (!hasValidImage) missingInfo.push('Photos');
-    
-    return `<div class="${cardClass}" onclick="go('part', ${p.id}); return false;">
+    return `<div class="card" onclick="go('part', ${p.id}); return false;">
         <div class="card-image">
-            <img src="${img}" alt="${p.title}" onerror="this.onerror=null;this.src='https://placehold.co/600x450/2563eb/ffffff?text=No+Photo'">
+            <img src="${img}" alt="${p.title}" onerror="this.parentElement.parentElement.style.display='none'">
             <span class="card-badge">${p.category || 'Part'}</span>
-            ${isIncomplete && showIncomplete ? `<span class="incomplete-badge">MISSING INFO</span>` : ''}
         </div>
         <div class="card-body">
             <div class="card-title">${p.title}</div>
-            ${isIncomplete && showIncomplete && missingInfo.length ? `<div class="missing-info">Missing: ${missingInfo.join(', ')}</div>` : ''}
+            <div class="card-meta">
+                <span class="card-cat">${p.make && p.make !== 'Non-Specific' ? p.make : ''}${p.model && p.model !== 'All' && p.model !== 'Any' ? ' ' + p.model : ''}</span>
+                <span class="card-price">$${(p.price || 0).toFixed(2)}</span>
+            </div>
+        </div>
+    </div>`;
+}
+
+// SELLER DASHBOARD card - shows gray placeholder with RED warning if missing image
+function sellerCardHTML(p) {
+    const img = getValidImage(p);
+    const hasImage = !!img;
+    const hasFile = !!p.file_url;
+    const isComplete = hasImage && hasFile;
+    
+    // Build missing info
+    let missingInfo = [];
+    if (!hasFile) missingInfo.push('3D File');
+    if (!hasImage) missingInfo.push('Photo');
+    
+    // Card classes
+    const cardClass = `card ${!isComplete ? 'card-warning' : ''}`;
+    
+    // Image: use valid image or gray placeholder (NEVER blue)
+    const displayImg = img || 'https://placehold.co/600x450/333333/999999?text=';
+    
+    return `<div class="${cardClass}" onclick="go('part', ${p.id}); return false;">
+        <div class="card-image">
+            <img src="${displayImg}" alt="${p.title}">
+            <span class="card-badge">${p.category || 'Part'}</span>
+            ${!isComplete ? `<span class="warning-badge">IMAGE REQUIRED</span>` : ''}
+        </div>
+        <div class="card-body">
+            <div class="card-title">${p.title}</div>
+            ${!isComplete ? `<div class="warning-text">Not visible publicly. Missing: ${missingInfo.join(', ')}</div>` : ''}
             <div class="card-meta">
                 <span class="card-cat">${p.make && p.make !== 'Non-Specific' ? p.make : ''}${p.model && p.model !== 'All' && p.model !== 'Any' ? ' ' + p.model : ''}</span>
                 <span class="card-price">$${(p.price || 0).toFixed(2)}</span>

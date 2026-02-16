@@ -176,8 +176,8 @@ body.dark .featured-section { background: linear-gradient(135deg, #422006 0%, #7
 .card-image img { width: 100%; aspect-ratio: 4/3; object-fit: cover; transition: transform 0.3s; }
 .card:hover .card-image img { transform: scale(1.05); }
 .card-badge { position: absolute; top: 12px; left: 12px; background: rgba(0,0,0,0.7); color: #fff; padding: 4px 10px; border-radius: 6px; font-size: 11px; }
-.trending-badge { position: absolute; top: 12px; right: 12px; font-size: 20px; }
-.featured-badge-card { position: absolute; top: 12px; right: 12px; font-size: 20px; }
+.premiered-badge { position: absolute; top: 12px; right: 12px; }
+.featured-badge-card { position: absolute; top: 12px; left: 50px; }
 .card-body { padding: 16px; }
 .card-title { font-size: 14px; font-weight: 600; margin-bottom: 10px; }
 .card-meta { display: flex; justify-content: space-between; align-items: center; }
@@ -1027,7 +1027,7 @@ body.dark {
     box-shadow: 0 0 20px rgba(37, 99, 235, 0.3);
 }
 
-.trending-badge {
+.premiered-badge {
     position: absolute;
     top: 10px;
     right: 10px;
@@ -1035,9 +1035,11 @@ body.dark {
     color: #fff;
     padding: 6px 12px;
     border-radius: 20px;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 700;
+    letter-spacing: 0.5px;
     z-index: 2;
+    text-transform: uppercase;
 }
 
 .featured-badge-card {
@@ -1046,14 +1048,13 @@ body.dark {
     left: 10px;
     background: var(--primary);
     color: #fff;
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.9rem;
+    padding: 5px 10px;
+    border-radius: 16px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
     z-index: 2;
+    text-transform: uppercase;
 }
 
 .card-image {

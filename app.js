@@ -128,10 +128,10 @@ const carModels = {
 
 // Demo data (fallback)
 const demoParts = [
-    { id: 1, title: "Tesla-Style Phone Mount", category: "Interior", make: "Universal", model: "All", price: 3.99, images: ["https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&h=450&fit=crop"], seller_name: "AutoParts3D", seller_email: "auto@example.com", description: "Minimalist phone mount for car vents with ball joint design.", file_format: "STL, STEP", file_size: "1.8 MB", material: "PLA", infill: "25%", downloads: 567, featured: 1 },
-    { id: 2, title: "BMW E30 Phone Dock", category: "Interior", make: "BMW", model: "E30", price: 5.99, images: ["https://images.unsplash.com/photo-1555215695-3004980ad54e?w=600&h=450&fit=crop"], seller_name: "BimmerParts", seller_email: "bmw@example.com", description: "Custom phone dock for BMW E30 center console.", file_format: "STL", file_size: "2.1 MB", material: "PETG", infill: "30%", downloads: 312 },
-    { id: 3, title: "Toyota Supra MK4 Gauge Pod", category: "Gauges", make: "Toyota", model: "Supra MK4", price: 8.99, images: ["https://images.unsplash.com/photo-1600712242805-5f78671b24da?w=600&h=450&fit=crop"], seller_name: "JDMParts3D", seller_email: "jdm@example.com", description: "52mm gauge pod for MK4 Supra center vent.", file_format: "STL, STEP", file_size: "3.4 MB", material: "ABS", infill: "40%", downloads: 523, featured: 1 },
-    { id: 4, title: "Honda Civic EG Cup Holder", category: "Interior", make: "Honda", model: "Civic EG", price: 4.49, images: ["https://images.unsplash.com/photo-1606611013016-969c19ba27bb?w=600&h=450&fit=crop"], seller_name: "HondaHacks", seller_email: "honda@example.com", description: "Dual cup holder insert for Civic EG.", file_format: "STL", file_size: "1.6 MB", material: "PLA", infill: "25%", downloads: 445 },
+    { id: 1, title: "Tesla-Style Phone Mount", category: "Interior", make: "Universal", model: "All", price: 3.99, images: ["https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&h=450&fit=crop"], seller_name: "AutoParts3D", seller_email: "auto@example.com", description: "Minimalist phone mount for car vents with ball joint design.", file_format: "STL, STEP", file_size: "1.8 MB", material: "PLA", infill: "25%", downloads: 567, featured: 1, premiered: 1 },
+    { id: 2, title: "BMW E30 Phone Dock", category: "Interior", make: "BMW", model: "E30", price: 5.99, images: ["https://images.unsplash.com/photo-1555215695-3004980ad54e?w=600&h=450&fit=crop"], seller_name: "BimmerParts", seller_email: "bmw@example.com", description: "Custom phone dock for BMW E30 center console.", file_format: "STL", file_size: "2.1 MB", material: "PETG", infill: "30%", downloads: 312, premiered: 1 },
+    { id: 3, title: "Toyota Supra MK4 Gauge Pod", category: "Gauges", make: "Toyota", model: "Supra MK4", price: 8.99, images: ["https://images.unsplash.com/photo-1600712242805-5f78671b24da?w=600&h=450&fit=crop"], seller_name: "JDMParts3D", seller_email: "jdm@example.com", description: "52mm gauge pod for MK4 Supra center vent.", file_format: "STL, STEP", file_size: "3.4 MB", material: "ABS", infill: "40%", downloads: 523, featured: 1, premiered: 1 },
+    { id: 4, title: "Honda Civic EG Cup Holder", category: "Interior", make: "Honda", model: "Civic EG", price: 4.49, images: ["https://images.unsplash.com/photo-1606611013016-969c19ba27bb?w=600&h=450&fit=crop"], seller_name: "HondaHacks", seller_email: "honda@example.com", description: "Dual cup holder insert for Civic EG.", file_format: "STL", file_size: "1.6 MB", material: "PLA", infill: "25%", downloads: 445, premiered: 1 },
     { id: 5, title: "Mazda Miata NA Phone Mount", category: "Interior", make: "Mazda", model: "Miata NA", price: 6.99, images: ["https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=600&h=450&fit=crop"], seller_name: "MiataMods", seller_email: "miata@example.com", description: "Low-profile phone mount for NA Miata.", file_format: "STL", file_size: "1.9 MB", material: "PETG", infill: "30%", downloads: 678 },
     { id: 6, title: "BMW E46 Coin Delete", category: "Interior", make: "BMW", model: "E46", price: 3.49, images: ["https://images.unsplash.com/photo-1617814076367-b759c7d7e738?w=600&h=450&fit=crop"], seller_name: "BimmerParts", seller_email: "bmw@example.com", description: "Clean delete panel for E46 coin holder.", file_format: "STL", file_size: "0.8 MB", material: "PLA", infill: "20%", downloads: 234 },
     { id: 7, title: "Nissan 350Z Triple Gauge Pod", category: "Gauges", make: "Nissan", model: "350Z", price: 12.99, images: ["https://images.unsplash.com/photo-1619405399517-d7fce0f13302?w=600&h=450&fit=crop"], seller_name: "ZCarParts", seller_email: "zcar@example.com", description: "A-pillar triple gauge pod for 350Z.", file_format: "STL, STEP", file_size: "4.8 MB", material: "ABS", infill: "35%", downloads: 389 },
@@ -635,7 +635,7 @@ async function handleAvatarUpload(event) {
 // ========== HOME VIEW ==========
 
 function homeView() {
-    const trendingParts = [...parts].sort((a, b) => b.downloads - a.downloads).slice(0, 4);
+    const premieredParts = parts.filter(p => p.featured || p.premiered).slice(0, 4);
     const featuredParts = parts.filter(p => p.featured);
     
     return `
@@ -678,8 +678,8 @@ function homeView() {
             <div class="cat-grid">${categories.map(c => `<a href="#" class="cat-item" onclick="filterCat='${c.name}';go('browse'); return false;"><img src="${c.img}" alt="${c.name}"><span>${c.name}</span></a>`).join('')}</div>
         </div>
 
-        <div class="section"><div class="section-head"><h2>Trending Parts</h2><a href="#" onclick="go('browse'); return false;">View all</a></div>
-            <div class="grid">${trendingParts.map(p => cardHTML(p, true)).join('')}</div>
+        <div class="section"><div class="section-head"><h2>Premiered Parts</h2><a href="#" onclick="go('browse'); return false;">View all</a></div>
+            <div class="grid">${premieredParts.map(p => cardHTML(p, true)).join('')}</div>
         </div>
 
         ${featuredParts.length ? `<div class="section featured-section"><div class="section-head"><h2>Featured Parts</h2><span class="featured-badge">SPONSORED</span></div>
@@ -942,15 +942,16 @@ async function profileView(id) {
     return `<div class="profile-page"><div class="profile-header"><div class="profile-avatar">${user.avatar_url ? `<img src="${user.avatar_url}">` : user.name.charAt(0)}</div><div><h1>${user.name}</h1><p>${user.role === 'designer' ? 'Designer' : 'Seller'}</p><p>${user.bio || ''}</p></div></div></div>`;
 }
 
-function cardHTML(p, showTrending = false, showFeatured = false) {
-    const img = p.images?.[0] || p.img || `https://placehold.co/600x450/1a1a1a/666?text=${encodeURIComponent(p.title || 'Part')}`;
-    const cardClass = `card ${showFeatured || p.featured ? 'card-featured' : ''} ${showTrending ? 'card-trending' : ''}`;
+function cardHTML(p, showPremiered = false, showFeatured = false) {
+    // Use actual images - placeholder only shows part title on dark background
+    const img = p.images?.[0] || p.img || `https://placehold.co/600x450/1a1a1a/444?text=${encodeURIComponent(p.title || 'Part')}`;
+    const cardClass = `card ${showFeatured || p.featured ? 'card-featured' : ''} ${showPremiered ? 'card-premiered' : ''}`;
     return `<div class="${cardClass}" onclick="go('part', ${p.id}); return false;">
         <div class="card-image">
-            <img src="${img}" alt="${p.title}" onerror="this.src='https://placehold.co/600x450/1a1a1a/666?text=No+Image'">
+            <img src="${img}" alt="${p.title}" onerror="this.onerror=null;this.src='https://placehold.co/600x450/1a1a1a/444?text=${encodeURIComponent(p.title || 'Part')}'">
             <span class="card-badge">${p.category || 'Part'}</span>
-            ${showTrending ? '<span class="trending-badge">🔥 HOT</span>' : ''}
-            ${showFeatured || p.featured ? '<span class="featured-badge-card">⭐</span>' : ''}
+            ${showPremiered || p.premiered ? '<span class="premiered-badge">PREMIERED</span>' : ''}
+            ${showFeatured || p.featured ? '<span class="featured-badge-card">FEATURED</span>' : ''}
         </div>
         <div class="card-body">
             <div class="card-title">${p.title}</div>

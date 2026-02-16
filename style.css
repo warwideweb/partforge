@@ -155,6 +155,33 @@ main {
 /* Categories */
 .categories {
     margin-top: 80px;
+    margin-left: -32px;
+    margin-right: -32px;
+    padding: 48px 32px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 50%, #f8f9fa 100%);
+    background-size: 200% 200%;
+    animation: gradientShift 8s ease infinite;
+    position: relative;
+    overflow: hidden;
+}
+
+.categories::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(circle at 20% 50%, rgba(0,0,0,0.02) 0%, transparent 50%),
+        radial-gradient(circle at 80% 50%, rgba(0,0,0,0.02) 0%, transparent 50%);
+    pointer-events: none;
+}
+
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
 }
 
 .categories h2 {
@@ -163,12 +190,14 @@ main {
     letter-spacing: 1px;
     color: var(--muted);
     margin-bottom: 24px;
+    position: relative;
 }
 
 .cat-grid {
     display: grid;
     grid-template-columns: repeat(6, 1fr);
     gap: 16px;
+    position: relative;
 }
 
 .cat-item {
@@ -720,6 +749,7 @@ main {
     main { padding: 24px 16px; }
     .hero { padding: 48px 0; }
     .hero h1 { font-size: 32px; }
+    .categories { margin-left: -16px; margin-right: -16px; padding: 32px 16px; }
     .cat-grid { grid-template-columns: repeat(2, 1fr); }
     .grid { grid-template-columns: repeat(2, 1fr); }
     .browse { grid-template-columns: 1fr; }

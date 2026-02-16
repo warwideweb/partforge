@@ -1,6 +1,6 @@
 # ForgAuto — 3D Marketplace for Automotive Parts
 
-![Version](https://img.shields.io/badge/version-3.0-blue)
+![Version](https://img.shields.io/badge/version-2.2-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 **The marketplace for 3D printable car parts. $5 listing fee, 0% commission.**
@@ -16,21 +16,35 @@
 ### For Buyers
 - 🔍 Search by make, model, category
 - 🎨 3D model preview (STL viewer)
-- 💳 Secure checkout (Stripe - coming soon)
+- 💬 Message sellers directly
 - ⭐ Reviews and ratings
-- �icing Find local print shops
+- 🏭 Find local print shops
 
 ### For Sellers
 - 📤 Upload 3D files (STL, STEP, OBJ)
 - 💰 **$5 flat listing fee, keep 100% of sales**
 - 📊 Sales dashboard
-- 🌟 Featured listings (+$10)
+- 🌟 Featured listings (+$10/30 days)
+
+### For Designers
+- 💼 Get hired for custom work
+- ⭐ Build reputation with reviews
+- 🏆 Featured placement ($100/30 days)
+- 📈 Sorted by commissions earned
+
+### For Print Shops
+- 📍 Get discovered by local customers
+- ⭐ Customer reviews
+- 🏆 Featured placement ($150/30 days)
 
 ### Platform
-- 🔐 Google OAuth login
+- 🔐 Google OAuth + Email login
+- 🔑 Password recovery
 - 👤 Profile photos
+- 💬 Built-in messaging
 - 📱 Mobile responsive
 - ⚙️ Admin panel
+- ↩️ Browser back button support
 
 ---
 
@@ -48,115 +62,78 @@
 
 ---
 
+## Pricing
+
+| Feature | Price | Duration |
+|---------|-------|----------|
+| Part Listing | $5 | Forever |
+| Featured Part | +$10 | 30 days |
+| Featured Designer | $100 | 30 days |
+| Featured Print Shop | $150 | 30 days |
+| Commission | 0% | - |
+
+---
+
 ## API Endpoints
 
 ### Auth
 - `POST /api/auth/signup` — Email signup
 - `POST /api/auth/login` — Email login
 - `GET /api/auth/google` — Google OAuth
-- `GET /api/auth/me` — Current user
+- `POST /api/auth/forgot-password` — Request password reset
+- `POST /api/auth/reset-password` — Reset with token
 
 ### Parts
-- `GET /api/parts` — List parts (with filters)
+- `GET /api/parts` — List parts
+- `POST /api/parts` — Create listing
 - `GET /api/parts/:id` — Part details
-- `POST /api/parts` — Create listing (auth required)
-- `PUT /api/parts/:id` — Update listing
-- `DELETE /api/parts/:id` — Delete listing
+- `POST /api/parts/:id/reviews` — Add review
 
-### Users
-- `GET /api/users/:id` — Public profile
-- `PUT /api/profile` — Update profile
-- `PUT /api/profile/avatar` — Upload avatar
-- `GET /api/designers` — List designers
+### Messaging
+- `GET /api/messages` — List conversations
+- `GET /api/messages/:userId` — Get conversation
+- `POST /api/messages` — Send message
+- `GET /api/messages/unread` — Unread count
+
+### Designers
+- `GET /api/designers` — List (sorted by sales)
+- `POST /api/designers/feature` — Purchase featured
+
+### Print Shops
+- `GET /api/printshops` — List shops
+- `POST /api/printshops/register` — Register shop
+- `POST /api/printshops/:id/reviews` — Add review
+- `POST /api/printshops/:id/feature` — Purchase featured
 
 ### Admin
-- `GET /api/admin/stats` — Dashboard stats
+- `GET /api/admin/stats` — Dashboard
 - `GET /api/admin/users` — All users
 - `GET /api/admin/parts` — All listings
 - `GET /api/admin/sales` — All transactions
-- `PUT /api/admin/users/:id` — Update user (ban/verify)
-- `DELETE /api/admin/parts/:id` — Remove listing
 
 ---
 
-## File Structure
+## Version History
 
-```
-PartForge/
-├── PartForge/              # Frontend (GitHub Pages)
-│   ├── index.html          # Main app
-│   ├── app.js              # Application logic
-│   ├── style.css           # Styles
-│   ├── admin.html          # Admin panel
-│   ├── privacy.html        # Privacy policy
-│   ├── terms.html          # Terms of service
-│   └── CNAME               # Custom domain
-├── worker/                 # Cloudflare Worker API
-│   ├── src/index.js        # API routes
-│   ├── wrangler.toml       # Worker config
-│   └── schema.sql          # Database schema
-├── PROJECT.md              # Full documentation
-└── README.md               # This file
-```
+| Version | Date | Changes |
+|---------|------|---------|
+| 1.0 | 2026-02-16 | Initial deployment |
+| 1.5 | 2026-02-16 | Google OAuth, profile photos |
+| 2.0 | 2026-02-16 | Messaging, password recovery, admin panel |
+| 2.1 | 2026-02-16 | Featured designers/shops, reviews |
+| 2.2 | 2026-02-16 | Browser history, Google OAuth fix |
 
 ---
 
 ## Deployment
 
-### Frontend
 ```bash
-cd PartForge
-git add -A && git commit -m "Update" && git push
+# Frontend
+cd PartForge && git push
+
+# API
+cd worker && npx wrangler deploy
 ```
-
-### Worker API
-```bash
-cd worker
-npx wrangler deploy
-```
-
-### Database Migrations
-```bash
-npx wrangler d1 execute forgauto --remote --command "YOUR SQL"
-```
-
-### Secrets
-```bash
-npx wrangler secret put SECRET_NAME
-```
-
----
-
-## Environment Variables (Worker)
-
-| Variable | Description |
-|----------|-------------|
-| `GOOGLE_CLIENT_ID` | Google OAuth client ID |
-| `GOOGLE_CLIENT_SECRET` | Google OAuth secret |
-| `ADMIN_KEY` | Admin panel access key |
-| `JWT_SECRET` | Session token secret |
-| `CORS_ORIGIN` | Allowed origins |
-
----
-
-## Business Model
-
-- **Listing Fee:** $5 one-time
-- **Commission:** 0% (sellers keep 100%)
-- **Featured:** +$10 for 30 days
-- **Revenue:** Listing fees only
-
----
-
-## Roadmap
-
-- [x] Core marketplace
-- [x] Google OAuth
-- [x] Profile photos
-- [x] Admin panel
-- [ ] Stripe payments
-- [ ] Print & Ship integration
-- [ ] Mobile app
 
 ---
 

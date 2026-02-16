@@ -1,6 +1,6 @@
 # ForgAuto — Complete Project Documentation
 
-**Last Updated:** 2026-02-16 22:37 GMT+7
+**Last Updated:** 2026-02-16 23:31 GMT+7 — Version 2.2
 
 ---
 
@@ -263,6 +263,9 @@ npx wrangler tail forgauto-api
 | 1.2 | 2026-02-16 | Google OAuth |
 | 1.3 | 2026-02-16 | Profile photos, R2 file serving |
 | 1.4 | 2026-02-16 | Admin panel |
+| 2.0 | 2026-02-16 | Messaging system, password recovery |
+| 2.1 | 2026-02-16 | Featured designers/shops, reviews, card styling |
+| 2.2 | 2026-02-16 | Browser history support, Google OAuth fix |
 
 ---
 

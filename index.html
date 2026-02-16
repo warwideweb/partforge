@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PartForge — 3D Printable Car Parts Marketplace</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙️</text></svg>">
+</head>
+<body>
+<!-- NAV -->
+<nav class="navbar" id="navbar">
+  <div class="nav-inner">
+    <a href="#" class="logo" onclick="navigate('home')">
+      <span class="logo-icon">⚙️</span>
+      <span class="logo-text">Part<span class="accent">Forge</span></span>
+    </a>
+    <div class="nav-links" id="navLinks">
+      <a href="#" onclick="navigate('home')">Home</a>
+      <a href="#" onclick="navigate('browse')">Browse</a>
+      <a href="#" onclick="navigate('sell')">Sell a Part</a>
+      <a href="#" onclick="navigate('dashboard')">Dashboard</a>
+    </div>
+    <div class="nav-actions">
+      <button class="btn btn-outline btn-sm" onclick="navigate('sell')">+ List Part</button>
+      <button class="btn btn-primary btn-sm nav-cta">Sign In</button>
+      <button class="hamburger" id="hamburger" onclick="toggleMenu()">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- MOBILE MENU -->
+<div class="mobile-menu" id="mobileMenu">
+  <a href="#" onclick="navigate('home');toggleMenu()">Home</a>
+  <a href="#" onclick="navigate('browse');toggleMenu()">Browse</a>
+  <a href="#" onclick="navigate('sell');toggleMenu()">Sell a Part</a>
+  <a href="#" onclick="navigate('dashboard');toggleMenu()">Dashboard</a>
+</div>
+
+<!-- PAGE: HOME -->
+<main id="page-home" class="page active">
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="container hero-content">
+      <div class="hero-badge">🚗 The marketplace for car enthusiasts & makers</div>
+      <h1>Download. Print. <span class="accent">Drive.</span></h1>
+      <p class="hero-sub">The world's first marketplace for 3D printable car parts. Find STL files for any make and model — or sell your own designs.</p>
+      <div class="search-box hero-search">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" id="heroSearch" placeholder="Search by car make, model, or part..." onkeydown="if(event.key==='Enter'){navigate('browse');document.getElementById('searchInput').value=this.value;filterListings()}">
+        <button class="btn btn-primary" onclick="navigate('browse');document.getElementById('searchInput').value=document.getElementById('heroSearch').value;filterListings()">Search</button>
+      </div>
+      <div class="hero-stats">
+        <div class="stat"><span class="stat-num">2,400+</span><span class="stat-label">Parts Listed</span></div>
+        <div class="stat"><span class="stat-num">850+</span><span class="stat-label">Sellers</span></div>
+        <div class="stat"><span class="stat-num">12K+</span><span class="stat-label">Downloads</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CATEGORIES -->
+  <section class="section">
+    <div class="container">
+      <h2 class="section-title">Browse by Category</h2>
+      <div class="categories-grid">
+        <div class="cat-card" onclick="browseCategory('Exterior')">
+          <div class="cat-icon">🏎️</div>
+          <span>Exterior</span>
+        </div>
+        <div class="cat-card" onclick="browseCategory('Interior')">
+          <div class="cat-icon">🪑</div>
+          <span>Interior</span>
+        </div>
+        <div class="cat-card" onclick="browseCategory('Engine Bay')">
+          <div class="cat-icon">⚡</div>
+          <span>Engine Bay</span>
+        </div>
+        <div class="cat-card" onclick="browseCategory('Wheels/Tires')">
+          <div class="cat-icon">🛞</div>
+          <span>Wheels/Tires</span>
+        </div>
+        <div class="cat-card" onclick="browseCategory('Lighting')">
+          <div class="cat-icon">💡</div>
+          <span>Lighting</span>
+        </div>
+        <div class="cat-card" onclick="browseCategory('Accessories')">
+          <div class="cat-icon">🔧</div>
+          <span>Accessories</span>
+        </div>
+        <div class="cat-card" onclick="browseCategory('Brackets/Mounts')">
+          <div class="cat-icon">🔩</div>
+          <span>Brackets/Mounts</span>
+        </div>
+        <div class="cat-card" onclick="browseCategory('Tools')">
+          <div class="cat-icon">🛠️</div>
+          <span>Tools</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURED -->
+  <section class="section section-dark">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Featured Parts</h2>
+        <a href="#" class="link-arrow" onclick="navigate('browse')">View all →</a>
+      </div>
+      <div class="listings-grid" id="featuredGrid"></div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="section">
+    <div class="container">
+      <h2 class="section-title">How It Works</h2>
+      <p class="section-sub">Start selling your 3D printable car parts in minutes</p>
+      <div class="steps-grid">
+        <div class="step-card">
+          <div class="step-num">01</div>
+          <div class="step-icon">📐</div>
+          <h3>Design & Upload</h3>
+          <p>Create your part in CAD, export as STL, and upload with photos and print specs.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num">02</div>
+          <div class="step-icon">🏷️</div>
+          <h3>List & Price</h3>
+          <p>Set your price, add car compatibility info, and publish your listing for just $5.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num">03</div>
+          <div class="step-icon">💰</div>
+          <h3>Sell & Earn</h3>
+          <p>Buyers download your STL instantly. You earn 85% of every sale, paid weekly.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="section cta-section">
+    <div class="container">
+      <div class="cta-card">
+        <h2>Got a design? Start selling today.</h2>
+        <p>Join 850+ sellers earning money from their 3D printable car part designs. Listing takes under 5 minutes.</p>
+        <button class="btn btn-primary btn-lg" onclick="navigate('sell')">Start Selling →</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- PAGE: BROWSE -->
+<main id="page-browse" class="page">
+  <section class="browse-section">
+    <div class="container">
+      <div class="browse-header">
+        <h1>Browse Parts</h1>
+        <div class="search-box">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="text" id="searchInput" placeholder="Search parts..." oninput="filterListings()">
+        </div>
+      </div>
+      <div class="browse-layout">
+        <aside class="filters-panel" id="filtersPanel">
+          <div class="filter-header">
+            <h3>Filters</h3>
+            <button class="btn-text" onclick="clearFilters()">Clear all</button>
+          </div>
+          <div class="filter-group">
+            <label>Category</label>
+            <select id="filterCategory" onchange="filterListings()">
+              <option value="">All Categories</option>
+              <option>Exterior</option><option>Interior</option><option>Engine Bay</option>
+              <option>Wheels/Tires</option><option>Lighting</option><option>Accessories</option>
+              <option>Brackets/Mounts</option><option>Tools</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Make</label>
+            <select id="filterMake" onchange="filterListings()">
+              <option value="">All Makes</option>
+              <option>BMW</option><option>Ford</option><option>Honda</option><option>Mazda</option>
+              <option>Mercedes</option><option>Nissan</option><option>Porsche</option><option>Subaru</option>
+              <option>Toyota</option><option>Universal</option><option>VW</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Price Range</label>
+            <select id="filterPrice" onchange="filterListings()">
+              <option value="">Any Price</option>
+              <option value="0-10">Under $10</option>
+              <option value="10-20">$10 – $20</option>
+              <option value="20-50">$20 – $50</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Sort By</label>
+            <select id="filterSort" onchange="filterListings()">
+              <option value="newest">Newest</option>
+              <option value="popular">Most Popular</option>
+              <option value="price-asc">Price: Low → High</option>
+              <option value="price-desc">Price: High → Low</option>
+            </select>
+          </div>
+          <button class="btn btn-outline btn-block filter-toggle-btn" onclick="toggleFilters()">Hide Filters</button>
+        </aside>
+        <div class="browse-results">
+          <div class="results-bar">
+            <span id="resultCount">12 parts found</span>
+            <button class="btn btn-outline btn-sm filter-mobile-btn" onclick="toggleFilters()">⚙ Filters</button>
+          </div>
+          <div class="listings-grid" id="browseGrid"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- PAGE: DETAIL -->
+<main id="page-detail" class="page">
+  <section class="detail-section">
+    <div class="container">
+      <button class="btn-text back-btn" onclick="navigate('browse')">← Back to Browse</button>
+      <div class="detail-layout" id="detailContent"></div>
+    </div>
+  </section>
+</main>
+
+<!-- PAGE: SELL -->
+<main id="page-sell" class="page">
+  <section class="section">
+    <div class="container container-sm">
+      <h1 class="page-title">List a Part</h1>
+      <p class="page-sub">Share your 3D printable car part with the community</p>
+      <form class="sell-form" id="sellForm" onsubmit="return handleSellSubmit(event)">
+        <div class="form-group">
+          <label>Part Title *</label>
+          <input type="text" id="sellTitle" placeholder="e.g. BMW E30 Intake Manifold Spacer" required>
+        </div>
+        <div class="form-group">
+          <label>Description *</label>
+          <textarea id="sellDesc" rows="4" placeholder="Describe your part, what it does, and any notes..." required></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Car Make *</label>
+            <select id="sellMake" required>
+              <option value="">Select make</option>
+              <option>BMW</option><option>Ford</option><option>Honda</option><option>Mazda</option>
+              <option>Mercedes</option><option>Nissan</option><option>Porsche</option><option>Subaru</option>
+              <option>Toyota</option><option>Universal</option><option>VW</option><option>Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Model</label>
+            <input type="text" id="sellModel" placeholder="e.g. E30, Miata NA">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Year(s)</label>
+            <input type="text" id="sellYear" placeholder="e.g. 1985-1991">
+          </div>
+          <div class="form-group">
+            <label>Category *</label>
+            <select id="sellCategory" required>
+              <option value="">Select category</option>
+              <option>Exterior</option><option>Interior</option><option>Engine Bay</option>
+              <option>Wheels/Tires</option><option>Lighting</option><option>Accessories</option>
+              <option>Brackets/Mounts</option><option>Tools</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Price (USD) *</label>
+          <input type="number" id="sellPrice" min="1" max="999" placeholder="15" required>
+        </div>
+        <h3 class="form-section-title">Print Specifications</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Recommended Material</label>
+            <select id="sellMaterial">
+              <option>PLA</option><option>PETG</option><option>ABS</option><option>ASA</option><option>Nylon</option><option>TPU</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Infill %</label>
+            <input type="number" id="sellInfill" min="5" max="100" placeholder="20" value="20">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Supports Needed?</label>
+            <select id="sellSupports"><option>No</option><option>Yes</option><option>Minimal</option></select>
+          </div>
+          <div class="form-group">
+            <label>Est. Print Time</label>
+            <input type="text" id="sellPrintTime" placeholder="e.g. 4-6 hours">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Upload Photos/Renders</label>
+          <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+            <input type="file" id="fileInput" multiple accept="image/*" style="display:none" onchange="handleFileUpload(event)">
+            <div class="upload-placeholder">
+              <span class="upload-icon">📸</span>
+              <p>Click to upload photos or renders</p>
+              <small>PNG, JPG up to 10MB each</small>
+            </div>
+            <div class="upload-preview" id="uploadPreview"></div>
+          </div>
+        </div>
+        <div class="listing-fee-card">
+          <div class="fee-info">
+            <span class="fee-label">Listing Fee</span>
+            <span class="fee-amount">$5.00</span>
+          </div>
+          <p class="fee-desc">One-time fee to publish your listing. Keeps the marketplace high quality.</p>
+        </div>
+        <button type="submit" class="btn btn-primary btn-lg btn-block">Preview & Pay $5 to List →</button>
+      </form>
+    </div>
+  </section>
+</main>
+
+<!-- PAGE: DASHBOARD -->
+<main id="page-dashboard" class="page">
+  <section class="section">
+    <div class="container">
+      <h1 class="page-title">Seller Dashboard</h1>
+      <div class="dash-stats">
+        <div class="dash-stat-card">
+          <span class="dash-stat-label">Total Earnings</span>
+          <span class="dash-stat-value">$347.00</span>
+          <span class="dash-stat-change positive">+$42 this week</span>
+        </div>
+        <div class="dash-stat-card">
+          <span class="dash-stat-label">Total Views</span>
+          <span class="dash-stat-value">1,284</span>
+          <span class="dash-stat-change positive">+156 this week</span>
+        </div>
+        <div class="dash-stat-card">
+          <span class="dash-stat-label">Downloads</span>
+          <span class="dash-stat-value">89</span>
+          <span class="dash-stat-change positive">+12 this week</span>
+        </div>
+        <div class="dash-stat-card">
+          <span class="dash-stat-label">Active Listings</span>
+          <span class="dash-stat-value">3</span>
+          <span class="dash-stat-change">of 12 total</span>
+        </div>
+      </div>
+      <div class="dash-section">
+        <div class="section-header">
+          <h2>My Listings</h2>
+          <button class="btn btn-primary btn-sm" onclick="navigate('sell')">+ New Listing</button>
+        </div>
+        <div class="dash-listings" id="dashListings"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="#" class="logo" onclick="navigate('home')">
+          <span class="logo-icon">⚙️</span>
+          <span class="logo-text">Part<span class="accent">Forge</span></span>
+        </a>
+        <p>The marketplace for 3D printable car parts. Download STL files, print at home, upgrade your ride.</p>
+      </div>
+      <div class="footer-links">
+        <h4>Marketplace</h4>
+        <a href="#" onclick="navigate('browse')">Browse Parts</a>
+        <a href="#" onclick="navigate('sell')">Sell a Part</a>
+        <a href="#">Pricing</a>
+        <a href="#">For Sellers</a>
+      </div>
+      <div class="footer-links">
+        <h4>Company</h4>
+        <a href="#">About</a>
+        <a href="#">Contact</a>
+        <a href="#">Blog</a>
+        <a href="#">Careers</a>
+      </div>
+      <div class="footer-links">
+        <h4>Legal</h4>
+        <a href="#">Terms of Service</a>
+        <a href="#">Privacy Policy</a>
+        <a href="#">DMCA Policy</a>
+        <a href="#">Refund Policy</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 PartForge. All rights reserved.</p>
+      <div class="social-links">
+        <a href="#" title="Twitter">𝕏</a>
+        <a href="#" title="Instagram">📷</a>
+        <a href="#" title="Discord">💬</a>
+        <a href="#" title="YouTube">▶️</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

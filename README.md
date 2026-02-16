@@ -1,4 +1,4 @@
-# ForgAuto v3.2
+# ForgAuto v4.0
 
 The 3D marketplace for automotive parts. Buy and sell STL files for your car.
 
@@ -7,11 +7,25 @@ The 3D marketplace for automotive parts. Buy and sell STL files for your car.
 
 ---
 
+## What's New in v4.0
+
+- **Fixed Image Pipeline**: Images now properly display on all listings
+- **Thingiverse-style 3D Viewer**: Grid floor, toolbar, wireframe, fullscreen, loading bar
+- **Pricing Standardized**: $5 listing fee, $20 featured boost
+- **Image Editing**: Add/remove photos from existing listings
+- **Dark Mode Fixed**: Removed conflicting CSS override
+- **Demo Parts Only When Empty**: Real parts no longer mixed with samples
+- **API-Level Image Filter**: Public queries only return parts with valid images
+- **CORS Locked Down**: API restricted to forgauto.com and dev origins
+- **Profile View Fix**: Sellers see their own imageless parts with warnings
+
+---
+
 ## Features
 
 ### For Buyers
 - Browse 3D printable car parts by make, model, and category
-- 3D model preview (spin/zoom) before purchase
+- Thingiverse-style 3D model viewer with toolbar
 - Instant digital download after payment
 - Find local print shops for Print & Ship service
 - Hire designers for custom parts
@@ -20,8 +34,9 @@ The 3D marketplace for automotive parts. Buy and sell STL files for your car.
 - $5 flat listing fee (keep 100% of sales)
 - No monthly fees, no commission
 - Listings never expire
-- Optional $10 Featured placement (30 days)
+- Optional $20 Featured placement (30 days)
 - Optional $20 Boost to Premier (30 days)
+- Image editing on existing listings
 
 ### Platform
 - 70+ car makes supported

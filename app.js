@@ -1,7 +1,7 @@
 // ForgAuto — 3D Marketplace for Cars
-// Version: 3.0 - Full Backend Integration
+// Version 4.0 - Major Fixes
 
-const VERSION = '3.5';
+const VERSION = '4.0';
 const API_URL = 'https://forgauto-api.warwideweb.workers.dev'; // Cloudflare Worker API
 
 // State
@@ -164,6 +164,7 @@ let parts = demoParts;
 let designers = demoDesigners;
 
 // Load data from API
+// FIX 6: Only use demo parts if there are ZERO real parts
 async function loadParts() {
     try {
         const params = new URLSearchParams();
@@ -173,14 +174,16 @@ async function loadParts() {
         if (filter) params.set('search', filter);
         
         const data = await api(`/api/parts?${params}`);
-        // Always include demo parts for a full-looking marketplace
-        // Real user parts will have higher IDs and appear first
         const realParts = data || [];
-        // Mark demo parts and combine (demo parts have IDs 1-8)
-        const markedDemos = demoParts.map(p => ({...p, isDemo: true, seller_name: 'ForgAuto Sample'}));
-        parts = [...realParts, ...markedDemos];
+        
+        // FIX 6: Only use demo parts if there are ZERO real parts
+        if (realParts.length === 0) {
+            parts = demoParts.map(p => ({...p, isDemo: true, seller_name: 'ForgAuto Sample'}));
+        } else {
+            parts = realParts;
+        }
     } catch (e) {
-        console.log('Using demo data:', e.message);
+        // API error - fall back to demo data
         parts = demoParts.map(p => ({...p, isDemo: true, seller_name: 'ForgAuto Sample'}));
     }
 }
@@ -680,7 +683,7 @@ function homeView() {
                 <button class="btn" onclick="doSearch()">Find Parts</button>
             </div>
             <div class="trust-badges">
-                <span class="trust-badge">$10 Flat Listing Fee</span>
+                <span class="trust-badge">$5 Flat Listing Fee</span>
                 <span class="trust-badge">Keep 100% of Sales</span>
                 <span class="trust-badge">Instant Download</span>
             </div>
@@ -699,7 +702,7 @@ function homeView() {
         
         <div class="section"><div class="section-head"><h2>New Parts</h2>${validParts.length ? `<a href="#" onclick="go('browse'); return false;">View all</a>` : ''}</div>
             ${validParts.length ? `<div class="grid">${validParts.slice(0, 8).map(cardHTML).join('')}</div>` : 
-            `<div class="empty-cta"><h3>Be the first to list a part</h3><p>Start selling your 3D automotive designs today.</p><a href="#" onclick="go('sell'); return false;" class="btn btn-lg btn-primary">Create Listing - $10</a></div>`}
+            `<div class="empty-cta"><h3>Be the first to list a part</h3><p>Start selling your 3D automotive designs today.</p><a href="#" onclick="go('sell'); return false;" class="btn btn-lg btn-primary">Create Listing - $5</a></div>`}
         </div>
 
         <div class="section featured-designers"><div class="section-head"><h2>Top Designers</h2><a href="#" onclick="go('designers'); return false;">View all</a></div>
@@ -710,7 +713,7 @@ function homeView() {
             <div class="stat"><span class="stat-num">${validParts.length}</span><span class="stat-label">${validParts.length === 1 ? 'Part' : 'Parts'} Listed</span></div>
             <div class="stat"><span class="stat-num">${demoDesigners.length}</span><span class="stat-label">${demoDesigners.length === 1 ? 'Designer' : 'Designers'}</span></div>
             <div class="stat"><span class="stat-num">${carMakes.length - 1}</span><span class="stat-label">Car Brands</span></div>
-            <div class="stat"><span class="stat-num">$10</span><span class="stat-label">Flat Fee</span></div>
+            <div class="stat"><span class="stat-num">$5</span><span class="stat-label">Flat Fee</span></div>
         </div>
         <div class="version-tag">v${VERSION}</div>
     `;
@@ -770,8 +773,8 @@ function sellView() {
     
     return `<div class="sell-layout">
         <div class="sell-info"><h1>Sell your car parts</h1><p>Upload your designs, set your price, start earning.</p>
-            <div class="steps"><div class="step"><div class="step-num">1</div><div><h4>Upload files</h4><p>3D files + photos</p></div></div><div class="step"><div class="step-num">2</div><div><h4>Pay listing fee</h4><p>One-time $10</p></div></div><div class="step"><div class="step-num">3</div><div><h4>Get paid</h4><p>Keep 100%</p></div></div></div>
-            <div class="pricing"><div class="pricing-big">$10</div><div class="pricing-sub">one-time listing fee</div><ul><li>Keep 100% of sales</li><li>No monthly fees</li><li>No commission</li><li>Listing never expires</li></ul></div>
+            <div class="steps"><div class="step"><div class="step-num">1</div><div><h4>Upload files</h4><p>3D files + photos</p></div></div><div class="step"><div class="step-num">2</div><div><h4>Pay listing fee</h4><p>One-time $5</p></div></div><div class="step"><div class="step-num">3</div><div><h4>Get paid</h4><p>Keep 100%</p></div></div></div>
+            <div class="pricing"><div class="pricing-big">$5</div><div class="pricing-sub">one-time listing fee</div><ul><li>Keep 100% of sales</li><li>No monthly fees</li><li>No commission</li><li>Listing never expires</li></ul></div>
         </div>
         <div class="form"><h2>Create Listing</h2>
             <form onsubmit="handleCreateListing(event)">
@@ -784,7 +787,7 @@ function sellView() {
             <div class="field"><label>3D File</label><div class="dropzone" onclick="document.getElementById('fileInput').click()"><div class="dropzone-icon">+</div><p id="fileName">Drop 3D file here or click</p><span>STL, STEP, OBJ, 3MF</span></div><input type="file" id="fileInput" hidden onchange="handleFileSelect(event)"></div>
             <div class="field"><label>Photos <span class="required-star">*</span> (First photo = thumbnail)</label><div class="photo-grid" id="photoGrid"><div class="photo-add" onclick="document.getElementById('photoInput').click()"><span class="photo-add-icon">+</span><span>Add</span></div></div><input type="file" id="photoInput" accept="image/*" multiple hidden onchange="handlePhotoUpload(event)"><p class="field-hint">At least 1 photo required</p></div>
             <div class="upsell-box"><label class="upsell-label"><input type="checkbox" id="featuredCheckbox" onchange="updateTotal()"><div class="upsell-content"><span class="upsell-badge">FEATURED</span><strong>Get Featured Placement +$20</strong><p>Your listing appears in the Featured section for 30 days.</p></div></label></div>
-            <div class="form-total"><span>Total</span><span id="totalPrice">$10.00</span></div>
+            <div class="form-total"><span>Total</span><span id="totalPrice">$5.00</span></div>
             <button type="submit" class="btn btn-lg btn-primary" style="width:100%">Create Listing</button>
             </form>
         </div>
@@ -943,23 +946,58 @@ async function handleCreateListing(e) {
     }
 }
 
-function updateTotal() { document.getElementById('totalPrice').textContent = document.getElementById('featuredCheckbox')?.checked ? '$30.00' : '$10.00'; }
+function updateTotal() { document.getElementById('totalPrice').textContent = document.getElementById('featuredCheckbox')?.checked ? '$25.00' : '$5.00'; }
+
+// FIX 7: Image editing support
+let editImagesToRemove = [];
+let editNewPhotos = [];
+let editNewPhotoFiles = [];
 
 async function editView(partId) {
     if (!currentUser) return '<div class="auth-prompt"><h2>Login Required</h2><a href="#" onclick="go(\'login\'); return false;" class="btn btn-primary">Login</a></div>';
+    
+    // Reset edit state
+    editImagesToRemove = [];
+    editNewPhotos = [];
+    editNewPhotoFiles = [];
     
     let p;
     try { p = await api(`/api/parts/${partId}`); } catch (e) { return '<p>Part not found.</p>'; }
     if (!p || p.user_id !== currentUser.id) return '<p>Not authorized to edit this listing.</p>';
     
+    // Store part data for later
+    window.editPartData = p;
+    
     return `<div class="sell-layout">
-        <div class="sell-info"><h1>Edit Listing</h1><p>Update your part details.</p></div>
+        <div class="sell-info"><h1>Edit Listing</h1><p>Update your part details and photos.</p></div>
         <div class="form"><h2>${p.title}</h2>
             <form onsubmit="handleEditListing(event, ${p.id})">
             <div class="field"><label>Part Name</label><input type="text" id="editTitle" value="${p.title}" required></div>
             <div class="field"><label>Description</label><textarea id="editDesc" rows="4" required>${p.description || ''}</textarea></div>
             <div class="field-row"><div class="field"><label>Category</label><select id="editCat" required>${categories.map(c => `<option ${p.category===c.name?'selected':''}>${c.name}</option>`).join('')}</select></div><div class="field"><label>Price (USD)</label><input type="number" id="editPrice" value="${p.price}" min="0.99" step="0.01" required></div></div>
             <div class="field-row"><div class="field"><label>Material</label><input type="text" id="editMaterial" value="${p.material || ''}"></div><div class="field"><label>Infill %</label><input type="text" id="editInfill" value="${p.infill || ''}"></div></div>
+            
+            <div class="field">
+                <label>Current Photos</label>
+                <div class="photo-grid" id="existingPhotos">
+                    ${(p.images || []).map((img, i) => `
+                        <div class="photo-item" id="existing-${p.image_ids ? p.image_ids[i] : i}" data-image-id="${p.image_ids ? p.image_ids[i] : i}">
+                            <img src="${img}">
+                            <button type="button" class="photo-remove" onclick="markImageForRemoval(${p.image_ids ? p.image_ids[i] : i})">×</button>
+                        </div>
+                    `).join('') || '<p class="empty-state">No photos</p>'}
+                </div>
+            </div>
+            <div class="field">
+                <label>Add More Photos</label>
+                <div class="photo-grid" id="editPhotoGrid">
+                    <div class="photo-add" onclick="document.getElementById('editPhotoInput').click()">
+                        <span class="photo-add-icon">+</span><span>Add</span>
+                    </div>
+                </div>
+                <input type="file" id="editPhotoInput" accept="image/*" multiple hidden onchange="handleEditPhotoUpload(event)">
+            </div>
+            
             <button type="submit" class="btn btn-lg btn-primary" style="width:100%">Save Changes</button>
             <a href="#" onclick="go('part', ${p.id}); return false;" class="btn btn-lg btn-outline" style="width:100%;margin-top:10px;">Cancel</a>
             </form>
@@ -967,9 +1005,75 @@ async function editView(partId) {
     </div>`;
 }
 
+function markImageForRemoval(imageId) {
+    editImagesToRemove.push(imageId);
+    const el = document.getElementById(`existing-${imageId}`);
+    if (el) el.remove();
+}
+
+function handleEditPhotoUpload(event) {
+    for (let file of event.target.files) {
+        if (editNewPhotos.length >= 10) break;
+        editNewPhotoFiles.push(file);
+        const reader = new FileReader();
+        reader.onload = e => {
+            editNewPhotos.push(e.target.result);
+            renderEditPhotoGrid();
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+function renderEditPhotoGrid() {
+    const grid = document.getElementById('editPhotoGrid');
+    if (!grid) return;
+    grid.innerHTML = editNewPhotos.map((photo, i) => `
+        <div class="photo-item">
+            <img src="${photo}">
+            <button type="button" class="photo-remove" onclick="removeEditPhoto(${i})">×</button>
+        </div>
+    `).join('') + `
+        <div class="photo-add" onclick="document.getElementById('editPhotoInput').click()">
+            <span class="photo-add-icon">+</span><span>Add</span>
+        </div>
+    `;
+}
+
+function removeEditPhoto(index) {
+    editNewPhotos.splice(index, 1);
+    editNewPhotoFiles.splice(index, 1);
+    renderEditPhotoGrid();
+}
+
 async function handleEditListing(e, partId) {
     e.preventDefault();
+    const btn = e.target.querySelector('button[type="submit"]');
+    const originalText = btn.textContent;
+    btn.textContent = 'Saving...';
+    btn.disabled = true;
+    
     try {
+        // Upload new photos first
+        const newImageUrls = [];
+        for (let i = 0; i < editNewPhotoFiles.length; i++) {
+            btn.textContent = `Uploading photo ${i + 1}/${editNewPhotoFiles.length}...`;
+            const photoFormData = new FormData();
+            photoFormData.append('file', editNewPhotoFiles[i]);
+            
+            const photoRes = await fetch(`${API_URL}/api/upload/photo`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${authToken}` },
+                body: photoFormData
+            });
+            
+            if (photoRes.ok) {
+                const photoData = await photoRes.json();
+                newImageUrls.push(photoData.url);
+            }
+        }
+        
+        btn.textContent = 'Saving...';
+        
         await api(`/api/parts/${partId}`, {
             method: 'PUT',
             body: JSON.stringify({
@@ -978,13 +1082,18 @@ async function handleEditListing(e, partId) {
                 category: document.getElementById('editCat').value,
                 price: parseFloat(document.getElementById('editPrice').value),
                 material: document.getElementById('editMaterial').value,
-                infill: document.getElementById('editInfill').value
+                infill: document.getElementById('editInfill').value,
+                remove_images: editImagesToRemove,
+                add_images: newImageUrls
             })
         });
+        
         alert('Listing updated!');
         go('part', partId);
     } catch (err) {
         alert('Error: ' + err.message);
+        btn.textContent = originalText;
+        btn.disabled = false;
     }
 }
 
@@ -1016,10 +1125,16 @@ async function partView(id) {
     const images = p.images || [p.img] || ['https://via.placeholder.com/600x450'];
     const reviews = p.reviews || [];
     
+    // FIX 13: Show 3D viewer + images together like Thingiverse
+    const hasFile = !!p.file_url;
+    
     return `<div class="detail">
         <div class="detail-gallery">
-            <div class="viewer-container" id="viewer3d"><div class="viewer-hint">Drag to rotate - Scroll to zoom</div></div>
-            <div class="gallery-thumbs">${images.map((img, i) => `<img src="${img}" alt="${p.title}" class="thumb ${i===0?'active':''}" onclick="openLightbox('${img}')">`).join('')}</div>
+            <div class="viewer-container" id="viewer3d"></div>
+            <div class="gallery-thumbs">
+                ${hasFile ? `<button class="thumb-3d active" onclick="show3DViewer()">3D</button>` : ''}
+                ${images.map((img, i) => `<img src="${img}" alt="${p.title}" class="thumb" onclick="showGalleryImage('${img}', this)">`).join('')}
+            </div>
         </div>
         <div class="detail-info">
             ${p.featured ? '<span class="detail-featured-badge">Featured</span>' : ''}
@@ -1027,7 +1142,7 @@ async function partView(id) {
             <h1>${p.title}</h1>
             <div class="detail-seller"><span class="seller-avatar">${(p.seller_name||'S').charAt(0)}</span><span>by <strong>${p.seller_name || 'Seller'}</strong></span><span class="detail-downloads">${p.downloads || 0} downloads</span></div>
             <div class="detail-price">$${(p.price || 0).toFixed(2)}</div>
-            <div class="detail-trust"><span>Secure Payment</span><span>Instant Download</span><span>$10 Listing Fee</span></div>
+            <div class="detail-trust"><span>Secure Payment</span><span>Instant Download</span><span>$5 Listing Fee</span></div>
             <div class="detail-actions">
                 ${p.purchased || (currentUser && currentUser.id === p.user_id) ? 
                     `<a href="${p.file_url}" download class="btn btn-lg btn-primary">Download File</a>` :
@@ -1149,13 +1264,16 @@ async function handleDesignerRequest(e, designerId) {
     }
 }
 
+// FIX 9: Show all parts with warnings when viewing own profile
 async function profileView(id) {
     let user, userParts = [];
     try { user = await api(`/api/users/${id}`); } catch (e) { return '<p>User not found.</p>'; }
     try { userParts = await api(`/api/parts?user=${id}`); } catch (e) { userParts = []; }
     
-    // Filter to only show parts with valid images (public profile)
-    const activeParts = filterPublicParts(userParts);
+    // FIX 9: If viewing own profile, show all parts with warnings
+    const isOwnProfile = currentUser && currentUser.id === parseInt(id);
+    const activeParts = isOwnProfile ? userParts : filterPublicParts(userParts);
+    const cardFn = isOwnProfile ? sellerCardHTML : cardHTML;
     
     return `<div class="profile-page">
         <div class="profile-header">
@@ -1170,7 +1288,7 @@ async function profileView(id) {
         ${activeParts.length ? `
         <div class="section">
             <div class="section-head"><h2>Listings by ${user.name}</h2></div>
-            <div class="grid">${activeParts.map(p => cardHTML(p)).join('')}</div>
+            <div class="grid">${activeParts.map(p => cardFn(p)).join('')}</div>
         </div>` : '<p class="empty-state">No listings yet.</p>'}
     </div>`;
 }
@@ -1201,22 +1319,25 @@ function hasValidImage(p) {
     return getValidImage(p) !== null;
 }
 
-// Filter parts to only those with valid images (for public views)
+// FIX 3: Filter parts - allow undefined status
 function filterPublicParts(partsArray) {
-    return partsArray.filter(p => hasValidImage(p) && p.status === 'active');
+    return partsArray.filter(p => hasValidImage(p) && (!p.status || p.status === 'active'));
 }
 
 // ============ CARD RENDERING ============
 
 // PUBLIC card - NEVER shows placeholder, only renders if valid image exists
+// FIX 8: Don't hide card on image error, show gray fallback
 function cardHTML(p) {
     const img = getValidImage(p);
     // If no valid image, don't render card at all in public view
     if (!img) return '';
     
+    const errorFallback = "this.onerror=null; this.src='data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300"><rect fill="#333" width="400" height="300"/><text x="50%" y="50%" fill="#999" font-family="sans-serif" font-size="16" text-anchor="middle" dy=".3em">Image unavailable</text></svg>') + "'";
+    
     return `<div class="card" onclick="go('part', ${p.id}); return false;">
         <div class="card-image">
-            <img src="${img}" alt="${p.title}" onerror="this.parentElement.parentElement.style.display='none'">
+            <img src="${img}" alt="${p.title}" onerror="${errorFallback}">
             <span class="card-badge">${p.category || 'Part'}</span>
         </div>
         <div class="card-body">
@@ -1332,118 +1453,315 @@ async function sendContactMessage(e, sellerId, partTitle) {
     }
 }
 
-let currentPartData = null; // Store current part for viewer
+// FIX 11: Thingiverse-style 3D viewer - complete rewrite
+let currentPartData = null;
+let viewerInstance = null;
 
 function initViewer(partId) {
     const container = document.getElementById('viewer3d');
     if (!container) return;
     
-    // Use stored part data or fall back to parts array
+    // Cleanup previous viewer
+    if (viewerInstance) {
+        if (viewerInstance.animationId) cancelAnimationFrame(viewerInstance.animationId);
+        if (viewerInstance.renderer) viewerInstance.renderer.dispose();
+        viewerInstance = null;
+    }
+    
     const p = currentPartData || parts.find(x => x.id === partId);
     if (!p) return;
     
-    // Check if THREE.js loaded
     if (!window.THREE) {
-        container.innerHTML = '<div class="viewer-loading"><span style="font-size:48px;">3D</span><p>3D viewer loading failed</p></div>';
+        container.innerHTML = '<div class="viewer-fallback"><p>3D viewer could not load</p></div>';
         return;
     }
     
-    // Check if part has file URL
-    const fileUrl = p.stl_url || p.file_url;
+    const fileUrl = p.file_url;
     if (!fileUrl) {
-        container.innerHTML = '<div class="viewer-loading"><span style="font-size:48px;">3D</span><p>No 3D file uploaded</p></div>';
+        const img = (p.images && p.images[0]) ? p.images[0] : null;
+        if (img) {
+            container.innerHTML = `<div class="viewer-image-fallback"><img src="${img}" alt="${p.title}"></div>`;
+        } else {
+            container.innerHTML = '<div class="viewer-fallback"><p>No 3D file or preview available</p></div>';
+        }
         return;
     }
     
-    // Check if it's an STL file (only format Three.js can render natively)
-    const isSTL = fileUrl.toLowerCase().includes('.stl');
-    if (!isSTL) {
-        container.innerHTML = `<div class="viewer-loading"><span style="font-size:48px;">3D</span><p>Preview for ${p.file_format || 'this format'}</p><p style="font-size:12px;color:#666;">Full 3D view available for STL files</p></div>`;
+    const ext = fileUrl.toLowerCase().split('.').pop().split('?')[0];
+    const isSTL = ext === 'stl';
+    const isOBJ = ext === 'obj';
+    
+    if (!isSTL && !isOBJ) {
+        container.innerHTML = `<div class="viewer-fallback"><p>3D preview for .${ext} files coming soon</p><p class="viewer-fallback-sub">Download the file to view in your slicer</p></div>`;
         return;
     }
     
-    // Show loading
-    container.innerHTML = '<div class="viewer-loading"><div class="viewer-loading-spinner"></div><p>Loading 3D model...</p></div>';
+    // Show loading bar
+    container.innerHTML = `
+        <div class="viewer-loading-screen" id="viewerLoading">
+            <div class="viewer-loading-bar-container">
+                <div class="viewer-loading-bar" id="viewerLoadingBar" style="width: 0%"></div>
+            </div>
+            <p class="viewer-loading-text" id="viewerLoadingText">Loading 3D model...</p>
+        </div>
+    `;
     
-    const width = container.clientWidth || 400;
-    const height = container.clientHeight || 300;
+    const width = container.clientWidth || 600;
+    const height = container.clientHeight || 450;
+    
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x1a1a1a);
-    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 2000);
-    camera.position.set(0, 0, 150);
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    scene.background = new THREE.Color(0x1a1a2e);
+    
+    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 10000);
+    camera.position.set(100, 80, 100);
+    
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     
     const controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-    controls.autoRotate = true;
+    controls.dampingFactor = 0.08;
+    controls.autoRotate = false;
     controls.autoRotateSpeed = 2;
     controls.enableZoom = true;
     controls.enablePan = true;
+    controls.minDistance = 5;
+    controls.maxDistance = 2000;
+    controls.target.set(0, 0, 0);
     
     // Lighting
-    scene.add(new THREE.AmbientLight(0xffffff, 0.5));
-    const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.8);
-    dirLight1.position.set(1, 1, 1);
-    scene.add(dirLight1);
-    const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.4);
-    dirLight2.position.set(-1, -1, -1);
-    scene.add(dirLight2);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+    const hemiLight = new THREE.HemisphereLight(0xddeeff, 0x0f0e0d, 0.3);
+    scene.add(hemiLight);
     
-    // Load STL file
-    const loader = new THREE.STLLoader();
-    loader.load(fileUrl, function(geometry) {
+    const keyLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    keyLight.position.set(50, 100, 50);
+    keyLight.castShadow = true;
+    scene.add(keyLight);
+    
+    const fillLight = new THREE.DirectionalLight(0xffffff, 0.4);
+    fillLight.position.set(-50, 50, -50);
+    scene.add(fillLight);
+    
+    const rimLight = new THREE.DirectionalLight(0xffffff, 0.3);
+    rimLight.position.set(0, 50, -100);
+    scene.add(rimLight);
+    
+    // Grid floor
+    const gridHelper = new THREE.GridHelper(200, 40, 0x2a2a4e, 0x1e1e3a);
+    scene.add(gridHelper);
+    
+    const groundGeo = new THREE.PlaneGeometry(200, 200);
+    const groundMat = new THREE.ShadowMaterial({ opacity: 0.15 });
+    const ground = new THREE.Mesh(groundGeo, groundMat);
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = 0.01;
+    ground.receiveShadow = true;
+    scene.add(ground);
+    
+    function onModelLoaded(geometry, isMesh) {
         container.innerHTML = '';
         container.appendChild(renderer.domElement);
         
-        geometry.computeBoundingBox();
-        geometry.center();
+        let mesh;
+        if (isMesh) {
+            mesh = geometry;
+        } else {
+            geometry.computeBoundingBox();
+            geometry.center();
+            const material = new THREE.MeshPhongMaterial({
+                color: 0xb0b0b0,
+                specular: 0x333333,
+                shininess: 40,
+                flatShading: false
+            });
+            geometry.computeVertexNormals();
+            mesh = new THREE.Mesh(geometry, material);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+        }
         
-        const material = new THREE.MeshPhongMaterial({ 
-            color: 0x2563eb, 
-            shininess: 80,
-            specular: 0x444444
-        });
-        const mesh = new THREE.Mesh(geometry, material);
+        const box = new THREE.Box3().setFromObject(mesh);
+        const size = new THREE.Vector3();
+        box.getSize(size);
         
-        // Auto-scale to fit view
-        const box = geometry.boundingBox;
-        const size = Math.max(box.max.x - box.min.x, box.max.y - box.min.y, box.max.z - box.min.z);
-        const scale = 60 / size;
+        const maxDim = Math.max(size.x, size.y, size.z);
+        const scale = 60 / maxDim;
         mesh.scale.set(scale, scale, scale);
+        
+        const scaledBox = new THREE.Box3().setFromObject(mesh);
+        const scaledCenter = new THREE.Vector3();
+        scaledBox.getCenter(scaledCenter);
+        const scaledSize = new THREE.Vector3();
+        scaledBox.getSize(scaledSize);
+        
+        mesh.position.x -= scaledCenter.x;
+        mesh.position.z -= scaledCenter.z;
+        mesh.position.y -= scaledBox.min.y;
         
         scene.add(mesh);
         
-        // Animation loop
+        const fitDist = maxDim * scale * 1.8;
+        camera.position.set(fitDist * 0.8, fitDist * 0.6, fitDist * 0.8);
+        controls.target.set(0, scaledSize.y * 0.3, 0);
+        controls.update();
+        
+        addViewerToolbar(container, controls, mesh, renderer, scene, camera);
+        
+        viewerInstance = { renderer, animationId: null, mesh };
+        
         function animate() {
-            requestAnimationFrame(animate);
+            viewerInstance.animationId = requestAnimationFrame(animate);
             controls.update();
             renderer.render(scene, camera);
         }
         animate();
         
-        // Handle resize
         window.addEventListener('resize', () => {
             const w = container.clientWidth;
             const h = container.clientHeight;
-            camera.aspect = w / h;
-            camera.updateProjectionMatrix();
-            renderer.setSize(w, h);
+            if (w && h) {
+                camera.aspect = w / h;
+                camera.updateProjectionMatrix();
+                renderer.setSize(w, h);
+            }
         });
-        
-    }, function(progress) {
-        // Progress callback
-        if (progress.total) {
-            const pct = Math.round((progress.loaded / progress.total) * 100);
-            const loadingDiv = container.querySelector('.viewer-loading p');
-            if (loadingDiv) loadingDiv.textContent = `Loading 3D model... ${pct}%`;
+    }
+    
+    function onProgress(event) {
+        if (event.total && event.total > 0) {
+            const pct = Math.round((event.loaded / event.total) * 100);
+            const bar = document.getElementById('viewerLoadingBar');
+            const text = document.getElementById('viewerLoadingText');
+            if (bar) bar.style.width = pct + '%';
+            if (text) text.textContent = `Loading 3D model... ${pct}%`;
         }
-    }, function(error) {
-        console.error('STL load error:', error);
-        container.innerHTML = '<div class="viewer-loading"><span style="font-size:48px;">3D</span><p>Failed to load model</p></div>';
-    });
+    }
+    
+    function onError(error) {
+        const img = (p.images && p.images[0]) ? p.images[0] : null;
+        if (img) {
+            container.innerHTML = `<div class="viewer-image-fallback"><img src="${img}" alt="${p.title}"><div class="viewer-fallback-overlay">3D preview unavailable</div></div>`;
+        } else {
+            container.innerHTML = '<div class="viewer-fallback"><p>Failed to load 3D model</p></div>';
+        }
+    }
+    
+    if (isSTL) {
+        const loader = new THREE.STLLoader();
+        loader.load(fileUrl, (geometry) => onModelLoaded(geometry, false), onProgress, onError);
+    } else if (isOBJ && window.THREE.OBJLoader) {
+        const loader = new THREE.OBJLoader();
+        loader.load(fileUrl, (obj) => {
+            obj.traverse(child => {
+                if (child.isMesh) {
+                    child.material = new THREE.MeshPhongMaterial({
+                        color: 0xb0b0b0,
+                        specular: 0x333333,
+                        shininess: 40
+                    });
+                    child.castShadow = true;
+                    child.receiveShadow = true;
+                }
+            });
+            onModelLoaded(obj, true);
+        }, onProgress, onError);
+    } else {
+        onError(new Error('Format not supported'));
+    }
+}
+
+function addViewerToolbar(container, controls, mesh, renderer, scene, camera) {
+    const toolbar = document.createElement('div');
+    toolbar.className = 'viewer-toolbar';
+    toolbar.innerHTML = `
+        <button class="viewer-btn" id="btnAutoRotate" title="Auto-Rotate">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 11-6.219-8.56"/><polyline points="21 3 21 9 15 9"/></svg>
+        </button>
+        <button class="viewer-btn" id="btnWireframe" title="Wireframe">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        </button>
+        <button class="viewer-btn" id="btnResetView" title="Reset View">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4m-10-10h4m12 0h4"/></svg>
+        </button>
+        <button class="viewer-btn" id="btnFullscreen" title="Fullscreen">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3"/></svg>
+        </button>
+    `;
+    container.appendChild(toolbar);
+    
+    const hint = document.createElement('div');
+    hint.className = 'viewer-hint';
+    hint.textContent = 'Drag to rotate · Scroll to zoom · Right-click to pan';
+    container.appendChild(hint);
+    setTimeout(() => { hint.style.opacity = '0'; }, 3000);
+    
+    let isWireframe = false;
+    let isAutoRotate = false;
+    
+    document.getElementById('btnAutoRotate').onclick = () => {
+        isAutoRotate = !isAutoRotate;
+        controls.autoRotate = isAutoRotate;
+        document.getElementById('btnAutoRotate').classList.toggle('active', isAutoRotate);
+    };
+    
+    document.getElementById('btnWireframe').onclick = () => {
+        isWireframe = !isWireframe;
+        if (mesh.isMesh) {
+            mesh.material.wireframe = isWireframe;
+        } else {
+            mesh.traverse(child => { if (child.isMesh) child.material.wireframe = isWireframe; });
+        }
+        document.getElementById('btnWireframe').classList.toggle('active', isWireframe);
+    };
+    
+    document.getElementById('btnResetView').onclick = () => {
+        const box = new THREE.Box3().setFromObject(mesh);
+        const size = new THREE.Vector3();
+        box.getSize(size);
+        const maxDim = Math.max(size.x, size.y, size.z);
+        const fitDist = maxDim * 1.8;
+        camera.position.set(fitDist * 0.8, fitDist * 0.6, fitDist * 0.8);
+        controls.target.set(0, size.y * 0.3, 0);
+        controls.update();
+    };
+    
+    document.getElementById('btnFullscreen').onclick = () => {
+        if (!document.fullscreenElement) {
+            container.requestFullscreen().catch(err => {});
+        } else {
+            document.exitFullscreen();
+        }
+    };
+}
+
+// FIX 13: Gallery functions for switching between 3D and images
+function show3DViewer() {
+    document.querySelectorAll('.thumb, .thumb-3d').forEach(t => t.classList.remove('active'));
+    document.querySelector('.thumb-3d')?.classList.add('active');
+    const viewer = document.getElementById('viewer3d');
+    if (viewer) viewer.style.display = 'block';
+    const heroImg = document.getElementById('galleryHeroImage');
+    if (heroImg) heroImg.style.display = 'none';
+}
+
+function showGalleryImage(src, el) {
+    document.querySelectorAll('.thumb, .thumb-3d').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    const viewer = document.getElementById('viewer3d');
+    if (viewer) viewer.style.display = 'none';
+    let heroImg = document.getElementById('galleryHeroImage');
+    if (!heroImg) {
+        heroImg = document.createElement('div');
+        heroImg.id = 'galleryHeroImage';
+        heroImg.className = 'gallery-hero-image';
+        viewer.parentElement.insertBefore(heroImg, viewer.nextSibling);
+    }
+    heroImg.style.display = 'block';
+    heroImg.innerHTML = `<img src="${src}" alt="Part photo" onclick="openLightbox('${src}')">`;
 }
 
 // Initialize

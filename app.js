@@ -886,6 +886,15 @@ async function partView(id) {
                 <button class="btn btn-lg btn-primary" onclick="handleBuyPart(${p.id})">Buy Now - $${(p.price || 0).toFixed(2)}</button>
                 <a href="mailto:${p.seller_email || ''}" class="btn btn-lg btn-outline">Contact Seller</a>
             </div>
+            ${currentUser && currentUser.id === p.user_id && !p.premiered ? `
+            <div class="boost-cta">
+                <div class="boost-header">
+                    <strong>Boost Your Listing</strong>
+                    <span>Get more visibility in the Premiered section</span>
+                </div>
+                <button class="btn btn-boost" onclick="handleBoostPart(${p.id})">Boost to Premier - $20</button>
+            </div>` : ''}
+            ${p.premiered ? '<div class="premiered-status">This listing is Premiered until ' + new Date(p.premiered_until).toLocaleDateString() + '</div>' : ''}
             <div class="print-ship-cta"><div class="print-ship-header"><div><strong>Print & Ship</strong><span>Don't have a printer? We'll print and ship it to you.</span></div></div><div class="print-ship-options"><button class="btn btn-sm" onclick="go('printshops', ${p.id})">Find Local Shop</button><button class="btn btn-sm btn-primary" onclick="alert('Print & Ship coming soon!')">Get Instant Quote</button></div></div>
             <div class="detail-desc"><h2>Description</h2><p>${p.description || ''}</p></div>
             <div class="specs"><h2>Specifications</h2><div class="spec-row"><span>Vehicle</span><span>${p.make} ${p.model}</span></div><div class="spec-row"><span>Category</span><span>${p.category}</span></div><div class="spec-row"><span>Format</span><span>${p.file_format || 'STL'}</span></div><div class="spec-row"><span>File Size</span><span>${p.file_size || 'N/A'}</span></div><div class="spec-row"><span>Material</span><span>${p.material || 'PLA'}</span></div><div class="spec-row"><span>Infill</span><span>${p.infill || '25%'}</span></div></div>
@@ -905,6 +914,22 @@ async function handleBuyPart(partId) {
     try {
         await api(`/api/parts/${partId}/purchase`, { method: 'POST' });
         alert('Purchase successful! You can now download the file and leave a review. (Stripe integration coming soon)');
+        go('part', partId);
+    } catch (err) {
+        alert('Error: ' + err.message);
+    }
+}
+
+async function handleBoostPart(partId) {
+    if (!currentUser) { alert('Please login first'); go('login'); return; }
+    
+    if (!confirm('Boost this listing to Premier for $20?\n\nYour part will appear in the Premiered section for 30 days.')) {
+        return;
+    }
+    
+    try {
+        await api(`/api/parts/${partId}/boost`, { method: 'POST' });
+        alert('Listing boosted! Your part will now appear in the Premiered section for 30 days. (Payment via Stripe coming soon)');
         go('part', partId);
     } catch (err) {
         alert('Error: ' + err.message);

@@ -251,8 +251,8 @@ function loginView() {
                 <div id="loginError" class="error-msg"></div>
                 <button type="submit" class="btn btn-lg btn-primary" style="width:100%">Login with Email</button>
             </form>
-            <p class="auth-switch">Don't have an account? <a href="#" onclick="go('signup')">Sign up</a></p>
-            <p class="auth-switch"><a href="#" onclick="go('forgot-password')">Forgot your password?</a></p>
+            <p class="auth-switch">Don't have an account? <a href="#" onclick="go('signup'); return false;">Sign up</a></p>
+            <p class="auth-switch"><a href="#" onclick="go('forgot-password'); return false;">Forgot your password?</a></p>
         </div>
     </div>`;
 }
@@ -269,7 +269,7 @@ function forgotPasswordView() {
                 <div id="forgotError" class="error-msg"></div>
                 <button type="submit" class="btn btn-lg btn-primary" style="width:100%">Send Reset Link</button>
             </form>
-            <p class="auth-switch"><a href="#" onclick="go('login')">← Back to Login</a></p>
+            <p class="auth-switch"><a href="#" onclick="go('login'); return false;">← Back to Login</a></p>
         </div>
     </div>`;
 }
@@ -306,7 +306,7 @@ async function conversationView(userId) {
     
     return `<div class="conversation-page">
         <div class="conversation-header">
-            <a href="#" onclick="go('dashboard')" class="back-btn">← Back</a>
+            <a href="#" onclick="go('dashboard'); return false;" class="back-btn">← Back</a>
             <div class="conversation-user">
                 <div class="user-avatar-sm">${otherUser.avatar_url ? `<img src="${otherUser.avatar_url}">` : otherUser.name.charAt(0)}</div>
                 <strong>${otherUser.name}</strong>
@@ -373,7 +373,7 @@ function signupView() {
                 <div id="signupError" class="error-msg"></div>
                 <button type="submit" class="btn btn-lg btn-primary" style="width:100%">Create Account</button>
             </form>
-            <p class="auth-switch">Already have an account? <a href="#" onclick="go('login')">Login</a></p>
+            <p class="auth-switch">Already have an account? <a href="#" onclick="go('login'); return false;">Login</a></p>
         </div>
     </div>`;
 }
@@ -462,7 +462,7 @@ async function dashboardView() {
                 </div>
             </div>
             <div class="dashboard-actions">
-                <a href="#" onclick="go('sell')" class="btn btn-primary">+ New Listing</a>
+                <a href="#sell" onclick="go('sell'); return false;" class="btn btn-primary">+ New Listing</a>
                 <button onclick="handleLogout()" class="btn btn-outline">Logout</button>
             </div>
         </div>
@@ -477,7 +477,7 @@ async function dashboardView() {
         
         <div id="dashListings" class="dash-content">
             <h2>My Listings (${myParts.length})</h2>
-            ${myParts.length ? `<div class="grid">${myParts.map(cardHTML).join('')}</div>` : '<p class="empty-state">No listings yet. <a href="#" onclick="go(\'sell\')">Create your first listing</a></p>'}
+            ${myParts.length ? `<div class="grid">${myParts.map(cardHTML).join('')}</div>` : '<p class="empty-state">No listings yet. <a href="#" onclick="go(\'sell\'); return false;">Create your first listing</a></p>'}
         </div>
         
         <div id="dashMessages" class="dash-content" style="display:none">
@@ -504,7 +504,7 @@ async function dashboardView() {
         
         <div id="dashPurchases" class="dash-content" style="display:none">
             <h2>My Purchases</h2>
-            ${myPurchases.length ? `<div class="purchase-list">${myPurchases.map(p => `<div class="purchase-item"><strong>${p.title}</strong> by ${p.seller_name}<span class="purchase-price">$${p.price.toFixed(2)}</span><a href="#" onclick="go('part', ${p.part_id})" class="btn btn-sm">View</a></div>`).join('')}</div>` : '<p class="empty-state">No purchases yet.</p>'}
+            ${myPurchases.length ? `<div class="purchase-list">${myPurchases.map(p => `<div class="purchase-item"><strong>${p.title}</strong> by ${p.seller_name}<span class="purchase-price">$${p.price.toFixed(2)}</span><a href="#" onclick="go('part', ${p.part_id}); return false;" class="btn btn-sm">View</a></div>`).join('')}</div>` : '<p class="empty-state">No purchases yet.</p>'}
         </div>
         
         <div id="dashSettings" class="dash-content" style="display:none">
@@ -625,7 +625,7 @@ function homeView() {
 
         <div class="promo-banner">
             <div class="promo-content"><span class="promo-badge">NEW</span><span class="promo-text">Need a custom part? <strong>Find a Designer</strong> to create it for you</span></div>
-            <a href="#" onclick="go('designers')" class="promo-cta">Browse Designers</a>
+            <a href="#" onclick="go('designers'); return false;" class="promo-cta">Browse Designers</a>
         </div>
 
         <div class="hero">
@@ -653,18 +653,18 @@ function homeView() {
             <div class="cat-grid">${categories.map(c => `<a href="#" class="cat-item" onclick="filterCat='${c.name}';go('browse')"><img src="${c.img}" alt="${c.name}"><span>${c.name}</span></a>`).join('')}</div>
         </div>
 
-        <div class="section"><div class="section-head"><h2>Trending Parts</h2><a href="#" onclick="go('browse')">View all</a></div>
+        <div class="section"><div class="section-head"><h2>Trending Parts</h2><a href="#" onclick="go('browse'); return false;">View all</a></div>
             <div class="grid">${trendingParts.map(p => cardHTML(p, true)).join('')}</div>
         </div>
 
         ${featuredParts.length ? `<div class="section featured-section"><div class="section-head"><h2>Featured Parts</h2><span class="featured-badge">SPONSORED</span></div>
             <div class="grid">${featuredParts.slice(0, 4).map(p => cardHTML(p, false, true)).join('')}</div></div>` : ''}
         
-        <div class="section"><div class="section-head"><h2>New Parts</h2><a href="#" onclick="go('browse')">View all</a></div>
+        <div class="section"><div class="section-head"><h2>New Parts</h2><a href="#" onclick="go('browse'); return false;">View all</a></div>
             <div class="grid">${parts.slice(0, 8).map(cardHTML).join('')}</div>
         </div>
 
-        <div class="section featured-designers"><div class="section-head"><h2>Top Designers</h2><a href="#" onclick="go('designers')">View all</a></div>
+        <div class="section featured-designers"><div class="section-head"><h2>Top Designers</h2><a href="#" onclick="go('designers'); return false;">View all</a></div>
             <div class="designers-preview">${designers.slice(0, 3).map(d => `<div class="designer-mini" onclick="go('designer', ${d.id})"><img src="${d.avatar_url}" alt="${d.name}"><div class="designer-mini-info"><strong>${d.name}</strong><span>${d.bio?.substring(0, 50)}...</span><span class="designer-mini-rate">${d.rate} - ${d.stats?.avgRating || 5} stars</span></div></div>`).join('')}</div>
         </div>
 
@@ -691,7 +691,7 @@ function browseView() {
             <h3>Category</h3><ul><li><a href="#" onclick="filterCat='';go('browse')" class="${!filterCat?'active':''}">All</a></li>${categories.map(c => `<li><a href="#" onclick="filterCat='${c.name}';go('browse')" class="${filterCat===c.name?'active':''}">${c.name}</a></li>`).join('')}</ul>
             <h3>Make</h3><ul><li><a href="#" onclick="filterMake='';filterModel='';go('browse')" class="${!filterMake?'active':''}">All Makes</a></li>${carMakes.map(m => `<li><a href="#" onclick="filterMake='${m}';filterModel='';go('browse')" class="${filterMake===m?'active':''}">${m}</a></li>`).join('')}</ul>
             ${filterMake && carModels[filterMake] ? `<h3>Model</h3><ul><li><a href="#" onclick="filterModel='';go('browse')" class="${!filterModel?'active':''}">All Models</a></li>${carModels[filterMake].map(m => `<li><a href="#" onclick="filterModel='${m}';go('browse')" class="${filterModel===m?'active':''}">${m}</a></li>`).join('')}</ul>` : ''}
-            <div class="sidebar-cta"><p>Don't have a printer?</p><a href="#" onclick="go('printshops')" class="btn btn-outline" style="width:100%">Find Print Shop</a></div>
+            <div class="sidebar-cta"><p>Don't have a printer?</p><a href="#" onclick="go('printshops'); return false;" class="btn btn-outline" style="width:100%">Find Print Shop</a></div>
         </aside>
         <div><div class="browse-head"><h1>${title}</h1><span style="color:var(--muted)">${filtered.length} parts</span></div>
             <div class="grid">${filtered.length ? filtered.map(cardHTML).join('') : '<p style="grid-column:1/-1;text-align:center;color:var(--muted);padding:48px 0;">No parts found.</p>'}</div>
@@ -707,7 +707,7 @@ function designersView() {
 
 function sellView() {
     if (!currentUser) {
-        return `<div class="auth-prompt"><h2>Login Required</h2><p>You need to be logged in to sell parts.</p><a href="#" onclick="go('login')" class="btn btn-primary">Login</a> <a href="#" onclick="go('signup')" class="btn btn-outline">Sign Up</a></div>`;
+        return `<div class="auth-prompt"><h2>Login Required</h2><p>You need to be logged in to sell parts.</p><a href="#" onclick="go('login'); return false;" class="btn btn-primary">Login</a> <a href="#" onclick="go('signup'); return false;" class="btn btn-outline">Sign Up</a></div>`;
     }
     
     return `<div class="sell-layout">

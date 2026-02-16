@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PartForge — 3D Parts Marketplace</title>
-    <meta name="description" content="Buy and sell 3D printable parts. Instant downloads. Low fees.">
+    <meta name="description" content="Buy and sell 3D printable parts. Instant downloads. Keep 100% of your sales.">
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -13,253 +13,480 @@
     <!-- Navigation -->
     <nav class="navbar">
         <div class="nav-container">
-            <a href="#" class="logo" onclick="showView('home')">
-                <span class="logo-icon">◆</span> PartForge
+            <a href="#" class="logo" onclick="navigate('home')">
+                <svg class="logo-mark" viewBox="0 0 32 32" fill="none">
+                    <path d="M16 2L30 9V23L16 30L2 23V9L16 2Z" fill="currentColor"/>
+                    <path d="M16 10L22 13.5V20.5L16 24L10 20.5V13.5L16 10Z" fill="white"/>
+                </svg>
+                PartForge
             </a>
+            
+            <div class="nav-search">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"/>
+                    <path d="M21 21l-4.35-4.35"/>
+                </svg>
+                <input type="text" id="navSearch" placeholder="Search parts..." onkeyup="handleNavSearch(event)" onfocus="showSearchResults()" onblur="hideSearchResults()">
+                <div class="search-dropdown" id="searchDropdown"></div>
+            </div>
+
             <div class="nav-links">
-                <a href="#" onclick="showView('home')" class="nav-link active" data-view="home">Browse Parts</a>
-                <a href="#" onclick="showView('designers')" class="nav-link" data-view="designers">Hire Designer</a>
-                <a href="#" onclick="showView('sell')" class="nav-link" data-view="sell">Sell Your Parts</a>
+                <a href="#" onclick="navigate('browse')" class="nav-link" data-view="browse">Browse</a>
+                <a href="#" onclick="navigate('designers')" class="nav-link" data-view="designers">Designers</a>
+                <a href="#" onclick="navigate('sell')" class="nav-link" data-view="sell">Sell</a>
             </div>
+            
             <div class="nav-actions">
-                <button class="btn btn-primary" onclick="showView('sell')">+ List a Part</button>
+                <button class="btn btn-primary" onclick="navigate('sell')">List a Part</button>
             </div>
+
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
         </div>
     </nav>
 
-    <!-- Hero Section -->
-    <section class="hero" id="hero">
-        <div class="hero-content">
-            <h1>The Marketplace for 3D Printable Parts</h1>
-            <p>Buy STL files instantly. Sell your designs. Hire expert designers.</p>
-            <div class="hero-search">
-                <input type="text" id="heroSearch" placeholder="Search parts... (e.g., drone mount, gear, bracket)" onkeyup="handleSearch(event)">
-                <button class="btn btn-primary" onclick="performSearch()">Search</button>
-            </div>
-            <div class="hero-stats">
-                <div class="stat"><span class="stat-number">1,247</span> Parts</div>
-                <div class="stat"><span class="stat-number">89</span> Designers</div>
-                <div class="stat"><span class="stat-number">2.9%</span> Fees Only</div>
-            </div>
-        </div>
-    </section>
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobileMenu">
+        <a href="#" onclick="navigate('browse')">Browse Parts</a>
+        <a href="#" onclick="navigate('designers')">Hire Designer</a>
+        <a href="#" onclick="navigate('sell')">Sell Your Parts</a>
+    </div>
 
-    <!-- Main Content -->
-    <main class="main-content">
-        <!-- Home / Browse View -->
-        <div id="homeView" class="view active">
-            <!-- Categories -->
-            <section class="categories">
-                <h2>Categories</h2>
-                <div class="category-grid">
-                    <button class="category-card" onclick="filterCategory('all')">
-                        <span class="cat-icon">🔧</span>
-                        <span class="cat-name">All Parts</span>
-                        <span class="cat-count">1,247</span>
-                    </button>
-                    <button class="category-card" onclick="filterCategory('drone')">
-                        <span class="cat-icon">🚁</span>
-                        <span class="cat-name">Drone</span>
-                        <span class="cat-count">234</span>
-                    </button>
-                    <button class="category-card" onclick="filterCategory('automotive')">
-                        <span class="cat-icon">🚗</span>
-                        <span class="cat-name">Automotive</span>
-                        <span class="cat-count">187</span>
-                    </button>
-                    <button class="category-card" onclick="filterCategory('electronics')">
-                        <span class="cat-icon">⚡</span>
-                        <span class="cat-name">Electronics</span>
-                        <span class="cat-count">312</span>
-                    </button>
-                    <button class="category-card" onclick="filterCategory('mechanical')">
-                        <span class="cat-icon">⚙️</span>
-                        <span class="cat-name">Mechanical</span>
-                        <span class="cat-count">198</span>
-                    </button>
-                    <button class="category-card" onclick="filterCategory('home')">
-                        <span class="cat-icon">🏠</span>
-                        <span class="cat-name">Home</span>
-                        <span class="cat-count">156</span>
-                    </button>
-                    <button class="category-card" onclick="filterCategory('hobby')">
-                        <span class="cat-icon">🎮</span>
-                        <span class="cat-name">Hobby</span>
-                        <span class="cat-count">160</span>
-                    </button>
+    <!-- Home View -->
+    <div id="homeView" class="view active">
+        <section class="hero">
+            <div class="hero-content">
+                <h1>The marketplace for<br>3D printable parts</h1>
+                <p>Buy STL files instantly. Sell your designs and keep 100% of sales.</p>
+                <div class="hero-search-large">
+                    <input type="text" id="heroSearchInput" placeholder="What are you looking for?" onkeyup="handleHeroSearch(event)">
+                    <button class="btn btn-dark" onclick="performHeroSearch()">Search</button>
                 </div>
-            </section>
+            </div>
+        </section>
 
-            <!-- Parts Grid -->
-            <section class="parts-section">
+        <!-- Categories -->
+        <section class="categories-section">
+            <div class="container">
+                <h2>Browse by category</h2>
+                <div class="categories-grid">
+                    <a href="#" class="category-tile" onclick="browseCategory('drone')">
+                        <div class="category-image">
+                            <img src="https://images.unsplash.com/photo-1473968512647-3e447244af8f?w=400&h=300&fit=crop" alt="Drone">
+                        </div>
+                        <span class="category-name">Drone & FPV</span>
+                    </a>
+                    <a href="#" class="category-tile" onclick="browseCategory('automotive')">
+                        <div class="category-image">
+                            <img src="https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=400&h=300&fit=crop" alt="Automotive">
+                        </div>
+                        <span class="category-name">Automotive</span>
+                    </a>
+                    <a href="#" class="category-tile" onclick="browseCategory('electronics')">
+                        <div class="category-image">
+                            <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&h=300&fit=crop" alt="Electronics">
+                        </div>
+                        <span class="category-name">Electronics</span>
+                    </a>
+                    <a href="#" class="category-tile" onclick="browseCategory('mechanical')">
+                        <div class="category-image">
+                            <img src="https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=400&h=300&fit=crop" alt="Mechanical">
+                        </div>
+                        <span class="category-name">Mechanical</span>
+                    </a>
+                    <a href="#" class="category-tile" onclick="browseCategory('home')">
+                        <div class="category-image">
+                            <img src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=300&fit=crop" alt="Home">
+                        </div>
+                        <span class="category-name">Home & Office</span>
+                    </a>
+                    <a href="#" class="category-tile" onclick="browseCategory('hobby')">
+                        <div class="category-image">
+                            <img src="https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?w=400&h=300&fit=crop" alt="Hobby">
+                        </div>
+                        <span class="category-name">RC & Hobby</span>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Featured Parts -->
+        <section class="featured-section">
+            <div class="container">
                 <div class="section-header">
-                    <h2>Latest Parts</h2>
-                    <div class="filters">
-                        <select id="sortFilter" onchange="sortParts()">
+                    <h2>New arrivals</h2>
+                    <a href="#" onclick="navigate('browse')" class="view-all">View all</a>
+                </div>
+                <div class="parts-grid" id="featuredParts"></div>
+            </div>
+        </section>
+
+        <!-- Value Props -->
+        <section class="value-section">
+            <div class="container">
+                <div class="value-grid">
+                    <div class="value-item">
+                        <div class="value-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 2v20M2 12h20"/>
+                            </svg>
+                        </div>
+                        <h3>Instant downloads</h3>
+                        <p>Pay once, download immediately. No waiting for seller approval.</p>
+                    </div>
+                    <div class="value-item">
+                        <div class="value-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="2" y="4" width="20" height="16" rx="2"/>
+                                <path d="M12 12h.01"/>
+                            </svg>
+                        </div>
+                        <h3>$5 flat fee</h3>
+                        <p>List your part for $5. Keep 100% of every sale. No commission.</p>
+                    </div>
+                    <div class="value-item">
+                        <div class="value-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                            </svg>
+                        </div>
+                        <h3>Secure payments</h3>
+                        <p>Powered by Stripe. Your money goes directly to your bank.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA -->
+        <section class="cta-section">
+            <div class="container">
+                <div class="cta-content">
+                    <h2>Ready to sell your designs?</h2>
+                    <p>Join thousands of designers earning money from their 3D models.</p>
+                    <button class="btn btn-primary btn-large" onclick="navigate('sell')">Start Selling</button>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Browse View -->
+    <div id="browseView" class="view">
+        <div class="browse-container">
+            <aside class="browse-sidebar">
+                <div class="sidebar-section">
+                    <h3>Categories</h3>
+                    <ul class="filter-list" id="categoryFilters">
+                        <li><a href="#" class="filter-item active" onclick="filterCategory('all')">All Parts</a></li>
+                        <li><a href="#" class="filter-item" onclick="filterCategory('drone')">Drone & FPV</a></li>
+                        <li><a href="#" class="filter-item" onclick="filterCategory('automotive')">Automotive</a></li>
+                        <li><a href="#" class="filter-item" onclick="filterCategory('electronics')">Electronics</a></li>
+                        <li><a href="#" class="filter-item" onclick="filterCategory('mechanical')">Mechanical</a></li>
+                        <li><a href="#" class="filter-item" onclick="filterCategory('home')">Home & Office</a></li>
+                        <li><a href="#" class="filter-item" onclick="filterCategory('hobby')">RC & Hobby</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <h3>File Format</h3>
+                    <ul class="filter-list">
+                        <li><label class="checkbox-item"><input type="checkbox" checked onchange="applyFilters()"> STL</label></li>
+                        <li><label class="checkbox-item"><input type="checkbox" checked onchange="applyFilters()"> STEP</label></li>
+                        <li><label class="checkbox-item"><input type="checkbox" checked onchange="applyFilters()"> OBJ</label></li>
+                        <li><label class="checkbox-item"><input type="checkbox" checked onchange="applyFilters()"> 3MF</label></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <h3>Price</h3>
+                    <div class="price-range">
+                        <input type="number" id="priceMin" placeholder="Min" onchange="applyFilters()">
+                        <span>to</span>
+                        <input type="number" id="priceMax" placeholder="Max" onchange="applyFilters()">
+                    </div>
+                </div>
+            </aside>
+            
+            <main class="browse-main">
+                <div class="browse-header">
+                    <div class="browse-title">
+                        <h1 id="browseTitle">All Parts</h1>
+                        <span class="result-count" id="resultCount">0 results</span>
+                    </div>
+                    <div class="browse-sort">
+                        <label>Sort by</label>
+                        <select id="sortSelect" onchange="applySort()">
                             <option value="newest">Newest</option>
+                            <option value="popular">Most Popular</option>
                             <option value="price-low">Price: Low to High</option>
                             <option value="price-high">Price: High to Low</option>
-                            <option value="popular">Most Popular</option>
                         </select>
                     </div>
                 </div>
-                <div class="parts-grid" id="partsGrid">
-                    <!-- Parts loaded by JS -->
-                </div>
-            </section>
+                <div class="parts-grid" id="browseGrid"></div>
+            </main>
         </div>
+    </div>
 
-        <!-- Designers View -->
-        <div id="designersView" class="view">
-            <section class="designers-hero">
-                <h1>Hire a 3D Designer</h1>
-                <p>Need a custom part? Work with expert designers who can bring your ideas to life.</p>
-            </section>
-            
-            <div class="designers-grid" id="designersGrid">
-                <!-- Designers loaded by JS -->
+    <!-- Designers View -->
+    <div id="designersView" class="view">
+        <div class="container">
+            <div class="page-header">
+                <h1>Hire a Designer</h1>
+                <p>Need a custom part? Work with experienced 3D designers.</p>
             </div>
+            <div class="designers-grid" id="designersGrid"></div>
         </div>
+    </div>
 
-        <!-- Sell View -->
-        <div id="sellView" class="view">
-            <section class="sell-hero">
-                <h1>Sell Your 3D Parts</h1>
-                <p>Upload your STL files and start earning. Only 2.9% + $0.30 per sale.</p>
-            </section>
-
-            <div class="sell-container">
-                <div class="sell-card">
-                    <h2>How It Works</h2>
-                    <div class="steps">
-                        <div class="step">
-                            <div class="step-num">1</div>
-                            <div class="step-content">
-                                <h3>Upload Your File</h3>
-                                <p>STL, STEP, OBJ, or 3MF formats accepted</p>
-                            </div>
-                        </div>
-                        <div class="step">
-                            <div class="step-num">2</div>
-                            <div class="step-content">
-                                <h3>Set Your Price</h3>
-                                <p>You keep 97% of every sale</p>
-                            </div>
-                        </div>
-                        <div class="step">
-                            <div class="step-num">3</div>
-                            <div class="step-content">
-                                <h3>Get Paid Instantly</h3>
-                                <p>Direct deposit to your bank via Stripe</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <form class="listing-form" id="listingForm" onsubmit="handleListing(event)">
-                    <h2>Create Listing</h2>
+    <!-- Sell View -->
+    <div id="sellView" class="view">
+        <div class="container">
+            <div class="sell-layout">
+                <div class="sell-info">
+                    <h1>Sell your 3D parts</h1>
+                    <p class="sell-subtitle">Upload your design, set your price, and start earning.</p>
                     
-                    <div class="form-group">
-                        <label>Part Name *</label>
-                        <input type="text" name="name" placeholder="e.g., Universal Drone Motor Mount" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Description *</label>
-                        <textarea name="description" rows="4" placeholder="Describe your part, materials, print settings..." required></textarea>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Category *</label>
-                            <select name="category" required>
-                                <option value="">Select category</option>
-                                <option value="drone">Drone</option>
-                                <option value="automotive">Automotive</option>
-                                <option value="electronics">Electronics</option>
-                                <option value="mechanical">Mechanical</option>
-                                <option value="home">Home</option>
-                                <option value="hobby">Hobby</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Price (USD) *</label>
-                            <input type="number" name="price" min="1" step="0.01" placeholder="5.00" required>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Upload File *</label>
-                        <div class="file-upload" id="fileUpload">
-                            <input type="file" name="file" accept=".stl,.step,.obj,.3mf" required>
-                            <div class="file-upload-content">
-                                <span class="upload-icon">📁</span>
-                                <span>Drop STL, STEP, OBJ, or 3MF here</span>
-                                <span class="upload-hint">or click to browse</span>
+                    <div class="how-it-works">
+                        <h2>How it works</h2>
+                        <div class="step-list">
+                            <div class="step-item">
+                                <div class="step-number">1</div>
+                                <div class="step-content">
+                                    <h3>Upload your file</h3>
+                                    <p>STL, STEP, OBJ, or 3MF. Add photos and description.</p>
+                                </div>
+                            </div>
+                            <div class="step-item">
+                                <div class="step-number">2</div>
+                                <div class="step-content">
+                                    <h3>Pay $5 listing fee</h3>
+                                    <p>One-time payment. Your listing stays up forever.</p>
+                                </div>
+                            </div>
+                            <div class="step-item">
+                                <div class="step-number">3</div>
+                                <div class="step-content">
+                                    <h3>Get paid instantly</h3>
+                                    <p>Buyers pay, you get 100%. Direct to your bank via Stripe.</p>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label>Preview Image</label>
-                        <div class="file-upload" id="imageUpload">
-                            <input type="file" name="image" accept="image/*">
-                            <div class="file-upload-content">
-                                <span class="upload-icon">🖼️</span>
-                                <span>Upload preview image</span>
-                                <span class="upload-hint">PNG, JPG (recommended: 800x600)</span>
+                    <div class="pricing-highlight">
+                        <div class="pricing-main">
+                            <span class="pricing-amount">$5</span>
+                            <span class="pricing-period">one-time</span>
+                        </div>
+                        <ul class="pricing-features">
+                            <li>Keep 100% of every sale</li>
+                            <li>No monthly fees</li>
+                            <li>No commission</li>
+                            <li>Listing never expires</li>
+                            <li>Instant buyer downloads</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="sell-form-container">
+                    <form class="sell-form" id="listingForm">
+                        <div class="form-section">
+                            <h2>Part details</h2>
+                            
+                            <div class="form-group">
+                                <label>Title</label>
+                                <input type="text" name="title" placeholder="e.g., Universal Drone Motor Mount" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Description</label>
+                                <textarea name="description" rows="4" placeholder="Describe your part, dimensions, recommended materials, print settings..." required></textarea>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Category</label>
+                                    <select name="category" required>
+                                        <option value="">Select category</option>
+                                        <option value="drone">Drone & FPV</option>
+                                        <option value="automotive">Automotive</option>
+                                        <option value="electronics">Electronics</option>
+                                        <option value="mechanical">Mechanical</option>
+                                        <option value="home">Home & Office</option>
+                                        <option value="hobby">RC & Hobby</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Price (USD)</label>
+                                    <div class="input-with-prefix">
+                                        <span class="input-prefix">$</span>
+                                        <input type="number" name="price" min="0.99" step="0.01" placeholder="4.99" required>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="form-group">
-                        <label>Your Email *</label>
-                        <input type="email" name="email" placeholder="you@example.com" required>
-                        <span class="form-hint">For payout notifications and buyer questions</span>
-                    </div>
+                        <div class="form-section">
+                            <h2>Files</h2>
+                            
+                            <div class="form-group">
+                                <label>3D File</label>
+                                <div class="file-drop-zone" id="fileDropZone">
+                                    <input type="file" name="partFile" accept=".stl,.step,.stp,.obj,.3mf" required>
+                                    <div class="drop-content">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                                            <polyline points="17 8 12 3 7 8"/>
+                                            <line x1="12" y1="3" x2="12" y2="15"/>
+                                        </svg>
+                                        <p>Drag and drop your file here</p>
+                                        <span>or click to browse</span>
+                                        <span class="file-types">STL, STEP, OBJ, 3MF</span>
+                                    </div>
+                                    <div class="file-selected" id="fileSelected"></div>
+                                </div>
+                            </div>
 
-                    <button type="submit" class="btn btn-primary btn-large">Create Listing — $5 Fee</button>
-                    <p class="form-note">One-time $5 listing fee. You keep 97% of all sales.</p>
-                </form>
-            </div>
-        </div>
+                            <div class="form-group">
+                                <label>Preview Images</label>
+                                <div class="image-upload-grid" id="imageUploadGrid">
+                                    <div class="image-upload-slot" onclick="triggerImageUpload(0)">
+                                        <input type="file" accept="image/*" onchange="handleImageUpload(this, 0)">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <rect x="3" y="3" width="18" height="18" rx="2"/>
+                                            <circle cx="8.5" cy="8.5" r="1.5"/>
+                                            <path d="M21 15l-5-5L5 21"/>
+                                        </svg>
+                                        <span>Main image</span>
+                                    </div>
+                                    <div class="image-upload-slot" onclick="triggerImageUpload(1)">
+                                        <input type="file" accept="image/*" onchange="handleImageUpload(this, 1)">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <line x1="12" y1="5" x2="12" y2="19"/>
+                                            <line x1="5" y1="12" x2="19" y2="12"/>
+                                        </svg>
+                                    </div>
+                                    <div class="image-upload-slot" onclick="triggerImageUpload(2)">
+                                        <input type="file" accept="image/*" onchange="handleImageUpload(this, 2)">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <line x1="12" y1="5" x2="12" y2="19"/>
+                                            <line x1="5" y1="12" x2="19" y2="12"/>
+                                        </svg>
+                                    </div>
+                                    <div class="image-upload-slot" onclick="triggerImageUpload(3)">
+                                        <input type="file" accept="image/*" onchange="handleImageUpload(this, 3)">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <line x1="12" y1="5" x2="12" y2="19"/>
+                                            <line x1="5" y1="12" x2="19" y2="12"/>
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
-        <!-- Part Detail Modal -->
-        <div id="partModal" class="modal">
-            <div class="modal-content">
-                <button class="modal-close" onclick="closeModal()">&times;</button>
-                <div class="modal-body" id="modalBody">
-                    <!-- Content loaded by JS -->
+                        <div class="form-section">
+                            <h2>Your details</h2>
+                            
+                            <div class="form-group">
+                                <label>Email</label>
+                                <input type="email" name="email" placeholder="you@example.com" required>
+                                <span class="form-hint">We'll send your earnings and buyer questions here</span>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Display Name</label>
+                                <input type="text" name="displayName" placeholder="Your name or brand">
+                            </div>
+                        </div>
+
+                        <div class="form-summary">
+                            <div class="summary-row">
+                                <span>Listing fee</span>
+                                <span>$5.00</span>
+                            </div>
+                            <div class="summary-row summary-total">
+                                <span>Total</span>
+                                <span>$5.00</span>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-large btn-full">
+                            Continue to Payment
+                        </button>
+                        <p class="form-footer-note">By listing, you agree to our Terms of Service</p>
+                    </form>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Designer Detail Modal -->
-        <div id="designerModal" class="modal">
-            <div class="modal-content modal-large">
-                <button class="modal-close" onclick="closeDesignerModal()">&times;</button>
-                <div class="modal-body" id="designerModalBody">
-                    <!-- Content loaded by JS -->
+    <!-- Part Detail View -->
+    <div id="partView" class="view">
+        <div class="container">
+            <div class="part-detail" id="partDetail"></div>
+        </div>
+    </div>
+
+    <!-- Designer Detail View -->
+    <div id="designerView" class="view">
+        <div class="container">
+            <div class="designer-detail" id="designerDetail"></div>
+        </div>
+    </div>
+
+    <!-- Success/Download View -->
+    <div id="successView" class="view">
+        <div class="container">
+            <div class="success-content">
+                <div class="success-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+                        <polyline points="22 4 12 14.01 9 11.01"/>
+                    </svg>
                 </div>
+                <h1>Payment Successful</h1>
+                <p>Your download is ready.</p>
+                <a href="#" class="btn btn-primary btn-large" id="downloadBtn">Download File</a>
+                <a href="#" onclick="navigate('browse')" class="btn btn-secondary">Continue Browsing</a>
             </div>
         </div>
-    </main>
+    </div>
 
     <!-- Footer -->
     <footer class="footer">
-        <div class="footer-content">
-            <div class="footer-brand">
-                <span class="logo-icon">◆</span> PartForge
-                <p>The marketplace for 3D printable parts</p>
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <a href="#" class="logo" onclick="navigate('home')">
+                        <svg class="logo-mark" viewBox="0 0 32 32" fill="none">
+                            <path d="M16 2L30 9V23L16 30L2 23V9L16 2Z" fill="currentColor"/>
+                            <path d="M16 10L22 13.5V20.5L16 24L10 20.5V13.5L16 10Z" fill="white"/>
+                        </svg>
+                        PartForge
+                    </a>
+                    <p>The marketplace for 3D printable parts.</p>
+                </div>
+                <div class="footer-links">
+                    <h4>Marketplace</h4>
+                    <a href="#" onclick="navigate('browse')">Browse Parts</a>
+                    <a href="#" onclick="navigate('designers')">Hire Designer</a>
+                    <a href="#" onclick="navigate('sell')">Sell Your Parts</a>
+                </div>
+                <div class="footer-links">
+                    <h4>Company</h4>
+                    <a href="#">About</a>
+                    <a href="#">Help Center</a>
+                    <a href="#">Contact</a>
+                </div>
+                <div class="footer-links">
+                    <h4>Legal</h4>
+                    <a href="#">Terms of Service</a>
+                    <a href="#">Privacy Policy</a>
+                </div>
             </div>
-            <div class="footer-links">
-                <a href="#">About</a>
-                <a href="#">Help</a>
-                <a href="#">Terms</a>
-                <a href="#">Privacy</a>
-            </div>
-            <div class="footer-copy">
-                © 2026 PartForge. All rights reserved.
+            <div class="footer-bottom">
+                <p>&copy; 2026 PartForge. All rights reserved.</p>
             </div>
         </div>
     </footer>

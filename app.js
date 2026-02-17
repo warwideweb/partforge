@@ -1,7 +1,7 @@
 // ForgAuto — 3D Marketplace for Cars
 // Version 4.0 - Major Fixes
 
-const VERSION = '5.0';
+const VERSION = '5.1';
 const API_URL = 'https://forgauto-api.warwideweb.workers.dev'; // Cloudflare Worker API
 
 // State
@@ -841,7 +841,16 @@ function sellView() {
             <div class="field-row"><div class="field"><label>Category</label><select id="partCat" required>${categories.map(c => `<option>${c.name}</option>`).join('')}</select></div><div class="field"><label>Price (USD)</label><input type="number" id="partPrice" placeholder="4.99" min="0.99" step="0.01" required></div></div>
             <div class="field-row"><div class="field"><label>File Format</label><input type="text" id="partFormat" placeholder="STL, STEP"></div><div class="field"><label>Recommended Material</label><input type="text" id="partMaterial" placeholder="PLA, PETG, ABS"></div></div>
             <div class="field"><label>Infill % (recommended)</label><input type="text" id="partInfill" placeholder="25%"></div>
-            <div class="field"><label>3D File</label><div class="dropzone" onclick="document.getElementById('fileInput').click()"><div class="dropzone-icon">+</div><p id="fileName">Drop 3D file here or click</p><span>STL, STEP, OBJ, 3MF</span></div><input type="file" id="fileInput" hidden onchange="handleFileSelect(event)"></div>
+            <div class="field">
+                <label>3D Files <span class="field-hint-inline">(Upload multiple files for a package)</span></label>
+                <div class="files-upload-zone" onclick="document.getElementById('fileInput').click()">
+                    <div class="dropzone-icon">📦</div>
+                    <p>Drop 3D files here or click to upload</p>
+                    <span>STL, STEP, OBJ, 3MF • Multiple files allowed</span>
+                </div>
+                <input type="file" id="fileInput" hidden multiple accept=".stl,.step,.stp,.obj,.3mf" onchange="handleMultiFileSelect(event)">
+                <div class="uploaded-files-list" id="uploadedFilesList"></div>
+            </div>
             <div class="field"><label>Photos <span class="required-star">*</span> (First photo = thumbnail)</label><div class="photo-grid" id="photoGrid"><div class="photo-add" onclick="document.getElementById('photoInput').click()"><span class="photo-add-icon">+</span><span>Add</span></div></div><input type="file" id="photoInput" accept="image/*" multiple hidden onchange="handlePhotoUpload(event)"><p class="field-hint">At least 1 photo required</p></div>
             <div class="upsell-box"><label class="upsell-label"><input type="checkbox" id="featuredCheckbox" onchange="updateTotal()"><div class="upsell-content"><span class="upsell-badge">FEATURED</span><strong>Get Featured Placement +$20</strong><p>Your listing appears in the Featured section for 30 days.</p></div></label></div>
             <div class="form-total"><span>Total</span><span id="totalPrice">$10.00</span></div>
@@ -869,6 +878,9 @@ function updatePartModels() {
     if (carModels[make]) carModels[make].forEach(m => { modelSelect.innerHTML += `<option value="${m}">${m}</option>`; });
 }
 
+// v5.1: Multiple 3D file upload support
+let uploadedFiles = [];
+
 function handleFileSelect(e) {
     const file = e.target.files[0];
     if (file) {
@@ -885,6 +897,68 @@ function handleFileSelect(e) {
     }
 }
 
+// v5.1: Handle multiple 3D file uploads
+function handleMultiFileSelect(e) {
+    const validTypes = ['.stl', '.step', '.stp', '.obj', '.3mf'];
+    
+    for (const file of e.target.files) {
+        const ext = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+        if (!validTypes.includes(ext)) {
+            alert(`Invalid file type: ${file.name}. Only STL, STEP, OBJ, 3MF allowed.`);
+            continue;
+        }
+        // Avoid duplicates
+        if (!uploadedFiles.some(f => f.name === file.name && f.size === file.size)) {
+            uploadedFiles.push(file);
+        }
+    }
+    
+    // Keep backward compatibility - first file is the "main" file
+    if (uploadedFiles.length > 0) {
+        uploadedFile = uploadedFiles[0];
+    }
+    
+    renderUploadedFilesList();
+}
+
+function renderUploadedFilesList() {
+    const container = document.getElementById('uploadedFilesList');
+    if (!container) return;
+    
+    if (uploadedFiles.length === 0) {
+        container.innerHTML = '';
+        return;
+    }
+    
+    container.innerHTML = `
+        <div class="uploaded-files-header">
+            <span class="files-count">${uploadedFiles.length} file${uploadedFiles.length > 1 ? 's' : ''} in package</span>
+        </div>
+        <div class="uploaded-files-grid">
+            ${uploadedFiles.map((f, i) => `
+                <div class="uploaded-file-item">
+                    <div class="file-icon">📄</div>
+                    <div class="file-info">
+                        <span class="file-name">${truncateText(f.name, 30)}</span>
+                        <span class="file-size">${(f.size / 1024).toFixed(1)} KB</span>
+                    </div>
+                    <button type="button" class="file-remove" onclick="removeUploadedFile(${i})">×</button>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+function removeUploadedFile(index) {
+    uploadedFiles.splice(index, 1);
+    if (uploadedFiles.length > 0) {
+        uploadedFile = uploadedFiles[0];
+    } else {
+        uploadedFile = null;
+    }
+    renderUploadedFilesList();
+}
+
 async function handleCreateListing(e) {
     e.preventDefault();
     
@@ -892,8 +966,9 @@ async function handleCreateListing(e) {
     document.querySelectorAll('.field-error').forEach(el => el.remove());
     
     // Validate BOTH file and photos required
+    // v5.1: Use uploadedFiles array for multi-file support
     const errors = [];
-    if (!uploadedFile) errors.push({field: 'fileInput', msg: '3D file is required'});
+    if (uploadedFiles.length === 0 && !uploadedFile) errors.push({field: 'fileInput', msg: '3D file is required'});
     if (uploadedPhotoFiles.length === 0) errors.push({field: 'photoInput', msg: 'At least 1 photo is required'});
     
     if (errors.length > 0) {
@@ -918,24 +993,37 @@ async function handleCreateListing(e) {
         // Show upload progress
         const submitBtn = e.target.querySelector('button[type="submit"]');
         const originalText = submitBtn.textContent;
-        submitBtn.textContent = 'Uploading 3D file...';
         submitBtn.disabled = true;
         
-        // First upload the 3D file
-        const fileFormData = new FormData();
-        fileFormData.append('file', uploadedFile);
+        // v5.1: Upload all 3D files (package support)
+        const filesToUpload = uploadedFiles.length > 0 ? uploadedFiles : (uploadedFile ? [uploadedFile] : []);
+        const fileUrls = [];
+        let totalSize = 0;
         
-        const fileRes = await fetch(`${API_URL}/api/upload/file`, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${authToken}` },
-            body: fileFormData
-        });
-        
-        if (!fileRes.ok) {
-            const errData = await fileRes.json().catch(() => ({}));
-            throw new Error(errData.error || 'Failed to upload 3D file');
+        for (let i = 0; i < filesToUpload.length; i++) {
+            submitBtn.textContent = `Uploading 3D file ${i + 1}/${filesToUpload.length}...`;
+            const file = filesToUpload[i];
+            totalSize += file.size;
+            
+            const fileFormData = new FormData();
+            fileFormData.append('file', file);
+            
+            const fileRes = await fetch(`${API_URL}/api/upload/file`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${authToken}` },
+                body: fileFormData
+            });
+            
+            if (!fileRes.ok) {
+                const errData = await fileRes.json().catch(() => ({}));
+                throw new Error(errData.error || `Failed to upload ${file.name}`);
+            }
+            const fileData = await fileRes.json();
+            fileUrls.push({ name: file.name, url: fileData.url, size: file.size });
         }
-        const fileData = await fileRes.json();
+        
+        // Primary file URL (first file for backward compatibility)
+        const primaryFileUrl = fileUrls[0]?.url || null;
         
         // Upload photos to R2 (NOT as base64)
         submitBtn.textContent = `Uploading photos (0/${uploadedPhotoFiles.length})...`;
@@ -961,6 +1049,9 @@ async function handleCreateListing(e) {
         
         submitBtn.textContent = 'Creating listing...';
         
+        // v5.1: Calculate total size and formats
+        const formats = [...new Set(filesToUpload.map(f => f.name.split('.').pop().toUpperCase()))].join(', ');
+        
         const listing = {
             title: document.getElementById('partTitle').value,
             description: document.getElementById('partDesc').value,
@@ -968,9 +1059,10 @@ async function handleCreateListing(e) {
             model: model,
             category: document.getElementById('partCat').value,
             price: parseFloat(document.getElementById('partPrice').value),
-            file_format: document.getElementById('partFormat').value || uploadedFile.name.split('.').pop().toUpperCase(),
-            file_size: (uploadedFile.size / (1024 * 1024)).toFixed(2) + ' MB',
-            file_url: fileData.url,
+            file_format: document.getElementById('partFormat').value || formats,
+            file_size: (totalSize / (1024 * 1024)).toFixed(2) + ' MB',
+            file_url: primaryFileUrl,
+            file_urls: fileUrls, // v5.1: All files in package
             material: document.getElementById('partMaterial').value,
             infill: document.getElementById('partInfill').value,
             featured: document.getElementById('featuredCheckbox').checked,
@@ -986,6 +1078,7 @@ async function handleCreateListing(e) {
         uploadedPhotos = [];
         uploadedPhotoFiles = [];
         uploadedFile = null;
+        uploadedFiles = [];
         
         submitBtn.textContent = originalText;
         submitBtn.disabled = false;
@@ -1202,10 +1295,27 @@ async function partView(id) {
             <div class="detail-trust"><span>Secure Payment</span><span>Instant Download</span><span>$10 Listing Fee</span></div>
             <div class="detail-actions">
                 ${p.purchased || (currentUser && currentUser.id === p.user_id) ? 
-                    `<a href="${p.file_url}" download class="btn btn-lg btn-primary">Download File</a>` :
+                    (p.file_urls && p.file_urls.length > 1 ? 
+                        `<button class="btn btn-lg btn-primary" onclick="downloadPackageZip(${p.id}, '${(p.title || 'part').replace(/'/g, "\\'")}')">📦 Download All (${p.file_urls.length} files)</button>` :
+                        `<a href="${p.file_url}" download class="btn btn-lg btn-primary">Download File</a>`) :
                     `<button class="btn btn-lg btn-primary" onclick="handleBuyPart(${p.id})">Buy Now - $${(p.price || 0).toFixed(2)}</button>`}
                 <button class="btn btn-lg btn-outline" onclick="openContactModal(${p.user_id}, '${(p.seller_name || 'Seller').replace(/'/g, "\\'")}', '${(p.title || '').replace(/'/g, "\\'")}', ${p.id}, '${(p.images && p.images[0] || '').replace(/'/g, "\\'")}')">Contact Seller</button>
             </div>
+            ${p.file_urls && p.file_urls.length > 1 ? `
+            <div class="package-files-section">
+                <h3>📦 Package Contents (${p.file_urls.length} files)</h3>
+                <div class="package-files-list">
+                    ${p.file_urls.map((f, i) => `
+                        <div class="package-file-item">
+                            <span class="package-file-icon">📄</span>
+                            <span class="package-file-name">${f.name}</span>
+                            <span class="package-file-size">${(f.size / 1024).toFixed(1)} KB</span>
+                            ${p.purchased || (currentUser && currentUser.id === p.user_id) ? 
+                                `<a href="${f.url}" download class="package-file-download">↓</a>` : ''}
+                        </div>
+                    `).join('')}
+                </div>
+            </div>` : ''}
             ${currentUser && currentUser.id === p.user_id ? `
             <div class="owner-actions">
                 <button class="btn btn-outline" onclick="go('edit', ${p.id})">Edit Listing</button>
@@ -1294,6 +1404,74 @@ function showDownloadModal(purchaseResult) {
 function closeDownloadModal() {
     const modal = document.getElementById('downloadModal');
     if (modal) modal.remove();
+}
+
+// v5.1: Download all files as ZIP
+async function downloadPackageZip(partId, partTitle) {
+    if (typeof JSZip === 'undefined') {
+        alert('ZIP library not loaded. Please refresh the page.');
+        return;
+    }
+    
+    // Get part data
+    let p;
+    try {
+        p = await api(`/api/parts/${partId}`);
+    } catch (e) {
+        alert('Error loading part data');
+        return;
+    }
+    
+    if (!p.file_urls || p.file_urls.length === 0) {
+        alert('No files to download');
+        return;
+    }
+    
+    // Show progress modal
+    const modal = document.createElement('div');
+    modal.id = 'zipProgressModal';
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="modal-box" style="text-align:center;">
+            <h2>Creating ZIP Package</h2>
+            <p id="zipProgress">Downloading file 1 of ${p.file_urls.length}...</p>
+            <div class="zip-progress-bar"><div class="zip-progress-fill" id="zipProgressBar" style="width:0%"></div></div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    
+    try {
+        const zip = new JSZip();
+        
+        for (let i = 0; i < p.file_urls.length; i++) {
+            const file = p.file_urls[i];
+            document.getElementById('zipProgress').textContent = `Downloading file ${i + 1} of ${p.file_urls.length}: ${file.name}`;
+            document.getElementById('zipProgressBar').style.width = `${((i + 1) / p.file_urls.length) * 80}%`;
+            
+            const response = await fetch(file.url);
+            const blob = await response.blob();
+            zip.file(file.name, blob);
+        }
+        
+        document.getElementById('zipProgress').textContent = 'Creating ZIP file...';
+        document.getElementById('zipProgressBar').style.width = '90%';
+        
+        const zipBlob = await zip.generateAsync({ type: 'blob' });
+        
+        document.getElementById('zipProgressBar').style.width = '100%';
+        
+        // Download the ZIP
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(zipBlob);
+        link.download = `${partTitle.replace(/[^a-z0-9]/gi, '_')}_package.zip`;
+        link.click();
+        URL.revokeObjectURL(link.href);
+        
+        modal.remove();
+    } catch (err) {
+        modal.remove();
+        alert('Error creating ZIP: ' + err.message);
+    }
 }
 
 async function handleBoostPart(partId) {

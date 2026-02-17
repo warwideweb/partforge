@@ -4037,3 +4037,228 @@ body.dark .download-email-notice {
         width: 100%;
     }
 }
+
+/* v6.9: New features - Seller rating, ownership checkbox, quote enhancements */
+
+/* Seller rating in part view */
+.seller-rating {
+    color: #f59e0b;
+    font-size: 14px;
+    margin-left: 8px;
+}
+
+/* Ownership confirmation checkbox */
+.ownership-checkbox {
+    background: #fef3c7;
+    border: 1px solid #f59e0b;
+    border-radius: 8px;
+    padding: 16px;
+    margin: 16px 0;
+}
+
+.ownership-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #92400e;
+}
+
+.ownership-label input[type="checkbox"] {
+    margin-top: 3px;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+/* Quote part link */
+.quote-part-link {
+    display: block;
+    color: var(--primary);
+    font-size: 13px;
+    margin-top: 4px;
+}
+
+.quote-part-link-row {
+    margin: 12px 0;
+    padding: 8px 12px;
+    background: #f0f9ff;
+    border-radius: 6px;
+}
+
+.quote-part-link-row a {
+    color: var(--primary);
+    font-weight: 500;
+}
+
+/* Payment options */
+.payment-options {
+    margin: 16px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.payment-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px;
+    border: 2px solid #e5e7eb;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.payment-option:hover {
+    border-color: var(--primary);
+    background: #f8fafc;
+}
+
+.payment-option input[type="radio"] {
+    margin-top: 2px;
+    width: 18px;
+    height: 18px;
+}
+
+.payment-option input[type="radio"]:checked + .payment-option-content {
+    color: var(--primary);
+}
+
+.payment-option:has(input:checked) {
+    border-color: var(--primary);
+    background: #eff6ff;
+}
+
+.payment-option-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.payment-option-content strong {
+    font-size: 15px;
+}
+
+.payment-option-content span {
+    font-size: 13px;
+    color: var(--muted);
+}
+
+.quote-total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: #f1f5f9;
+    border-radius: 8px;
+    margin: 12px 0;
+    font-weight: 600;
+}
+
+.quote-total-value {
+    font-size: 20px;
+    color: var(--primary);
+}
+
+/* Accepted/Paid quote styles */
+.my-quote-accepted {
+    padding: 16px;
+    background: #f0fdf4;
+    border: 1px solid #86efac;
+    border-radius: 10px;
+}
+
+.quote-paid-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.paid-badge {
+    background: #22c55e;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.paid-date {
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.quote-payment-details {
+    background: white;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 12px;
+}
+
+.quote-payment-details .detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.quote-payment-details .detail-row:last-child {
+    border-bottom: none;
+}
+
+.quote-file-upload {
+    background: white;
+    border: 2px dashed #cbd5e1;
+    border-radius: 8px;
+    padding: 16px;
+    margin: 12px 0;
+    text-align: center;
+}
+
+.quote-file-upload .upload-zone {
+    padding: 20px;
+    cursor: pointer;
+    color: var(--primary);
+}
+
+.quote-file-upload .upload-zone:hover {
+    background: #f8fafc;
+}
+
+.quote-file-included {
+    background: #ecfdf5;
+    border: 1px solid #86efac;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 12px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Mobile fixes for new features */
+@media (max-width: 480px) {
+    .payment-options {
+        gap: 8px;
+    }
+    
+    .payment-option {
+        padding: 12px;
+    }
+    
+    .quote-paid-header {
+        flex-direction: column;
+        gap: 8px;
+        align-items: flex-start;
+    }
+    
+    .quote-file-included {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+}

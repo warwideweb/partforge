@@ -1,7 +1,7 @@
 // ForgAuto — 3D Marketplace for Cars
 // Version 4.0 - Major Fixes
 
-const VERSION = '6.8';
+const VERSION = '6.9';
 const API_URL = 'https://forgauto-api.warwideweb.workers.dev'; // Cloudflare Worker API
 
 // State
@@ -828,13 +828,36 @@ async function dashboardView() {
                             ${q.status === 'quoted' ? `
                                 <div class="my-quote-response">
                                     <div class="quote-price-display">
-                                        <span class="quote-label">Quoted Price:</span>
+                                        <span class="quote-label">Quoted Price (Print Service):</span>
                                         <span class="quote-price-value">$${(q.quoted_price || 0).toFixed(2)}</span>
                                     </div>
                                     ${q.quoted_turnaround ? `<div class="quote-turnaround">Turnaround: ${q.quoted_turnaround}</div>` : ''}
                                     ${q.quoted_message ? `<div class="quote-message">"${q.quoted_message}"</div>` : ''}
+                                    ${q.part_id ? `<div class="quote-part-link-row"><a href="#part/${q.part_id}" onclick="go('part', ${q.part_id}); return false;">View Product on ForgAuto →</a></div>` : ''}
+                                    <div class="payment-options">
+                                        <label class="payment-option">
+                                            <input type="radio" name="paymentType_${q.id}" value="service_only" checked onchange="updateQuoteTotal(${q.id}, ${q.quoted_price}, ${q.part_price || 0})">
+                                            <div class="payment-option-content">
+                                                <strong>Print Service Only</strong>
+                                                <span>$${(q.quoted_price || 0).toFixed(2)} — Upload your own file</span>
+                                            </div>
+                                        </label>
+                                        ${q.part_id && q.part_price ? `
+                                        <label class="payment-option">
+                                            <input type="radio" name="paymentType_${q.id}" value="service_and_file" onchange="updateQuoteTotal(${q.id}, ${q.quoted_price}, ${q.part_price})">
+                                            <div class="payment-option-content">
+                                                <strong>Buy Service + File</strong>
+                                                <span>$${((q.quoted_price || 0) + (q.part_price || 0)).toFixed(2)} — Includes STL purchase</span>
+                                            </div>
+                                        </label>
+                                        ` : ''}
+                                    </div>
+                                    <div class="quote-total-row">
+                                        <span>Total:</span>
+                                        <span id="quoteTotal_${q.id}" class="quote-total-value">$${(q.quoted_price || 0).toFixed(2)}</span>
+                                    </div>
                                     <div class="my-quote-actions">
-                                        <button class="btn btn-primary" onclick="payForQuote(${q.id}, ${q.quoted_price})">Pay Now - $${(q.quoted_price || 0).toFixed(2)}</button>
+                                        <button class="btn btn-primary" onclick="payForQuoteWithOptions(${q.id}, ${q.quoted_price}, ${q.part_price || 0}, ${q.part_id || 'null'})">Pay Now</button>
                                         <button class="btn btn-outline" onclick="messageShop(${q.shop_id}, '${(q.shop_name || '').replace(/'/g, "\\'")}')">Message Shop</button>
                                     </div>
                                 </div>
@@ -847,6 +870,37 @@ async function dashboardView() {
                                 <div class="my-quote-declined">
                                     <p>This shop declined your request.</p>
                                     <a href="#" onclick="go('printshops', ${q.part_id}); return false;" class="btn btn-outline btn-sm">Find Another Shop</a>
+                                </div>
+                            ` : q.status === 'accepted' || q.status === 'paid' ? `
+                                <div class="my-quote-accepted">
+                                    <div class="quote-paid-header">
+                                        <span class="paid-badge">✓ Paid</span>
+                                        <span class="paid-date">Payment Date: ${q.paid_at ? new Date(q.paid_at).toLocaleDateString() : new Date(q.updated_at || q.created_at).toLocaleDateString()}</span>
+                                    </div>
+                                    <div class="quote-payment-details">
+                                        <div class="detail-row"><span>Amount Paid:</span><strong>$${(q.total_paid || q.quoted_price || 0).toFixed(2)}</strong></div>
+                                        <div class="detail-row"><span>Service:</span><span>${q.include_file ? 'Print Service + File' : 'Print Service Only'}</span></div>
+                                        <div class="detail-row"><span>Print Shop:</span><span>${q.shop_name}</span></div>
+                                        <div class="detail-row"><span>Shop Email:</span><a href="mailto:${q.shop_email}">${q.shop_email || 'Contact via Messages'}</a></div>
+                                    </div>
+                                    ${q.part_id ? `<div class="quote-part-link-row"><a href="#part/${q.part_id}" onclick="go('part', ${q.part_id}); return false;">View Product on ForgAuto →</a></div>` : ''}
+                                    ${!q.include_file ? `
+                                    <div class="quote-file-upload">
+                                        <p><strong>Upload your STL file for printing:</strong></p>
+                                        <div class="upload-zone" onclick="document.getElementById('quoteFileUpload_${q.id}').click()">
+                                            <span id="quoteFileName_${q.id}">${q.customer_file_url ? '✓ File uploaded' : 'Click to upload your 3D file'}</span>
+                                        </div>
+                                        <input type="file" id="quoteFileUpload_${q.id}" hidden accept=".stl,.step,.stp,.obj,.3mf" onchange="handleQuoteFileUpload(event, ${q.id})">
+                                    </div>
+                                    ` : `
+                                    <div class="quote-file-included">
+                                        <p>✓ STL file included with purchase</p>
+                                        ${q.file_url ? `<a href="${q.file_url}" download class="btn btn-sm btn-outline">Download File</a>` : ''}
+                                    </div>
+                                    `}
+                                    <div class="my-quote-actions">
+                                        <button class="btn btn-outline" onclick="messageShop(${q.shop_id}, '${(q.shop_name || '').replace(/'/g, "\\'")}')">Message Shop</button>
+                                    </div>
                                 </div>
                             ` : ''}
                         </div>
@@ -891,10 +945,11 @@ async function dashboardView() {
                         <div class="quote-card ${q.status}">
                             <div class="quote-header">
                                 <div class="quote-part-info">
-                                    ${q.part_image ? `<img src="${q.part_image}" alt="${q.part_title}" class="quote-part-thumb">` : ''}
+                                    ${q.part_image ? `<img src="${q.part_image}" alt="${q.part_title}" class="quote-part-thumb" onclick="go('part', ${q.part_id})" style="cursor:pointer">` : ''}
                                     <div>
-                                        <strong>${q.part_title || 'Custom Print Request'}</strong>
+                                        <strong>${q.part_id ? `<a href="#part/${q.part_id}" onclick="go('part', ${q.part_id}); return false;" style="color:inherit; text-decoration:underline;">${q.part_title || 'Custom Print Request'}</a>` : (q.part_title || 'Custom Print Request')}</strong>
                                         <span class="quote-customer">From: ${q.customer_name} (${q.customer_email})</span>
+                                        ${q.part_id ? `<a href="#part/${q.part_id}" onclick="go('part', ${q.part_id}); return false;" class="quote-part-link">View Product →</a>` : ''}
                                     </div>
                                 </div>
                                 <span class="quote-status-badge ${q.status}">${q.status}</span>
@@ -1778,6 +1833,12 @@ function sellView() {
             </div>
             <div class="field"><label>Photos <span class="required-star">*</span> (First photo = thumbnail)</label><div class="photo-grid" id="photoGrid"><div class="photo-add" onclick="document.getElementById('photoInput').click()"><span class="photo-add-icon">+</span><span>Add</span></div></div><input type="file" id="photoInput" accept="image/*" multiple hidden onchange="handlePhotoUpload(event)"><p class="field-hint">At least 1 photo required</p></div>
             <div class="upsell-box"><label class="upsell-label"><input type="checkbox" id="featuredCheckbox" onchange="updateTotal()"><div class="upsell-content"><span class="upsell-badge">FEATURED</span><strong>Get Featured Placement +$20</strong><p>Your listing appears in the Featured section for 30 days.</p></div></label></div>
+            <div class="ownership-checkbox">
+                <label class="ownership-label">
+                    <input type="checkbox" id="ownershipConfirm" required>
+                    <span>I confirm that I have full ownership of this design and it is exclusively mine to sell. I have the right to distribute this file and it does not infringe on any copyrights or trademarks.</span>
+                </label>
+            </div>
             <div class="form-total"><span>Total</span><span id="totalPrice">$10.00</span></div>
             <button type="submit" class="btn btn-lg btn-primary" style="width:100%">Create Listing</button>
             </form>
@@ -2223,7 +2284,7 @@ async function partView(id) {
             ${p.featured ? '<span class="detail-featured-badge">Featured</span>' : ''}
             <div class="detail-breadcrumb">${p.make} / ${p.model} / ${p.category}</div>
             <h1>${p.title}</h1>
-            <div class="detail-seller"><span class="seller-avatar">${p.seller_avatar_url ? `<img src="${p.seller_avatar_url}" alt="${p.seller_name}">` : (p.seller_name||'S').charAt(0)}</span><span>by <strong>${p.seller_name || 'Seller'}</strong></span><span class="detail-downloads">${p.downloads || 0} downloads</span></div>
+            <div class="detail-seller"><span class="seller-avatar">${p.seller_avatar_url ? `<img src="${p.seller_avatar_url}" alt="${p.seller_name}">` : (p.seller_name||'S').charAt(0)}</span><span>by <strong>${p.seller_name || 'Seller'}</strong> <span class="seller-rating">${'★'.repeat(Math.floor(p.seller_rating || 5))}${(p.seller_rating || 5) % 1 >= 0.5 ? '½' : ''} (${(p.seller_rating || 5).toFixed(1)})</span></span><span class="detail-downloads">${p.downloads || 0} downloads</span></div>
             <div class="detail-price">$${(p.price || 0).toFixed(2)}</div>
             <div class="detail-trust"><span>Secure Payment</span><span>Instant Download</span><span>$10 Listing Fee</span></div>
             <div class="detail-actions">
@@ -2526,7 +2587,7 @@ async function printShopsView(partId) {
                             </div>
                         </div>
                         
-                        <p class="shop-address">Location: ${shop.address || 'Location not specified'}</p>
+                        <p class="shop-address">📍 ${shop.city || ''}${shop.state ? ` (${shop.state})` : ''}${shop.country ? `, ${shop.country}` : (shop.address || 'Location not specified')}</p>
                         
                         <div class="shop-tags">
                             ${(shop.technologies || []).map(t => `<span class="tag tech-tag">${t}</span>`).join('')}
@@ -2557,7 +2618,7 @@ async function printShopsView(partId) {
         <div class="printshop-register-cta">
             <h3>Own a 3D Printing Business?</h3>
             <p>Register your shop and start receiving quote requests from customers.</p>
-            <a href="#" onclick="goToShopSignup(); return false;" class="btn btn-outline">Register as a Print Shop</a>
+            <a href="#" onclick="goToShopSignup(); return false;" class="btn btn-outline" style="color: white; border-color: white;">Register as a Print Shop</a>
         </div>
     </div>`;
 }
@@ -2607,6 +2668,85 @@ async function payForQuote(quoteId, amount) {
         go('dashboard');
     } catch (err) {
         alert('Error: ' + err.message);
+    }
+}
+
+// Update quote total based on payment option selection
+function updateQuoteTotal(quoteId, servicePrice, filePrice) {
+    const serviceOnly = document.querySelector(`input[name="paymentType_${quoteId}"][value="service_only"]`);
+    const totalEl = document.getElementById(`quoteTotal_${quoteId}`);
+    if (!totalEl) return;
+    
+    if (serviceOnly && serviceOnly.checked) {
+        totalEl.textContent = `$${servicePrice.toFixed(2)}`;
+    } else {
+        totalEl.textContent = `$${(servicePrice + filePrice).toFixed(2)}`;
+    }
+}
+
+// Pay for quote with service+file or service only options
+async function payForQuoteWithOptions(quoteId, servicePrice, filePrice, partId) {
+    const serviceAndFile = document.querySelector(`input[name="paymentType_${quoteId}"][value="service_and_file"]`);
+    const includeFile = serviceAndFile && serviceAndFile.checked;
+    const total = includeFile ? (servicePrice + filePrice) : servicePrice;
+    
+    const optionText = includeFile ? 'Print Service + File Purchase' : 'Print Service Only';
+    
+    if (!confirm(`Proceed to pay $${total.toFixed(2)} for ${optionText}?\n\n(Stripe payment integration coming soon)`)) {
+        return;
+    }
+    
+    try {
+        await api(`/api/quotes/${quoteId}/accept`, { 
+            method: 'POST',
+            body: JSON.stringify({ 
+                include_file: includeFile,
+                total_paid: total,
+                part_id: partId
+            })
+        });
+        alert(`Quote accepted! ${includeFile ? 'File purchased and ' : ''}The print shop will begin your order.`);
+        go('dashboard');
+    } catch (err) {
+        alert('Error: ' + err.message);
+    }
+}
+
+// Handle file upload for accepted quotes (print service only)
+async function handleQuoteFileUpload(e, quoteId) {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const validTypes = ['.stl', '.step', '.stp', '.obj', '.3mf'];
+    const ext = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+    if (!validTypes.includes(ext)) {
+        alert('Invalid file type. Please upload STL, STEP, OBJ, or 3MF files.');
+        return;
+    }
+    
+    const fileNameEl = document.getElementById(`quoteFileName_${quoteId}`);
+    if (fileNameEl) fileNameEl.textContent = `Uploading ${file.name}...`;
+    
+    try {
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        const res = await fetch(`${API_URL}/api/quotes/${quoteId}/upload-file`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${authToken}` },
+            body: formData
+        });
+        
+        if (!res.ok) {
+            const data = await res.json();
+            throw new Error(data.error || 'Upload failed');
+        }
+        
+        if (fileNameEl) fileNameEl.textContent = `✓ ${file.name} uploaded`;
+        alert('File uploaded successfully! The print shop can now access it.');
+    } catch (err) {
+        if (fileNameEl) fileNameEl.textContent = 'Upload failed - click to try again';
+        alert('Error uploading file: ' + err.message);
     }
 }
 

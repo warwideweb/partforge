@@ -2922,8 +2922,6 @@ async function partView(id) {
 }
 
 async function handleBuyPart(partId) {
-    alert('Buy button clicked! Part ID: ' + partId); // DEBUG - remove after testing
-    
     if (!currentUser) { 
         alert('Please login to purchase and download parts.'); 
         go('login'); 
@@ -4625,7 +4623,31 @@ function handleStripeReturn() {
         setTimeout(() => alert('✅ Listing is now live!'), 500);
     }
     if (hash.includes('purchased=true')) {
-        setTimeout(() => alert('✅ Purchase complete! You can now download the file.'), 500);
+        // Extract part ID from hash and show download modal
+        const partMatch = hash.match(/#part\/(\d+)/);
+        if (partMatch) {
+            const partId = partMatch[1];
+            setTimeout(async () => {
+                try {
+                    // Fetch the part details and show download
+                    const part = await api(`/api/parts/${partId}`);
+                    if (part && part.purchased) {
+                        showDownloadModal({
+                            part_title: part.title,
+                            file_format: part.file_format,
+                            file_size: part.file_size,
+                            download_url: `https://forgauto-api.warwideweb.workers.dev/api/purchases/download/${partId}`
+                        });
+                    } else {
+                        alert('✅ Purchase complete! Refresh the page to download your file.');
+                    }
+                } catch (e) {
+                    alert('✅ Purchase complete! Refresh the page to download your file.');
+                }
+            }, 1000);
+        } else {
+            setTimeout(() => alert('✅ Purchase complete! You can now download the file.'), 500);
+        }
     }
     if (hash.includes('boosted=true')) {
         setTimeout(() => alert('✅ Your listing is now featured for 30 days!'), 500);

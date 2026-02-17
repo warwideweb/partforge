@@ -4633,10 +4633,11 @@ function handleStripeReturn() {
                     const part = await api(`/api/parts/${partId}`);
                     if (part && part.purchased) {
                         showDownloadModal({
+                            part_id: partId,
                             part_title: part.title,
                             file_format: part.file_format,
                             file_size: part.file_size,
-                            download_url: `https://forgauto-api.warwideweb.workers.dev/api/purchases/download/${partId}`
+                            download_url: `https://forgauto-api.warwideweb.workers.dev/api/parts/${partId}/download`
                         });
                     } else {
                         alert('✅ Purchase complete! Refresh the page to download your file.');

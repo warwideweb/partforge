@@ -1,7 +1,7 @@
 // ForgAuto — 3D Marketplace for Cars
 // Version 4.0 - Major Fixes
 
-const VERSION = '5.3';
+const VERSION = '6.0';
 const API_URL = 'https://forgauto-api.warwideweb.workers.dev'; // Cloudflare Worker API
 
 // State
@@ -258,6 +258,7 @@ async function render(data) {
     else if (view === 'edit') app.innerHTML = await editView(data);
     else if (view === 'part') { app.innerHTML = await partView(data); initViewer(data); }
     else if (view === 'designer') app.innerHTML = await designerView(data);
+    else if (view === 'become-designer') app.innerHTML = await becomeDesignerView();
     else if (view === 'printshops') app.innerHTML = printShopsView(data);
     else if (view === 'login') app.innerHTML = loginView();
     else if (view === 'signup') app.innerHTML = signupView();
@@ -804,6 +805,25 @@ function browseView() {
     </div>`;
 }
 
+// v6.0: Designer specialties for filtering
+const designerSpecialties = [
+    'CAD Modeling',
+    '3D Scanning',
+    '3D Editing',
+    'Reverse Engineering',
+    'Prototyping',
+    'Interior Parts',
+    'Exterior Parts',
+    'Performance Parts',
+    'JDM Specialist',
+    'European Specialist',
+    'American Muscle'
+];
+
+let designerFilterSpecialty = '';
+let designerFilterLocation = '';
+let designerSortBy = 'rating'; // rating, parts, rate
+
 function designersView() {
     // Filter out invalid designers - if none valid, use demo data
     let validDesigners = designers.filter(d => d.name && d.name !== 'undefined' && d.avatar_url && d.avatar_url.startsWith('http'));
@@ -813,8 +833,106 @@ function designersView() {
         validDesigners = demoDesigners;
     }
     
-    return `<div class="page-header"><h1>Find a Designer</h1><p>Need a custom part? Work with automotive specialists.</p></div>
-        <div class="designers-grid">${validDesigners.map(d => `<div class="designer" onclick="go('designer', ${d.id})"><div class="designer-top"><img src="${d.avatar_url}" alt="${d.name}" onerror="this.style.display='none'"><div><h3>${d.name}</h3><p>${d.bio ? d.bio.substring(0, 60) + '...' : ''}</p></div></div><div class="designer-stats"><span class="designer-rate">${d.rate || 'Contact for rate'}</span><span class="designer-rating">${d.stats?.avgRating || 5} stars</span></div><div class="tags">${(d.tags||[]).map(t => `<span class="tag">${t}</span>`).join('')}</div><div class="designer-projects">${d.stats?.parts || 0} projects</div></div>`).join('')}</div>`;
+    // v6.0: Apply filters
+    let filtered = validDesigners.filter(d => {
+        // Must have 5+ parts to be a designer
+        if ((d.stats?.parts || 0) < 5 && !d.isDemo) return false;
+        // Must have profile photo
+        if (!d.avatar_url) return false;
+        // Filter by specialty
+        if (designerFilterSpecialty && !(d.tags || []).some(t => t.toLowerCase().includes(designerFilterSpecialty.toLowerCase()))) return false;
+        // Filter by location
+        if (designerFilterLocation && !(d.location || '').toLowerCase().includes(designerFilterLocation.toLowerCase())) return false;
+        return true;
+    });
+    
+    // v6.0: Sort designers
+    filtered.sort((a, b) => {
+        if (designerSortBy === 'rating') return (b.stats?.avgRating || 0) - (a.stats?.avgRating || 0);
+        if (designerSortBy === 'parts') return (b.stats?.parts || 0) - (a.stats?.parts || 0);
+        if (designerSortBy === 'rate') {
+            const rateA = parseFloat((a.rate || '$0').replace(/[^0-9.]/g, '')) || 0;
+            const rateB = parseFloat((b.rate || '$0').replace(/[^0-9.]/g, '')) || 0;
+            return rateA - rateB;
+        }
+        return 0;
+    });
+    
+    return `<div class="designers-page">
+        <div class="designers-header">
+            <div class="designers-header-content">
+                <h1>Hire a Designer</h1>
+                <p>Work with verified automotive 3D specialists. All designers have 5+ completed projects on ForgAuto.</p>
+                ${currentUser ? `<a href="#" onclick="go('become-designer'); return false;" class="btn btn-outline">Become a Designer</a>` : ''}
+            </div>
+        </div>
+        
+        <div class="designers-filters">
+            <div class="filter-group">
+                <label>Specialty</label>
+                <select onchange="designerFilterSpecialty=this.value; go('designers');">
+                    <option value="">All Specialties</option>
+                    ${designerSpecialties.map(s => `<option value="${s}" ${designerFilterSpecialty===s?'selected':''}>${s}</option>`).join('')}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Location</label>
+                <input type="text" placeholder="City or country..." value="${designerFilterLocation}" onchange="designerFilterLocation=this.value; go('designers');">
+            </div>
+            <div class="filter-group">
+                <label>Sort By</label>
+                <select onchange="designerSortBy=this.value; go('designers');">
+                    <option value="rating" ${designerSortBy==='rating'?'selected':''}>Highest Rated</option>
+                    <option value="parts" ${designerSortBy==='parts'?'selected':''}>Most Projects</option>
+                    <option value="rate" ${designerSortBy==='rate'?'selected':''}>Lowest Rate</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="designers-results">
+            <p class="results-count">${filtered.length} designer${filtered.length !== 1 ? 's' : ''} found</p>
+            
+            ${filtered.length ? `<div class="designers-grid-v6">
+                ${filtered.map(d => designerCardHTML(d)).join('')}
+            </div>` : `<div class="no-designers">
+                <p>No designers match your filters.</p>
+                <button class="btn btn-outline" onclick="designerFilterSpecialty='';designerFilterLocation='';go('designers');">Clear Filters</button>
+            </div>`}
+        </div>
+    </div>`;
+}
+
+// v6.0: Designer card with full info
+function designerCardHTML(d) {
+    const rating = d.stats?.avgRating || 5;
+    const reviewCount = d.stats?.reviewCount || 0;
+    const partsCount = d.stats?.parts || 0;
+    const stars = '★'.repeat(Math.floor(rating)) + (rating % 1 >= 0.5 ? '½' : '');
+    
+    return `<div class="designer-card-v6" onclick="go('designer', ${d.id})">
+        <div class="designer-card-header">
+            <img src="${d.avatar_url}" alt="${d.name}" class="designer-avatar-lg" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(d.name)}&background=2563eb&color=fff'">
+            <div class="designer-card-title">
+                <h3>${d.name}</h3>
+                ${d.location ? `<span class="designer-location">📍 ${d.location}</span>` : ''}
+                <div class="designer-rating">
+                    <span class="stars">${stars}</span>
+                    <span class="rating-text">${rating.toFixed(1)} (${reviewCount} reviews)</span>
+                </div>
+            </div>
+        </div>
+        <p class="designer-bio">${d.bio ? (d.bio.length > 100 ? d.bio.substring(0, 100) + '...' : d.bio) : 'Experienced automotive 3D designer.'}</p>
+        <div class="designer-tags">
+            ${(d.tags || []).slice(0, 4).map(t => `<span class="tag">${t}</span>`).join('')}
+        </div>
+        <div class="designer-card-footer">
+            <div class="designer-stats-row">
+                <span class="stat">📦 ${partsCount} projects</span>
+                ${d.equipment ? `<span class="stat">🖨️ ${d.equipment.split(',')[0]}</span>` : ''}
+            </div>
+            <div class="designer-rate-badge">${d.rate || 'Contact for rate'}</div>
+        </div>
+    </div>`;
 }
 
 function sellView() {
@@ -1518,6 +1636,7 @@ function printShopsView(partId) {
         <div class="print-shops-list">${printShops.map(shop => `<div class="print-shop-card ${shop.verified ? 'verified' : ''}"><div class="print-shop-header"><div><h3>${shop.name} ${shop.verified ? '<span class="verified-badge">Verified</span>' : ''}</h3>${shop.instantQuote ? '<span class="instant-badge">Instant Quotes</span>' : ''}${shop.printAndShip ? '<span class="ship-badge">Print & Ship</span>' : ''}</div><span class="print-shop-distance">${shop.distance}</span></div><p class="print-shop-address">${shop.address}</p><div class="print-shop-meta"><span>${shop.rating} stars (${shop.reviews})</span><span>${shop.turnaround}</span></div><div class="print-shop-actions"><a href="tel:${shop.phone}" class="btn btn-sm btn-outline">Call</a>${shop.instantQuote ? `<button class="btn btn-sm btn-primary" onclick="alert('Quote: ~$${(Math.random() * 20 + 10).toFixed(2)}')">Instant Quote</button>` : ''}<a href="mailto:${shop.email}${part ? `?subject=Print: ${part.title}` : ''}" class="btn btn-sm btn-outline">Email</a></div></div>`).join('')}</div>`;
 }
 
+// v6.0: Full resume-style designer profile
 async function designerView(id) {
     let d = designers.find(x => x.id === id);
     if (!d) {
@@ -1525,9 +1644,207 @@ async function designerView(id) {
     }
     if (!d) return '<p>Designer not found.</p>';
     
-    return `<div class="designer-profile"><div class="designer-header"><img src="${d.avatar_url}" alt="${d.name}" class="designer-avatar-lg"><div class="designer-header-info"><h1>${d.name}</h1><p class="designer-title">${d.role === 'designer' ? 'Designer' : 'Seller'}</p><div class="designer-meta"><span>${d.stats?.avgRating || 5} stars (${d.stats?.reviewCount || 0} reviews)</span><span>${d.stats?.parts || 0} projects</span></div><div class="tags">${(d.tags||[]).map(t => `<span class="tag">${t}</span>`).join('')}</div></div><div class="designer-cta"><div class="designer-rate-lg">${d.rate || 'Contact for rate'}</div><button class="btn btn-lg btn-primary" onclick="document.getElementById('requestForm').scrollIntoView()">Request Quote</button></div></div>
-    <div class="designer-body"><div class="designer-about"><h2>About</h2><p>${d.bio || 'No bio yet.'}</p></div>
-    <div class="designer-request" id="requestForm"><h2>Request Custom Part</h2><form onsubmit="handleDesignerRequest(event, ${d.id})"><div class="field"><label>Your Name</label><input type="text" id="reqName" required></div><div class="field"><label>Your Email</label><input type="email" id="reqEmail" required></div><div class="field-row"><div class="field"><label>Car Make</label><select id="reqMake">${carMakes.map(m => `<option>${m}</option>`).join('')}</select></div><div class="field"><label>Model</label><input type="text" id="reqModel" placeholder="E30, Miata NA..."></div></div><div class="field"><label>Describe what you need</label><textarea id="reqDesc" rows="4" required placeholder="I need a phone mount that fits..."></textarea></div><div class="field"><label>Budget (optional)</label><input type="text" id="reqBudget" placeholder="$50-100"></div><button type="submit" class="btn btn-primary">Send Request</button></form></div></div></div>`;
+    // Get designer's parts/portfolio
+    let designerParts = [];
+    try { designerParts = await api(`/api/parts?user=${id}`); } catch (e) {}
+    const validParts = designerParts.filter(p => p.images && p.images.length > 0).slice(0, 6);
+    
+    // Get reviews
+    let reviews = d.reviews || [];
+    
+    const rating = d.stats?.avgRating || 5;
+    const reviewCount = d.stats?.reviewCount || 0;
+    const partsCount = d.stats?.parts || validParts.length || 0;
+    const stars = '★'.repeat(Math.floor(rating)) + (rating % 1 >= 0.5 ? '½' : '');
+    
+    return `<div class="designer-profile-v6">
+        <div class="designer-profile-header">
+            <div class="designer-profile-main">
+                <img src="${d.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(d.name) + '&background=2563eb&color=fff'}" alt="${d.name}" class="designer-avatar-xl">
+                <div class="designer-profile-info">
+                    <h1>${d.name}</h1>
+                    ${d.location ? `<p class="designer-location-lg">📍 ${d.location}</p>` : ''}
+                    <div class="designer-rating-lg">
+                        <span class="stars-lg">${stars}</span>
+                        <span>${rating.toFixed(1)} rating · ${reviewCount} reviews · ${partsCount} projects</span>
+                    </div>
+                    <div class="designer-specialties">
+                        ${(d.tags || []).map(t => `<span class="specialty-tag">${t}</span>`).join('')}
+                    </div>
+                </div>
+            </div>
+            <div class="designer-profile-cta">
+                <div class="rate-display">
+                    <span class="rate-label">Rate</span>
+                    <span class="rate-value">${d.rate || 'Contact for quote'}</span>
+                    ${d.project_rate ? `<span class="rate-alt">or ${d.project_rate}/project</span>` : ''}
+                </div>
+                <button class="btn btn-lg btn-primary" onclick="openDesignerContact(${d.id}, '${(d.name || '').replace(/'/g, "\\'")}')">💬 Contact Designer</button>
+                <button class="btn btn-lg btn-outline" onclick="document.getElementById('requestForm').scrollIntoView({behavior:'smooth'})">📝 Request Quote</button>
+            </div>
+        </div>
+        
+        <div class="designer-profile-body">
+            <div class="designer-profile-left">
+                <section class="profile-section">
+                    <h2>About</h2>
+                    <p>${d.bio || 'Experienced automotive 3D designer specializing in custom parts and modifications.'}</p>
+                </section>
+                
+                ${d.experience ? `<section class="profile-section">
+                    <h2>Experience</h2>
+                    <p>${d.experience}</p>
+                </section>` : ''}
+                
+                <section class="profile-section">
+                    <h2>Equipment & Software</h2>
+                    <div class="equipment-list">
+                        ${(d.equipment || 'Fusion 360, SolidWorks, Bambu Lab X1C').split(',').map(e => `<span class="equipment-item">✓ ${e.trim()}</span>`).join('')}
+                    </div>
+                </section>
+                
+                <section class="profile-section">
+                    <h2>Services Offered</h2>
+                    <div class="services-grid">
+                        ${(d.services || ['CAD Modeling', '3D Scanning', 'Prototyping', 'Reverse Engineering']).map(s => typeof s === 'string' ? s : s.name).map(s => `
+                            <div class="service-item">
+                                <span class="service-icon">${getServiceIcon(s)}</span>
+                                <span class="service-name">${s}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </section>
+                
+                ${validParts.length ? `<section class="profile-section">
+                    <h2>Portfolio (${partsCount} projects)</h2>
+                    <div class="portfolio-grid-v6">
+                        ${validParts.map(p => `
+                            <div class="portfolio-item-v6" onclick="go('part', ${p.id})">
+                                <img src="${p.images[0]}" alt="${p.title}">
+                                <div class="portfolio-overlay">
+                                    <span>${truncateText(p.title, 30)}</span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    ${partsCount > 6 ? `<a href="#" onclick="go('profile', ${d.id}); return false;" class="btn btn-outline btn-sm">View All ${partsCount} Projects</a>` : ''}
+                </section>` : ''}
+                
+                <section class="profile-section" id="requestForm">
+                    <h2>Request a Custom Part</h2>
+                    <form onsubmit="handleDesignerRequest(event, ${d.id})" class="request-form-v6">
+                        <div class="field-row">
+                            <div class="field"><label>Your Name</label><input type="text" id="reqName" required></div>
+                            <div class="field"><label>Your Email</label><input type="email" id="reqEmail" required></div>
+                        </div>
+                        <div class="field-row">
+                            <div class="field"><label>Car Make</label><select id="reqMake">${carMakes.map(m => `<option>${m}</option>`).join('')}</select></div>
+                            <div class="field"><label>Model</label><input type="text" id="reqModel" placeholder="E30, Miata NA..."></div>
+                        </div>
+                        <div class="field"><label>What do you need?</label><textarea id="reqDesc" rows="4" required placeholder="Describe the part you need, including measurements if possible..."></textarea></div>
+                        <div class="field-row">
+                            <div class="field"><label>Budget Range</label><input type="text" id="reqBudget" placeholder="$50-100"></div>
+                            <div class="field"><label>Timeline</label><select id="reqTimeline"><option>No rush</option><option>Within 1 week</option><option>Within 2 weeks</option><option>Within 1 month</option></select></div>
+                        </div>
+                        <button type="submit" class="btn btn-lg btn-primary">Send Request</button>
+                    </form>
+                </section>
+            </div>
+            
+            <div class="designer-profile-right">
+                <div class="profile-sidebar-card">
+                    <h3>Quick Stats</h3>
+                    <div class="stat-row"><span>Projects Completed</span><strong>${partsCount}</strong></div>
+                    <div class="stat-row"><span>Avg. Response Time</span><strong>${d.response_time || '< 24 hours'}</strong></div>
+                    <div class="stat-row"><span>Member Since</span><strong>${d.member_since || '2024'}</strong></div>
+                    <div class="stat-row"><span>Repeat Clients</span><strong>${d.repeat_clients || '85%'}</strong></div>
+                </div>
+                
+                ${reviews.length ? `<div class="profile-sidebar-card">
+                    <h3>Reviews (${reviewCount})</h3>
+                    ${reviews.slice(0, 3).map(r => `
+                        <div class="review-mini">
+                            <div class="review-mini-header">
+                                <strong>${r.reviewer_name || 'Client'}</strong>
+                                <span class="stars-sm">${'★'.repeat(r.rating)}</span>
+                            </div>
+                            <p>${r.comment || 'Great work!'}</p>
+                        </div>
+                    `).join('')}
+                    ${reviewCount > 3 ? `<a href="#" class="see-all-reviews">See all ${reviewCount} reviews</a>` : ''}
+                </div>` : ''}
+                
+                <div class="profile-sidebar-card verification-card">
+                    <h3>Verification</h3>
+                    <div class="verification-item ${partsCount >= 5 ? 'verified' : ''}">
+                        <span>${partsCount >= 5 ? '✓' : '○'}</span>
+                        <span>5+ Projects on ForgAuto</span>
+                    </div>
+                    <div class="verification-item ${d.avatar_url ? 'verified' : ''}">
+                        <span>${d.avatar_url ? '✓' : '○'}</span>
+                        <span>Profile Photo</span>
+                    </div>
+                    <div class="verification-item ${d.email_verified ? 'verified' : ''}">
+                        <span>${d.email_verified ? '✓' : '○'}</span>
+                        <span>Email Verified</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>`;
+}
+
+// Helper for service icons
+function getServiceIcon(service) {
+    const icons = {
+        'CAD Modeling': '🖥️',
+        '3D Scanning': '📷',
+        '3D Editing': '✏️',
+        'Prototyping': '🔧',
+        'Reverse Engineering': '🔍',
+        'Interior Parts': '🚗',
+        'Exterior Parts': '🏎️',
+        'Performance Parts': '⚡'
+    };
+    return icons[service] || '📦';
+}
+
+// v6.0: Contact designer modal
+function openDesignerContact(designerId, designerName) {
+    if (!currentUser) { alert('Please login to contact designers'); go('login'); return; }
+    
+    const modal = document.createElement('div');
+    modal.id = 'designerContactModal';
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="modal-box">
+            <button class="modal-close" onclick="document.getElementById('designerContactModal').remove()">×</button>
+            <h2>Message ${designerName}</h2>
+            <form onsubmit="sendDesignerMessage(event, ${designerId})">
+                <div class="field">
+                    <label>Your Message</label>
+                    <textarea id="designerMessage" rows="5" placeholder="Hi, I'm interested in your design services..." required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Send Message</button>
+            </form>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+async function sendDesignerMessage(e, designerId) {
+    e.preventDefault();
+    const content = document.getElementById('designerMessage').value;
+    try {
+        await api('/api/messages', {
+            method: 'POST',
+            body: JSON.stringify({ recipient_id: designerId, content })
+        });
+        document.getElementById('designerContactModal').remove();
+        alert('Message sent!');
+    } catch (err) {
+        alert('Error: ' + err.message);
+    }
 }
 
 async function handleDesignerRequest(e, designerId) {
@@ -1538,7 +1855,8 @@ async function handleDesignerRequest(e, designerId) {
         make: document.getElementById('reqMake').value,
         model: document.getElementById('reqModel').value,
         description: document.getElementById('reqDesc').value,
-        budget: document.getElementById('reqBudget').value
+        budget: document.getElementById('reqBudget').value,
+        timeline: document.getElementById('reqTimeline')?.value
     };
     
     try {
@@ -1547,6 +1865,129 @@ async function handleDesignerRequest(e, designerId) {
             body: JSON.stringify(request)
         });
         alert('Request sent! The designer will contact you soon.');
+    } catch (err) {
+        alert('Error: ' + err.message);
+    }
+}
+
+// v6.0: Become a Designer page
+async function becomeDesignerView() {
+    if (!currentUser) {
+        return `<div class="auth-prompt"><h2>Login Required</h2><p>You need to be logged in to become a designer.</p><a href="#" onclick="go('login'); return false;" class="btn btn-primary">Login</a></div>`;
+    }
+    
+    // Check how many parts user has
+    let userParts = [];
+    try { userParts = await api(`/api/parts?user=${currentUser.id}`); } catch (e) {}
+    const partsCount = userParts.length;
+    const canApply = partsCount >= 5;
+    
+    return `<div class="become-designer-page">
+        <div class="become-designer-header">
+            <h1>Become a Designer</h1>
+            <p>Join ForgAuto as a verified 3D designer and get hired for custom projects.</p>
+        </div>
+        
+        <div class="requirements-section">
+            <h2>Requirements</h2>
+            <div class="requirements-grid">
+                <div class="requirement-item ${partsCount >= 5 ? 'met' : 'unmet'}">
+                    <div class="req-icon">${partsCount >= 5 ? '✓' : '○'}</div>
+                    <div class="req-text">
+                        <strong>5+ Parts Listed</strong>
+                        <span>You have ${partsCount} part${partsCount !== 1 ? 's' : ''} ${partsCount >= 5 ? '✓' : `(need ${5 - partsCount} more)`}</span>
+                    </div>
+                </div>
+                <div class="requirement-item ${currentUser.avatar_url ? 'met' : 'unmet'}">
+                    <div class="req-icon">${currentUser.avatar_url ? '✓' : '○'}</div>
+                    <div class="req-text">
+                        <strong>Profile Photo</strong>
+                        <span>${currentUser.avatar_url ? 'Uploaded ✓' : 'Required - go to Settings'}</span>
+                    </div>
+                </div>
+                <div class="requirement-item met">
+                    <div class="req-icon">✓</div>
+                    <div class="req-text">
+                        <strong>Email Verified</strong>
+                        <span>Your account is verified</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        ${canApply ? `
+        <div class="designer-application">
+            <h2>Complete Your Designer Profile</h2>
+            <form onsubmit="submitDesignerApplication(event)">
+                <div class="field">
+                    <label>Location (City, Country)</label>
+                    <input type="text" id="dLocation" placeholder="Los Angeles, USA" required>
+                </div>
+                <div class="field">
+                    <label>Bio / About You</label>
+                    <textarea id="dBio" rows="4" placeholder="Tell clients about your experience, background, and what makes you unique..." required></textarea>
+                </div>
+                <div class="field">
+                    <label>Years of Experience</label>
+                    <input type="text" id="dExperience" placeholder="5 years designing automotive parts">
+                </div>
+                <div class="field">
+                    <label>Equipment & Software (comma separated)</label>
+                    <input type="text" id="dEquipment" placeholder="Fusion 360, SolidWorks, Bambu Lab X1C, Creality K1" required>
+                </div>
+                <div class="field">
+                    <label>Specialties (select all that apply)</label>
+                    <div class="checkbox-grid">
+                        ${designerSpecialties.map(s => `<label class="checkbox-item"><input type="checkbox" name="specialty" value="${s}"> ${s}</label>`).join('')}
+                    </div>
+                </div>
+                <div class="field-row">
+                    <div class="field">
+                        <label>Hourly Rate</label>
+                        <input type="text" id="dHourlyRate" placeholder="$50/hr">
+                    </div>
+                    <div class="field">
+                        <label>Or Project Rate</label>
+                        <input type="text" id="dProjectRate" placeholder="Starting at $100">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-lg btn-primary">Submit Application</button>
+            </form>
+        </div>
+        ` : `
+        <div class="not-eligible">
+            <h2>Not Eligible Yet</h2>
+            <p>You need to upload at least 5 parts before becoming a designer. This ensures all our designers have proven experience.</p>
+            <a href="#" onclick="go('sell'); return false;" class="btn btn-primary">Upload a Part</a>
+        </div>
+        `}
+    </div>`;
+}
+
+async function submitDesignerApplication(e) {
+    e.preventDefault();
+    
+    const specialties = Array.from(document.querySelectorAll('input[name="specialty"]:checked')).map(c => c.value);
+    
+    const application = {
+        location: document.getElementById('dLocation').value,
+        bio: document.getElementById('dBio').value,
+        experience: document.getElementById('dExperience').value,
+        equipment: document.getElementById('dEquipment').value,
+        tags: specialties,
+        rate: document.getElementById('dHourlyRate').value,
+        project_rate: document.getElementById('dProjectRate').value,
+        role: 'designer'
+    };
+    
+    try {
+        await api('/api/profile', {
+            method: 'PUT',
+            body: JSON.stringify(application)
+        });
+        alert('Congratulations! Your designer profile is now live.');
+        currentUser = { ...currentUser, ...application };
+        go('designer', currentUser.id);
     } catch (err) {
         alert('Error: ' + err.message);
     }

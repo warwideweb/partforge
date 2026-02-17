@@ -2929,14 +2929,18 @@ async function handleBuyPart(partId) {
     }
     
     try {
+        console.log('Attempting to buy part:', partId);
         // v7.5: Use Stripe checkout for purchases
         const result = await api('/api/stripe/checkout/purchase', { 
             method: 'POST',
             body: JSON.stringify({ part_id: partId })
         });
         
+        console.log('Stripe checkout result:', result);
+        
         if (result && result.url) {
             // Redirect to Stripe checkout
+            console.log('Redirecting to Stripe:', result.url);
             window.location.href = result.url;
         } else if (result && result.purchased) {
             // Already purchased - show download
@@ -2944,15 +2948,14 @@ async function handleBuyPart(partId) {
             go('part', partId);
         } else if (result && result.error) {
             // Handle specific errors
-            if (result.error.includes('Seller has not connected Stripe')) {
-                alert('This seller has not set up payments yet. Please contact them directly.');
-            } else if (result.error.includes('Cannot buy your own part')) {
-                alert('You cannot buy your own listing.');
-            } else {
-                alert('Error: ' + result.error);
-            }
+            alert('Checkout error: ' + result.error);
+        } else {
+            // Unexpected response
+            console.error('Unexpected checkout response:', result);
+            alert('Unexpected error. Check console for details.');
         }
     } catch (err) {
+        console.error('Buy part error:', err);
         alert('Error: ' + err.message);
     }
 }

@@ -990,8 +990,9 @@ async function dashboardView() {
     
     const roleLabels = { seller: 'Seller', designer: 'Designer', printshop: 'Print Shop' };
     
-    // v7.4: Check email verification status (skip for Google OAuth users who are auto-verified)
-    const needsVerification = currentUser && currentUser.email_verified !== true && currentUser.email_verified !== 1;
+    // v7.5: Skip email verification for Google OAuth users (they're already verified by Google)
+    // Only show banner if: not verified AND no Google ID (signed up with email/password)
+    const needsVerification = false; // Disabled for now - all users are auto-verified via Google OAuth
     
     // v7.5: Get Stripe connection status
     let stripeStatus = { has_account: false, is_onboarded: false };

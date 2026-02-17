@@ -1,7 +1,7 @@
 // ForgAuto — 3D Marketplace for Cars
 // Version 4.0 - Major Fixes
 
-const VERSION = '6.4';
+const VERSION = '6.5';
 const API_URL = 'https://forgauto-api.warwideweb.workers.dev'; // Cloudflare Worker API
 
 // State
@@ -262,7 +262,7 @@ async function render(data) {
     else if (view === 'part') { app.innerHTML = await partView(data); initViewer(data); }
     else if (view === 'designer') app.innerHTML = await designerView(data);
     else if (view === 'become-designer') app.innerHTML = await becomeDesignerView();
-    else if (view === 'printshops') app.innerHTML = printShopsView(data);
+    else if (view === 'printshops') app.innerHTML = await printShopsView(data);
     else if (view === 'login') app.innerHTML = loginView();
     else if (view === 'signup') app.innerHTML = signupView();
     else if (view === 'forgot-password') app.innerHTML = forgotPasswordView();
@@ -435,33 +435,169 @@ async function sendMessage(e, recipientId) {
 
 function signupView() {
     return `<div class="auth-container">
-        <div class="auth-box">
+        <div class="auth-box auth-box-wide">
             <h1>Create Account</h1>
-            <p>Join ForgAuto as a seller or designer</p>
+            <p>Join ForgAuto — choose how you want to participate</p>
             
-            <button onclick="loginWithGoogle()" class="btn btn-google" style="width:100%; margin-bottom:20px; background:#4285f4; color:white; display:flex; align-items:center; justify-content:center; gap:10px;">
-                <svg width="18" height="18" viewBox="0 0 24 24"><path fill="white" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="white" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="white" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="white" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-                Sign up with Google
-            </button>
-            
-            <div style="text-align:center; margin:15px 0; color:#666;">— or sign up with email —</div>
-            
-            <form onsubmit="handleSignup(event)">
-                <div class="field"><label>Name</label><input type="text" id="signupName" required></div>
-                <div class="field"><label>Email</label><input type="email" id="signupEmail" required></div>
-                <div class="field"><label>Password</label><input type="password" id="signupPassword" required minlength="6"></div>
-                <div class="field"><label>I am a...</label>
-                    <select id="signupRole">
-                        <option value="seller">Seller (I have parts to sell)</option>
-                        <option value="designer">Designer (I create custom parts)</option>
-                    </select>
+            <div class="role-selector" id="roleSelector">
+                <div class="role-card" onclick="selectSignupRole('seller')">
+                    <div class="role-icon">🛒</div>
+                    <h3>Buyer / Seller</h3>
+                    <p>Buy parts or sell your 3D designs</p>
+                    <ul class="role-features">
+                        <li>Browse & purchase parts</li>
+                        <li>Sell designs for $10/listing</li>
+                        <li>Keep 100% of sales</li>
+                    </ul>
+                    <span class="role-price">Free</span>
                 </div>
-                <div id="signupError" class="error-msg"></div>
-                <button type="submit" class="btn btn-lg btn-primary" style="width:100%">Create Account</button>
-            </form>
-            <p class="auth-switch">Already have an account? <a href="#" onclick="go('login'); return false;">Login</a></p>
+                <div class="role-card" onclick="selectSignupRole('designer')">
+                    <div class="role-icon">✏️</div>
+                    <h3>Designer</h3>
+                    <p>Offer custom design services</p>
+                    <ul class="role-features">
+                        <li>All Seller features +</li>
+                        <li>Public designer profile</li>
+                        <li>Accept custom commissions</li>
+                    </ul>
+                    <span class="role-price">Free (5+ builds required)</span>
+                </div>
+                <div class="role-card" onclick="selectSignupRole('printshop')">
+                    <div class="role-icon">🖨️</div>
+                    <h3>Print Shop</h3>
+                    <p>Offer printing services to buyers</p>
+                    <ul class="role-features">
+                        <li>Listed in Print Shop directory</li>
+                        <li>Receive quote requests</li>
+                        <li>Build reviews & reputation</li>
+                    </ul>
+                    <span class="role-price">$100 registration</span>
+                </div>
+            </div>
+            
+            <div id="signupFormContainer" style="display:none;">
+                <button type="button" class="btn btn-outline btn-sm" onclick="showRoleSelector()" style="margin-bottom:16px;">← Back to options</button>
+                
+                <div id="selectedRoleLabel" class="selected-role-label"></div>
+                
+                <button onclick="loginWithGoogle()" class="btn btn-google" style="width:100%; margin-bottom:20px; background:#4285f4; color:white; display:flex; align-items:center; justify-content:center; gap:10px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24"><path fill="white" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="white" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="white" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="white" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                    Continue with Google
+                </button>
+                
+                <div style="text-align:center; margin:15px 0; color:#666;">— or sign up with email —</div>
+                
+                <form onsubmit="handleSignup(event)">
+                    <input type="hidden" id="signupRole" value="seller">
+                    
+                    <!-- Regular signup fields -->
+                    <div id="regularSignupFields">
+                        <div class="field"><label>Name</label><input type="text" id="signupName" required></div>
+                        <div class="field"><label>Email</label><input type="email" id="signupEmail" required></div>
+                        <div class="field"><label>Password</label><input type="password" id="signupPassword" required minlength="6"></div>
+                    </div>
+                    
+                    <!-- Print Shop additional fields -->
+                    <div id="printshopSignupFields" style="display:none;">
+                        <hr style="margin:20px 0; border:none; border-top:1px solid var(--border);">
+                        <h3 style="margin-bottom:16px;">Print Shop Details</h3>
+                        <div class="field"><label>Shop Name *</label><input type="text" id="shopName" placeholder="Your Business Name"></div>
+                        <div class="field"><label>Contact Person *</label><input type="text" id="shopContact" placeholder="Primary Contact Name"></div>
+                        <div class="field"><label>Phone *</label><input type="tel" id="shopPhone" placeholder="+1 555 123 4567"></div>
+                        <div class="field"><label>Website</label><input type="url" id="shopWebsite" placeholder="https://yourshop.com"></div>
+                        <div class="field"><label>Address / Location *</label><input type="text" id="shopAddress" placeholder="123 Main St, City, Country"></div>
+                        <div class="field"><label>Description *</label><textarea id="shopDescription" rows="3" placeholder="Tell customers about your shop, equipment, specialties..."></textarea></div>
+                        
+                        <div class="field">
+                            <label>Printing Technologies (select all that apply)</label>
+                            <div class="checkbox-grid">
+                                <label class="checkbox-item"><input type="checkbox" id="techFDM" checked> FDM</label>
+                                <label class="checkbox-item"><input type="checkbox" id="techSLA"> SLA/Resin</label>
+                                <label class="checkbox-item"><input type="checkbox" id="techSLS"> SLS</label>
+                                <label class="checkbox-item"><input type="checkbox" id="techMJF"> MJF</label>
+                                <label class="checkbox-item"><input type="checkbox" id="techMetal"> Metal</label>
+                                <label class="checkbox-item"><input type="checkbox" id="techOther"> Other</label>
+                            </div>
+                        </div>
+                        
+                        <div class="field">
+                            <label>Services Offered</label>
+                            <div class="checkbox-grid">
+                                <label class="checkbox-item"><input type="checkbox" id="svcInstantQuote"> Instant Quotes</label>
+                                <label class="checkbox-item"><input type="checkbox" id="svcPrintShip" checked> Print & Ship</label>
+                                <label class="checkbox-item"><input type="checkbox" id="svcLocalPickup"> Local Pickup</label>
+                                <label class="checkbox-item"><input type="checkbox" id="svcRush"> Rush Orders</label>
+                            </div>
+                        </div>
+                        
+                        <div class="field-row">
+                            <div class="field"><label>Max Build Size (mm)</label><input type="text" id="shopBuildSize" placeholder="300x300x400"></div>
+                            <div class="field"><label>Typical Turnaround</label><input type="text" id="shopTurnaround" placeholder="2-3 days"></div>
+                        </div>
+                        
+                        <div class="printshop-fee-notice">
+                            <span class="fee-icon">💳</span>
+                            <div>
+                                <strong>Registration Fee: $100</strong>
+                                <p>One-time fee to list your shop. Get verified after 5 reviews.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="signupError" class="error-msg"></div>
+                    <button type="submit" class="btn btn-lg btn-primary" style="width:100%" id="signupSubmitBtn">Create Account</button>
+                </form>
+                <p class="auth-switch">Already have an account? <a href="#" onclick="go('login'); return false;">Login</a></p>
+            </div>
         </div>
     </div>`;
+}
+
+// Role selector functions
+let selectedSignupRole = 'seller';
+
+function selectSignupRole(role) {
+    selectedSignupRole = role;
+    document.getElementById('signupRole').value = role;
+    document.getElementById('roleSelector').style.display = 'none';
+    document.getElementById('signupFormContainer').style.display = 'block';
+    
+    // Update label
+    const labels = {
+        seller: '🛒 Buyer / Seller Account',
+        designer: '✏️ Designer Account',
+        printshop: '🖨️ Print Shop Account'
+    };
+    document.getElementById('selectedRoleLabel').textContent = labels[role];
+    
+    // Show/hide print shop fields
+    const printshopFields = document.getElementById('printshopSignupFields');
+    const submitBtn = document.getElementById('signupSubmitBtn');
+    
+    if (role === 'printshop') {
+        printshopFields.style.display = 'block';
+        submitBtn.textContent = 'Register Print Shop — $100';
+        // Make print shop fields required
+        document.getElementById('shopName').required = true;
+        document.getElementById('shopContact').required = true;
+        document.getElementById('shopPhone').required = true;
+        document.getElementById('shopAddress').required = true;
+        document.getElementById('shopDescription').required = true;
+    } else {
+        printshopFields.style.display = 'none';
+        submitBtn.textContent = 'Create Account';
+        // Remove required from print shop fields
+        document.getElementById('shopName').required = false;
+        document.getElementById('shopContact').required = false;
+        document.getElementById('shopPhone').required = false;
+        document.getElementById('shopAddress').required = false;
+        document.getElementById('shopDescription').required = false;
+    }
+}
+
+function showRoleSelector() {
+    document.getElementById('roleSelector').style.display = 'grid';
+    document.getElementById('signupFormContainer').style.display = 'none';
 }
 
 async function handleLogin(e) {
@@ -491,15 +627,56 @@ async function handleSignup(e) {
     const password = document.getElementById('signupPassword').value;
     const role = document.getElementById('signupRole').value;
     
+    // Build signup data
+    let signupData = { name, email, password, role };
+    
+    // Add print shop data if registering as print shop
+    if (role === 'printshop') {
+        // Collect technologies
+        const technologies = [];
+        if (document.getElementById('techFDM').checked) technologies.push('FDM');
+        if (document.getElementById('techSLA').checked) technologies.push('SLA');
+        if (document.getElementById('techSLS').checked) technologies.push('SLS');
+        if (document.getElementById('techMJF').checked) technologies.push('MJF');
+        if (document.getElementById('techMetal').checked) technologies.push('Metal');
+        if (document.getElementById('techOther').checked) technologies.push('Other');
+        
+        // Collect services
+        const services = [];
+        if (document.getElementById('svcInstantQuote').checked) services.push('Instant Quote');
+        if (document.getElementById('svcPrintShip').checked) services.push('Print & Ship');
+        if (document.getElementById('svcLocalPickup').checked) services.push('Local Pickup');
+        if (document.getElementById('svcRush').checked) services.push('Rush Orders');
+        
+        signupData.printshop = {
+            shop_name: document.getElementById('shopName').value,
+            contact_name: document.getElementById('shopContact').value,
+            phone: document.getElementById('shopPhone').value,
+            website: document.getElementById('shopWebsite').value,
+            address: document.getElementById('shopAddress').value,
+            description: document.getElementById('shopDescription').value,
+            technologies: technologies,
+            services: services,
+            build_size: document.getElementById('shopBuildSize').value,
+            turnaround: document.getElementById('shopTurnaround').value
+        };
+    }
+    
     try {
         const data = await api('/api/auth/signup', {
             method: 'POST',
-            body: JSON.stringify({ name, email, password, role })
+            body: JSON.stringify(signupData)
         });
         authToken = data.token;
         localStorage.setItem('authToken', authToken);
         currentUser = data.user;
         updateNavAuth();
+        
+        // Show payment notice for print shops
+        if (role === 'printshop') {
+            alert('Print Shop registered! Note: $100 registration fee will be collected via Stripe (coming soon). Your shop is now listed.');
+        }
+        
         go('dashboard');
     } catch (err) {
         document.getElementById('signupError').textContent = err.message;
@@ -538,28 +715,45 @@ async function dashboardView() {
         unreadCount = unreadData.unread || 0;
     } catch (e) { unreadCount = 0; }
     
+    // Get print shop quote requests if user is a print shop
+    let quoteRequests = [];
+    if (currentUser.role === 'printshop') {
+        try {
+            quoteRequests = await api('/api/quotes/received');
+        } catch (e) { quoteRequests = []; }
+    }
+    
+    const roleLabels = { seller: 'Seller', designer: 'Designer', printshop: 'Print Shop' };
+    
     return `<div class="dashboard">
         <div class="dashboard-header">
             <div class="dashboard-user">
-                <div class="user-avatar">${currentUser.avatar_url ? `<img src="${currentUser.avatar_url}">` : currentUser.name.charAt(0)}</div>
+                <div class="user-avatar">${currentUser.avatar_url ? `<img src="${currentUser.avatar_url}">` : (currentUser.printshop?.shop_name || currentUser.name).charAt(0)}</div>
                 <div>
-                    <h1>${currentUser.name}</h1>
-                    <span class="user-role">${currentUser.role === 'designer' ? 'Designer' : 'Seller'}</span>
+                    <h1>${currentUser.role === 'printshop' ? (currentUser.printshop?.shop_name || currentUser.name) : currentUser.name}</h1>
+                    <span class="user-role">${roleLabels[currentUser.role] || 'Seller'}</span>
                 </div>
             </div>
             <div class="dashboard-actions">
-                <a href="#sell" onclick="go('sell'); return false;" class="btn btn-primary">+ New Listing</a>
+                ${currentUser.role !== 'printshop' ? `<a href="#sell" onclick="go('sell'); return false;" class="btn btn-primary">+ New Listing</a>` : ''}
                 <button onclick="handleLogout()" class="btn btn-outline">Logout</button>
             </div>
         </div>
         
         <div class="dashboard-nav">
-            <button class="dash-tab active" onclick="showDashTab('listings')">My Listings</button>
-            <button class="dash-tab" onclick="showDashTab('messages')">Messages ${unreadCount > 0 ? `<span class="badge-unread">${unreadCount}</span>` : ''}</button>
-            <button class="dash-tab" onclick="showDashTab('sales')">Sales</button>
-            <button class="dash-tab" onclick="showDashTab('purchases')">Purchases</button>
-            ${currentUser.role === 'designer' ? `<button class="dash-tab" onclick="showDashTab('designer')">Designer Profile</button>` : ''}
-            <button class="dash-tab" onclick="showDashTab('settings')">Settings</button>
+            ${currentUser.role === 'printshop' ? `
+                <button class="dash-tab active" onclick="showDashTab('quotes')">Quote Requests ${quoteRequests.filter(q => q.status === 'pending').length > 0 ? `<span class="badge-unread">${quoteRequests.filter(q => q.status === 'pending').length}</span>` : ''}</button>
+                <button class="dash-tab" onclick="showDashTab('shopProfile')">Shop Profile</button>
+                <button class="dash-tab" onclick="showDashTab('messages')">Messages ${unreadCount > 0 ? `<span class="badge-unread">${unreadCount}</span>` : ''}</button>
+                <button class="dash-tab" onclick="showDashTab('settings')">Settings</button>
+            ` : `
+                <button class="dash-tab active" onclick="showDashTab('listings')">My Listings</button>
+                <button class="dash-tab" onclick="showDashTab('messages')">Messages ${unreadCount > 0 ? `<span class="badge-unread">${unreadCount}</span>` : ''}</button>
+                <button class="dash-tab" onclick="showDashTab('sales')">Sales</button>
+                <button class="dash-tab" onclick="showDashTab('purchases')">Purchases</button>
+                ${currentUser.role === 'designer' ? `<button class="dash-tab" onclick="showDashTab('designer')">Designer Profile</button>` : ''}
+                <button class="dash-tab" onclick="showDashTab('settings')">Settings</button>
+            `}
         </div>
         
         <div id="dashListings" class="dash-content">
@@ -593,6 +787,135 @@ async function dashboardView() {
             <h2>My Purchases</h2>
             ${myPurchases.length ? `<div class="purchase-list">${myPurchases.map(p => `<div class="purchase-item"><strong>${p.title}</strong> by ${p.seller_name}<span class="purchase-price">$${p.price.toFixed(2)}</span><a href="#" onclick="go('part', ${p.part_id}); return false;" class="btn btn-sm">View</a></div>`).join('')}</div>` : '<p class="empty-state">No purchases yet.</p>'}
         </div>
+        
+        ${currentUser.role === 'printshop' ? `
+        <div id="dashQuotes" class="dash-content">
+            <h2>Quote Requests</h2>
+            ${quoteRequests.length ? `
+                <div class="quotes-list">
+                    ${quoteRequests.map(q => `
+                        <div class="quote-card ${q.status}">
+                            <div class="quote-header">
+                                <div class="quote-part-info">
+                                    ${q.part_image ? `<img src="${q.part_image}" alt="${q.part_title}" class="quote-part-thumb">` : ''}
+                                    <div>
+                                        <strong>${q.part_title || 'Custom Print Request'}</strong>
+                                        <span class="quote-customer">From: ${q.customer_name} (${q.customer_email})</span>
+                                    </div>
+                                </div>
+                                <span class="quote-status-badge ${q.status}">${q.status}</span>
+                            </div>
+                            <div class="quote-details">
+                                <div class="quote-detail"><span>Material:</span> ${q.material || 'Not specified'}</div>
+                                <div class="quote-detail"><span>Quantity:</span> ${q.quantity || 1}</div>
+                                <div class="quote-detail"><span>Timeline:</span> ${q.timeline || 'Standard'}</div>
+                                <div class="quote-detail"><span>Color:</span> ${q.color || 'Any'}</div>
+                            </div>
+                            ${q.notes ? `<div class="quote-notes"><strong>Notes:</strong> ${q.notes}</div>` : ''}
+                            <div class="quote-actions">
+                                ${q.status === 'pending' ? `
+                                    <button class="btn btn-primary btn-sm" onclick="openQuoteResponseModal(${q.id})">Send Quote</button>
+                                    <button class="btn btn-outline btn-sm" onclick="declineQuote(${q.id})">Decline</button>
+                                ` : q.status === 'quoted' ? `
+                                    <span class="quote-sent-price">Quoted: $${q.quoted_price?.toFixed(2) || '0.00'}</span>
+                                ` : ''}
+                                <a href="mailto:${q.customer_email}" class="btn btn-outline btn-sm">Email Customer</a>
+                            </div>
+                            <div class="quote-date">Received: ${new Date(q.created_at).toLocaleDateString()}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            ` : '<p class="empty-state">No quote requests yet. Your shop will appear in the Print Shop directory for customers to find.</p>'}
+        </div>
+        
+        <div id="dashShopProfile" class="dash-content" style="display:none">
+            <h2>Shop Profile</h2>
+            
+            <div class="shop-status-box ${(currentUser.printshop?.review_count || 0) >= 5 ? 'status-verified' : 'status-pending'}">
+                <div class="status-header">
+                    <span class="status-icon">${(currentUser.printshop?.review_count || 0) >= 5 ? '✓' : '⏳'}</span>
+                    <span class="status-text">${(currentUser.printshop?.review_count || 0) >= 5 ? 'Verified Print Shop' : 'Pending Verification'}</span>
+                </div>
+                <div class="status-progress">
+                    <span class="progress-count ${(currentUser.printshop?.review_count || 0) < 5 ? 'progress-red' : ''}">${currentUser.printshop?.review_count || 0}/5 reviews</span>
+                    ${(currentUser.printshop?.review_count || 0) < 5 ? `<span class="progress-hint">Get ${5 - (currentUser.printshop?.review_count || 0)} more review${5 - (currentUser.printshop?.review_count || 0) > 1 ? 's' : ''} to become verified</span>` : '<span class="progress-hint">✓ Your shop is verified!</span>'}
+                </div>
+                ${currentUser.printshop?.avg_rating ? `<div class="shop-rating-display">Average Rating: ${'★'.repeat(Math.floor(currentUser.printshop.avg_rating))}${currentUser.printshop.avg_rating % 1 >= 0.5 ? '½' : ''} (${currentUser.printshop.avg_rating.toFixed(1)})</div>` : ''}
+            </div>
+            
+            <form onsubmit="handleShopProfileUpdate(event)" class="settings-form">
+                <div class="field">
+                    <label>Shop Logo</label>
+                    <div class="avatar-upload">
+                        <div class="avatar-preview" id="shopLogoPreview">
+                            ${currentUser.printshop?.logo_url ? `<img src="${currentUser.printshop.logo_url}" alt="Logo">` : `<span>🖨️</span>`}
+                        </div>
+                        <div class="avatar-actions">
+                            <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('shopLogoInput').click()">Change Logo</button>
+                            <input type="file" id="shopLogoInput" accept="image/*" hidden onchange="handleShopLogoUpload(event)">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="field"><label>Shop Name *</label><input type="text" id="shopProfileName" value="${currentUser.printshop?.shop_name || ''}" required></div>
+                <div class="field"><label>Contact Person *</label><input type="text" id="shopProfileContact" value="${currentUser.printshop?.contact_name || ''}" required></div>
+                <div class="field-row">
+                    <div class="field"><label>Phone *</label><input type="tel" id="shopProfilePhone" value="${currentUser.printshop?.phone || ''}" required></div>
+                    <div class="field"><label>Email</label><input type="email" id="shopProfileEmail" value="${currentUser.printshop?.email || currentUser.email}" readonly></div>
+                </div>
+                <div class="field"><label>Website</label><input type="url" id="shopProfileWebsite" value="${currentUser.printshop?.website || ''}" placeholder="https://yourshop.com"></div>
+                <div class="field"><label>Address / Location *</label><input type="text" id="shopProfileAddress" value="${currentUser.printshop?.address || ''}" required></div>
+                <div class="field"><label>Description *</label><textarea id="shopProfileDescription" rows="4" required>${currentUser.printshop?.description || ''}</textarea></div>
+                
+                <h3>Capabilities</h3>
+                <div class="field">
+                    <label>Printing Technologies</label>
+                    <div class="checkbox-grid">
+                        <label class="checkbox-item"><input type="checkbox" id="shopTechFDM" ${(currentUser.printshop?.technologies || []).includes('FDM') ? 'checked' : ''}> FDM</label>
+                        <label class="checkbox-item"><input type="checkbox" id="shopTechSLA" ${(currentUser.printshop?.technologies || []).includes('SLA') ? 'checked' : ''}> SLA/Resin</label>
+                        <label class="checkbox-item"><input type="checkbox" id="shopTechSLS" ${(currentUser.printshop?.technologies || []).includes('SLS') ? 'checked' : ''}> SLS</label>
+                        <label class="checkbox-item"><input type="checkbox" id="shopTechMJF" ${(currentUser.printshop?.technologies || []).includes('MJF') ? 'checked' : ''}> MJF</label>
+                        <label class="checkbox-item"><input type="checkbox" id="shopTechMetal" ${(currentUser.printshop?.technologies || []).includes('Metal') ? 'checked' : ''}> Metal</label>
+                    </div>
+                </div>
+                
+                <div class="field">
+                    <label>Services Offered</label>
+                    <div class="checkbox-grid">
+                        <label class="checkbox-item"><input type="checkbox" id="shopSvcInstant" ${(currentUser.printshop?.services || []).includes('Instant Quote') ? 'checked' : ''}> Instant Quotes</label>
+                        <label class="checkbox-item"><input type="checkbox" id="shopSvcShip" ${(currentUser.printshop?.services || []).includes('Print & Ship') ? 'checked' : ''}> Print & Ship</label>
+                        <label class="checkbox-item"><input type="checkbox" id="shopSvcPickup" ${(currentUser.printshop?.services || []).includes('Local Pickup') ? 'checked' : ''}> Local Pickup</label>
+                        <label class="checkbox-item"><input type="checkbox" id="shopSvcRush" ${(currentUser.printshop?.services || []).includes('Rush Orders') ? 'checked' : ''}> Rush Orders</label>
+                    </div>
+                </div>
+                
+                <div class="field-row">
+                    <div class="field"><label>Max Build Size (mm)</label><input type="text" id="shopProfileBuildSize" value="${currentUser.printshop?.build_size || ''}" placeholder="300x300x400"></div>
+                    <div class="field"><label>Typical Turnaround</label><input type="text" id="shopProfileTurnaround" value="${currentUser.printshop?.turnaround || ''}" placeholder="2-3 days"></div>
+                </div>
+                
+                <h3>Portfolio Images</h3>
+                <div class="field">
+                    <div class="portfolio-grid" id="shopPortfolioGrid">
+                        ${(currentUser.printshop?.portfolio_images || []).map((img, i) => `
+                            <div class="portfolio-item">
+                                <img src="${img}" alt="Work ${i+1}">
+                                <button type="button" class="portfolio-remove" onclick="removeShopPortfolioImage(${i})">×</button>
+                            </div>
+                        `).join('')}
+                        <div class="portfolio-add" onclick="document.getElementById('shopPortfolioInput').click()">
+                            <span>+</span>
+                            <span>Add</span>
+                        </div>
+                    </div>
+                    <input type="file" id="shopPortfolioInput" accept="image/*" multiple hidden onchange="handleShopPortfolioUpload(event)">
+                    <p class="field-hint">Show off your best prints to attract customers</p>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">Save Shop Profile</button>
+            </form>
+        </div>
+        ` : ''}
         
         <div id="dashSettings" class="dash-content" style="display:none">
             <h2>Profile Settings</h2>
@@ -880,6 +1203,201 @@ async function handleAvatarUpload(event) {
         alert('Profile photo updated!');
     } catch (err) {
         alert('Error uploading photo: ' + err.message);
+    }
+}
+
+// ========== PRINT SHOP HANDLERS ==========
+
+async function handleShopProfileUpdate(e) {
+    e.preventDefault();
+    
+    // Collect technologies
+    const technologies = [];
+    if (document.getElementById('shopTechFDM')?.checked) technologies.push('FDM');
+    if (document.getElementById('shopTechSLA')?.checked) technologies.push('SLA');
+    if (document.getElementById('shopTechSLS')?.checked) technologies.push('SLS');
+    if (document.getElementById('shopTechMJF')?.checked) technologies.push('MJF');
+    if (document.getElementById('shopTechMetal')?.checked) technologies.push('Metal');
+    
+    // Collect services
+    const services = [];
+    if (document.getElementById('shopSvcInstant')?.checked) services.push('Instant Quote');
+    if (document.getElementById('shopSvcShip')?.checked) services.push('Print & Ship');
+    if (document.getElementById('shopSvcPickup')?.checked) services.push('Local Pickup');
+    if (document.getElementById('shopSvcRush')?.checked) services.push('Rush Orders');
+    
+    const shopData = {
+        shop_name: document.getElementById('shopProfileName').value,
+        contact_name: document.getElementById('shopProfileContact').value,
+        phone: document.getElementById('shopProfilePhone').value,
+        website: document.getElementById('shopProfileWebsite').value,
+        address: document.getElementById('shopProfileAddress').value,
+        description: document.getElementById('shopProfileDescription').value,
+        technologies: technologies,
+        services: services,
+        build_size: document.getElementById('shopProfileBuildSize').value,
+        turnaround: document.getElementById('shopProfileTurnaround').value
+    };
+    
+    try {
+        await api('/api/printshop/profile', {
+            method: 'PUT',
+            body: JSON.stringify(shopData)
+        });
+        currentUser.printshop = { ...currentUser.printshop, ...shopData };
+        alert('Shop profile updated!');
+    } catch (err) {
+        alert('Error: ' + err.message);
+    }
+}
+
+async function handleShopLogoUpload(event) {
+    const file = event.target.files[0];
+    if (!file || !file.type.startsWith('image/')) return;
+    if (file.size > 5 * 1024 * 1024) { alert('Image must be under 5MB'); return; }
+    
+    const reader = new FileReader();
+    reader.onload = e => {
+        document.getElementById('shopLogoPreview').innerHTML = `<img src="${e.target.result}" alt="Logo">`;
+    };
+    reader.readAsDataURL(file);
+    
+    try {
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        const res = await fetch(`${API_URL}/api/upload/photo`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${authToken}` },
+            body: formData
+        });
+        
+        if (res.ok) {
+            const data = await res.json();
+            await api('/api/printshop/profile', {
+                method: 'PUT',
+                body: JSON.stringify({ logo_url: data.url })
+            });
+            currentUser.printshop = { ...currentUser.printshop, logo_url: data.url };
+            alert('Logo updated!');
+        }
+    } catch (err) {
+        alert('Error uploading logo: ' + err.message);
+    }
+}
+
+async function handleShopPortfolioUpload(event) {
+    for (let file of event.target.files) {
+        if (!file.type.startsWith('image/') || file.size > 5 * 1024 * 1024) continue;
+        
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            const res = await fetch(`${API_URL}/api/upload/photo`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${authToken}` },
+                body: formData
+            });
+            
+            if (res.ok) {
+                const data = await res.json();
+                if (!currentUser.printshop) currentUser.printshop = {};
+                if (!currentUser.printshop.portfolio_images) currentUser.printshop.portfolio_images = [];
+                currentUser.printshop.portfolio_images.push(data.url);
+                renderShopPortfolioGrid();
+            }
+        } catch (err) {
+            console.error('Upload error:', err);
+        }
+    }
+}
+
+function removeShopPortfolioImage(index) {
+    if (currentUser.printshop?.portfolio_images) {
+        currentUser.printshop.portfolio_images.splice(index, 1);
+        renderShopPortfolioGrid();
+    }
+}
+
+function renderShopPortfolioGrid() {
+    const grid = document.getElementById('shopPortfolioGrid');
+    if (!grid) return;
+    grid.innerHTML = `
+        ${(currentUser.printshop?.portfolio_images || []).map((img, i) => `
+            <div class="portfolio-item">
+                <img src="${img}" alt="Work ${i+1}">
+                <button type="button" class="portfolio-remove" onclick="removeShopPortfolioImage(${i})">×</button>
+            </div>
+        `).join('')}
+        <div class="portfolio-add" onclick="document.getElementById('shopPortfolioInput').click()">
+            <span>+</span>
+            <span>Add</span>
+        </div>
+    `;
+}
+
+// Quote response modal
+function openQuoteResponseModal(quoteId) {
+    const modal = document.createElement('div');
+    modal.id = 'quoteResponseModal';
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="modal-box">
+            <button class="modal-close" onclick="closeQuoteResponseModal()">×</button>
+            <h2>Send Quote</h2>
+            <form onsubmit="submitQuoteResponse(event, ${quoteId})">
+                <div class="field">
+                    <label>Quote Price ($)</label>
+                    <input type="number" id="quotePrice" step="0.01" min="0" required placeholder="Enter your price">
+                </div>
+                <div class="field">
+                    <label>Estimated Turnaround</label>
+                    <input type="text" id="quoteTurnaround" placeholder="e.g., 2-3 business days">
+                </div>
+                <div class="field">
+                    <label>Message to Customer</label>
+                    <textarea id="quoteMessage" rows="3" placeholder="Include any details about your quote..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%">Send Quote</button>
+            </form>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function closeQuoteResponseModal() {
+    const modal = document.getElementById('quoteResponseModal');
+    if (modal) modal.remove();
+}
+
+async function submitQuoteResponse(e, quoteId) {
+    e.preventDefault();
+    const price = parseFloat(document.getElementById('quotePrice').value);
+    const turnaround = document.getElementById('quoteTurnaround').value;
+    const message = document.getElementById('quoteMessage').value;
+    
+    try {
+        await api(`/api/quotes/${quoteId}/respond`, {
+            method: 'POST',
+            body: JSON.stringify({ price, turnaround, message })
+        });
+        closeQuoteResponseModal();
+        alert('Quote sent to customer!');
+        go('dashboard');
+    } catch (err) {
+        alert('Error: ' + err.message);
+    }
+}
+
+async function declineQuote(quoteId) {
+    if (!confirm('Decline this quote request?')) return;
+    try {
+        await api(`/api/quotes/${quoteId}/decline`, { method: 'POST' });
+        alert('Quote declined.');
+        go('dashboard');
+    } catch (err) {
+        alert('Error: ' + err.message);
     }
 }
 
@@ -1641,7 +2159,23 @@ async function partView(id) {
                 <button class="btn btn-boost" onclick="handleBoostPart(${p.id})">Make Featured - $20</button>
             </div>` : ''}
             ${p.premiered ? '<div class="featured-status">This listing is Featured until ' + new Date(p.premiered_until).toLocaleDateString() + '</div>' : ''}
-            <div class="print-ship-cta"><div class="print-ship-header"><div><strong>Print & Ship</strong><span>Don't have a printer? We'll print and ship it to you.</span></div></div><div class="print-ship-options"><button class="btn btn-sm" onclick="go('printshops', ${p.id})">Find Local Shop</button><button class="btn btn-sm btn-primary" onclick="alert('Print & Ship coming soon!')">Get Instant Quote</button></div></div>
+            <div class="print-ship-cta">
+                <div class="print-ship-header">
+                    <div class="print-ship-icon">🖨️</div>
+                    <div>
+                        <strong>Need it printed?</strong>
+                        <span>Get quotes from professional print shops</span>
+                    </div>
+                </div>
+                <div class="print-ship-options">
+                    <button class="btn btn-primary" onclick="openQuoteRequestModal(${p.id}, '${(p.title || '').replace(/'/g, "\\'")}', '${(p.images && p.images[0] || '').replace(/'/g, "\\'")}')">
+                        📝 Request Print Quotes
+                    </button>
+                    <button class="btn btn-outline" onclick="go('printshops', ${p.id})">
+                        Browse Print Shops
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
     <div class="section"><div class="section-head"><h2>Similar Parts</h2></div><div class="grid">${filterPublicParts(parts).filter(x => x.id !== p.id && (x.make === p.make || x.category === p.category)).slice(0, 4).map(cardHTML).join('')}</div></div>
@@ -1812,13 +2346,136 @@ async function handleReview(e, partId) {
     }
 }
 
-function printShopsView(partId) {
+async function printShopsView(partId) {
+    // Fetch real print shops from API
+    let shops = [];
+    try {
+        shops = await api('/api/printshops');
+    } catch (e) {
+        // Fall back to demo data
+        shops = printShops.map(s => ({
+            id: Math.random(),
+            shop_name: s.name,
+            address: s.address,
+            phone: s.phone,
+            email: s.email,
+            avg_rating: s.rating,
+            review_count: s.reviews,
+            turnaround: s.turnaround,
+            services: [s.instantQuote ? 'Instant Quote' : null, s.printAndShip ? 'Print & Ship' : null].filter(Boolean),
+            technologies: ['FDM'],
+            verified: s.verified,
+            isDemo: true
+        }));
+    }
+    
     const part = partId ? parts.find(x => x.id === partId) : null;
-    return `<div class="page-header"><h1>Find a Print Shop</h1><p>Get your part printed and shipped to you.</p></div>
-        ${part ? `<div class="selected-part-banner"><img src="${part.images?.[0] || part.img}" alt="${part.title}"><div class="selected-part-info"><strong>${part.title}</strong><span>${part.make} ${part.model} - ${part.file_format} - ${part.file_size}</span></div></div>` : ''}
-        <div class="location-search"><input type="text" id="locationInput" placeholder="Enter your city or zip code..."><button class="btn" onclick="alert('Search coming soon')">Search</button><button class="btn btn-outline" onclick="useMyLocation()">Use My Location</button></div>
-        <div class="sample-disclaimer">Sample data — real print shops coming soon</div>
-        <div class="print-shops-list">${printShops.map(shop => `<div class="print-shop-card ${shop.verified ? 'verified' : ''}"><div class="print-shop-header"><div><h3>${shop.name} ${shop.verified ? '<span class="verified-badge">Verified</span>' : ''}</h3>${shop.instantQuote ? '<span class="instant-badge">Instant Quotes</span>' : ''}${shop.printAndShip ? '<span class="ship-badge">Print & Ship</span>' : ''}</div><span class="print-shop-distance">${shop.distance}</span></div><p class="print-shop-address">${shop.address}</p><div class="print-shop-meta"><span>${shop.rating} stars (${shop.reviews})</span><span>${shop.turnaround}</span></div><div class="print-shop-actions"><a href="tel:${shop.phone}" class="btn btn-sm btn-outline">Call</a>${shop.instantQuote ? `<button class="btn btn-sm btn-primary" onclick="alert('Quote: ~$${(Math.random() * 20 + 10).toFixed(2)}')">Instant Quote</button>` : ''}<a href="mailto:${shop.email}${part ? `?subject=Print: ${part.title}` : ''}" class="btn btn-sm btn-outline">Email</a></div></div>`).join('')}</div>`;
+    if (!part && partId) {
+        try {
+            const fetchedPart = await api(`/api/parts/${partId}`);
+            if (fetchedPart) parts.push(fetchedPart);
+        } catch (e) {}
+    }
+    const currentPart = partId ? parts.find(x => x.id === partId) : null;
+    
+    return `<div class="printshops-page">
+        <div class="printshops-header">
+            <h1>🖨️ Find a Print Shop</h1>
+            <p>Get your parts professionally printed and shipped to you</p>
+        </div>
+        
+        ${currentPart ? `
+        <div class="selected-part-banner">
+            <img src="${currentPart.images?.[0] || ''}" alt="${currentPart.title}">
+            <div class="selected-part-info">
+                <strong>${currentPart.title}</strong>
+                <span>${currentPart.make} ${currentPart.model} · ${currentPart.file_format || 'STL'} · ${currentPart.file_size || 'N/A'}</span>
+            </div>
+            <button class="btn btn-primary" onclick="openQuoteRequestModal(${currentPart.id}, '${(currentPart.title || '').replace(/'/g, "\\'")}', '${(currentPart.images?.[0] || '').replace(/'/g, "\\'")}')">
+                📝 Request Quotes from All Shops
+            </button>
+        </div>
+        ` : ''}
+        
+        <div class="location-search">
+            <input type="text" id="locationInput" placeholder="Enter your city or zip code...">
+            <button class="btn" onclick="searchPrintShops()">Search</button>
+            <button class="btn btn-outline" onclick="useMyLocation()">📍 Use My Location</button>
+        </div>
+        
+        ${shops.length === 0 ? `
+            <div class="no-shops-cta">
+                <h3>No print shops yet</h3>
+                <p>Are you a 3D printing service? Be the first to register!</p>
+                <a href="#" onclick="go('signup'); return false;" class="btn btn-primary">Register Your Print Shop — $100</a>
+            </div>
+        ` : `
+            <div class="print-shops-grid">
+                ${shops.map(shop => `
+                    <div class="print-shop-card-v2 ${shop.verified ? 'verified' : ''}">
+                        <div class="shop-card-header">
+                            ${shop.logo_url ? `<img src="${shop.logo_url}" alt="${shop.shop_name}" class="shop-logo">` : `<div class="shop-logo-placeholder">🖨️</div>`}
+                            <div class="shop-card-title">
+                                <h3>${shop.shop_name} ${shop.verified ? '<span class="verified-badge">✓ Verified</span>' : ''}</h3>
+                                <div class="shop-rating">
+                                    ${'★'.repeat(Math.floor(shop.avg_rating || 0))}${'☆'.repeat(5 - Math.floor(shop.avg_rating || 0))}
+                                    <span>${(shop.avg_rating || 0).toFixed(1)} (${shop.review_count || 0} reviews)</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <p class="shop-address">📍 ${shop.address || 'Location not specified'}</p>
+                        
+                        <div class="shop-tags">
+                            ${(shop.technologies || []).map(t => `<span class="tag tech-tag">${t}</span>`).join('')}
+                            ${(shop.services || []).map(s => `<span class="tag service-tag">${s}</span>`).join('')}
+                        </div>
+                        
+                        ${shop.build_size ? `<div class="shop-spec"><span>Max Build:</span> ${shop.build_size}</div>` : ''}
+                        ${shop.turnaround ? `<div class="shop-spec"><span>Turnaround:</span> ${shop.turnaround}</div>` : ''}
+                        
+                        <div class="shop-card-actions">
+                            <a href="tel:${shop.phone}" class="btn btn-sm btn-outline">📞 Call</a>
+                            <a href="mailto:${shop.email || ''}${currentPart ? `?subject=Quote Request: ${currentPart.title}` : ''}" class="btn btn-sm btn-outline">✉️ Email</a>
+                            ${currentPart ? `
+                                <button class="btn btn-sm btn-primary" onclick="openQuoteRequestModal(${currentPart.id}, '${(currentPart.title || '').replace(/'/g, "\\'")}', '${(currentPart.images?.[0] || '').replace(/'/g, "\\'")}', ${shop.id}, '${(shop.shop_name || '').replace(/'/g, "\\'")}')">
+                                    📝 Request Quote
+                                </button>
+                            ` : `
+                                <button class="btn btn-sm btn-primary" onclick="go('printshop', ${shop.id})">View Shop</button>
+                            `}
+                        </div>
+                        
+                        ${shop.isDemo ? '<div class="demo-badge">Sample Data</div>' : ''}
+                    </div>
+                `).join('')}
+            </div>
+        `}
+        
+        <div class="printshop-register-cta">
+            <h3>Own a 3D Printing Business?</h3>
+            <p>Register your shop and start receiving quote requests from customers.</p>
+            <a href="#" onclick="go('signup'); return false;" class="btn btn-outline">Register Your Print Shop — $100</a>
+        </div>
+    </div>`;
+}
+
+function searchPrintShops() {
+    const location = document.getElementById('locationInput')?.value;
+    if (location) {
+        alert(`Search for print shops near "${location}" coming soon!`);
+    }
+}
+
+function useMyLocation() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            pos => alert(`Location detected! Finding shops near you... (Coming soon)`),
+            err => alert('Could not get your location. Please enter it manually.')
+        );
+    } else {
+        alert('Geolocation not supported. Please enter your location manually.');
+    }
 }
 
 // v6.0: Full resume-style designer profile
@@ -2029,6 +2686,145 @@ async function sendDesignerMessage(e, designerId) {
         alert('Message sent!');
     } catch (err) {
         alert('Error: ' + err.message);
+    }
+}
+
+// ========== PRINT SHOP QUOTE REQUEST MODAL ==========
+
+function openQuoteRequestModal(partId, partTitle, partImage, shopId = null, shopName = null) {
+    if (!currentUser) { 
+        alert('Please login to request quotes'); 
+        go('login'); 
+        return; 
+    }
+    
+    const modal = document.createElement('div');
+    modal.id = 'quoteRequestModal';
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="modal-box modal-box-lg">
+            <button class="modal-close" onclick="closeQuoteRequestModal()">×</button>
+            
+            <div class="quote-request-header">
+                <h2>📝 Request a Print Quote</h2>
+                <p>${shopId ? `From: <strong>${shopName}</strong>` : 'Send to all print shops'}</p>
+            </div>
+            
+            <div class="quote-part-preview">
+                ${partImage ? `<img src="${partImage}" alt="${partTitle}">` : '<div class="no-image">📦</div>'}
+                <div>
+                    <strong>${partTitle}</strong>
+                    <span>Part ID: #${partId}</span>
+                </div>
+            </div>
+            
+            <form onsubmit="submitQuoteRequest(event, ${partId}, ${shopId || 'null'})">
+                <div class="quote-form-grid">
+                    <div class="field">
+                        <label>Your Name *</label>
+                        <input type="text" id="quoteReqName" value="${currentUser.name || ''}" required>
+                    </div>
+                    <div class="field">
+                        <label>Your Email *</label>
+                        <input type="email" id="quoteReqEmail" value="${currentUser.email || ''}" required>
+                    </div>
+                </div>
+                
+                <div class="quote-form-grid">
+                    <div class="field">
+                        <label>Preferred Material *</label>
+                        <select id="quoteReqMaterial" required>
+                            <option value="">Select material...</option>
+                            <option value="PLA">PLA (Standard)</option>
+                            <option value="PETG">PETG (Stronger)</option>
+                            <option value="ABS">ABS (Heat resistant)</option>
+                            <option value="ASA">ASA (UV resistant)</option>
+                            <option value="Nylon">Nylon (Flexible)</option>
+                            <option value="TPU">TPU (Flexible rubber)</option>
+                            <option value="Resin">Resin (High detail)</option>
+                            <option value="Carbon Fiber">Carbon Fiber</option>
+                            <option value="Other">Other (specify in notes)</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Color Preference</label>
+                        <input type="text" id="quoteReqColor" placeholder="e.g., Black, Carbon fiber look">
+                    </div>
+                </div>
+                
+                <div class="quote-form-grid">
+                    <div class="field">
+                        <label>Quantity *</label>
+                        <input type="number" id="quoteReqQty" value="1" min="1" required>
+                    </div>
+                    <div class="field">
+                        <label>Timeline</label>
+                        <select id="quoteReqTimeline">
+                            <option value="Standard">Standard (1-2 weeks)</option>
+                            <option value="Rush">Rush (3-5 days) +$</option>
+                            <option value="No Rush">No rush (whenever)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="field">
+                    <label>Shipping Address</label>
+                    <input type="text" id="quoteReqAddress" placeholder="Your shipping address for delivery estimates">
+                </div>
+                
+                <div class="field">
+                    <label>Additional Notes</label>
+                    <textarea id="quoteReqNotes" rows="3" placeholder="Any special requirements? Infill percentage, surface finish, tolerances..."></textarea>
+                </div>
+                
+                <div class="quote-submit-section">
+                    <button type="submit" class="btn btn-lg btn-primary">
+                        ${shopId ? `📤 Send Quote Request to ${shopName}` : '📤 Send to All Print Shops'}
+                    </button>
+                    <p class="quote-note">Print shops will respond with pricing via email</p>
+                </div>
+            </form>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function closeQuoteRequestModal() {
+    const modal = document.getElementById('quoteRequestModal');
+    if (modal) modal.remove();
+}
+
+async function submitQuoteRequest(e, partId, shopId) {
+    e.preventDefault();
+    
+    const quoteData = {
+        part_id: partId,
+        shop_id: shopId, // null means send to all
+        customer_name: document.getElementById('quoteReqName').value,
+        customer_email: document.getElementById('quoteReqEmail').value,
+        material: document.getElementById('quoteReqMaterial').value,
+        color: document.getElementById('quoteReqColor').value,
+        quantity: parseInt(document.getElementById('quoteReqQty').value),
+        timeline: document.getElementById('quoteReqTimeline').value,
+        shipping_address: document.getElementById('quoteReqAddress').value,
+        notes: document.getElementById('quoteReqNotes').value
+    };
+    
+    try {
+        const result = await api('/api/quotes', {
+            method: 'POST',
+            body: JSON.stringify(quoteData)
+        });
+        
+        closeQuoteRequestModal();
+        
+        if (shopId) {
+            alert(`Quote request sent! The print shop will contact you at ${quoteData.customer_email} with pricing.`);
+        } else {
+            alert(`Quote request sent to ${result.shops_notified || 'all'} print shops! They will contact you at ${quoteData.customer_email} with pricing.`);
+        }
+    } catch (err) {
+        alert('Error sending quote request: ' + err.message);
     }
 }
 

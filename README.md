@@ -1,4 +1,4 @@
-# ForgAuto v7.2.8
+# ForgAuto v7.3
 
 The 3D Marketplace for Automotive Parts.
 
@@ -25,9 +25,11 @@ The 3D Marketplace for Automotive Parts.
 - PDF receipts for both parties
 
 ### Mobile
-- Responsive design
+- Clean mobile product pages (v7.3)
+- Full-bleed 3D viewer
+- Sticky buy bar at bottom
+- Horizontal scroll thumbnails
 - Hamburger navigation menu
-- Mobile search on browse page
 - 2-column grid for parts
 
 ## Tech Stack
@@ -50,6 +52,14 @@ npx wrangler deploy
 ```
 
 ## Version History
+
+### v7.3
+- **Clean mobile product page layout:**
+  - Full-bleed 3D viewer (edge-to-edge, no padding)
+  - Horizontal scroll thumbnail strip
+  - Sticky bottom bar with price + buy button
+  - Sections divided by thin lines (no card gaps)
+  - App-like flow
 
 ### v7.2.8
 - Fixed mobile logo size (2.5x bigger - 70px)

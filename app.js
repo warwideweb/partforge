@@ -43,18 +43,25 @@ async function checkAuth() {
     const oauthUser = urlParams.get('user');
     
     if (oauthToken && oauthUser) {
-        // Google OAuth callback - save token and user
+        // Google OAuth callback - save token and fetch fresh user data
         authToken = oauthToken;
         localStorage.setItem('authToken', authToken);
+        // Clean URL first
+        window.history.replaceState({}, '', window.location.pathname);
+        // Fetch fresh user data from API (includes email_verified status)
         try {
-            currentUser = JSON.parse(decodeURIComponent(oauthUser));
-            updateNavAuth();
-            // Clean URL
-            window.history.replaceState({}, '', window.location.pathname);
-            go('dashboard');
-            return;
+            const res = await fetch(`${API_URL}/api/auth/me`, {
+                headers: { 'Authorization': `Bearer ${authToken}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                currentUser = data.user;
+                updateNavAuth();
+                go('dashboard');
+                return;
+            }
         } catch (e) {
-            console.error('Failed to parse OAuth user:', e);
+            console.error('Failed to fetch user after OAuth:', e);
         }
     }
     
@@ -4555,10 +4562,72 @@ function showGalleryImage(src, el) {
     heroImg.innerHTML = `<img src="${src}" alt="Part photo" onclick="openLightbox('${src}')">`;
 }
 
+// v7.5: Handle Stripe return URLs
+function handleStripeReturn() {
+    const hash = window.location.hash;
+    if (hash.includes('listing_paid=true')) {
+        setTimeout(() => alert('✅ Listing is now live!'), 500);
+    }
+    if (hash.includes('purchased=true')) {
+        setTimeout(() => alert('✅ Purchase complete! You can now download the file.'), 500);
+    }
+    if (hash.includes('boosted=true')) {
+        setTimeout(() => alert('✅ Your listing is now featured for 30 days!'), 500);
+    }
+    if (hash.includes('stripe=success')) {
+        setTimeout(() => alert('✅ Stripe account connected! You can now receive payments.'), 500);
+    }
+    if (hash.includes('registered=true')) {
+        setTimeout(() => alert('✅ Print shop registered successfully!'), 500);
+    }
+    if (hash.includes('stripe=refresh')) {
+        // Retry Stripe onboarding
+        connectStripeAccount();
+    }
+}
+
+// v7.5: Stripe Connect - create seller account
+async function connectStripeAccount() {
+    if (!currentUser) { go('login'); return; }
+    try {
+        const res = await api('/api/stripe/connect-account', { method: 'POST' });
+        if (res && res.url) {
+            window.location.href = res.url;
+        } else if (res && res.onboarded) {
+            alert('Your Stripe account is already connected!');
+        }
+    } catch (e) {
+        alert('Error connecting Stripe: ' + e.message);
+    }
+}
+
+// v7.5: Open Stripe dashboard
+async function openStripeDashboard() {
+    try {
+        const res = await api('/api/stripe/dashboard-link');
+        if (res && res.url) {
+            window.open(res.url, '_blank');
+        }
+    } catch (e) {
+        alert('Error opening dashboard: ' + e.message);
+    }
+}
+
+// v7.5: Check Stripe account status
+async function getStripeStatus() {
+    try {
+        const res = await api('/api/stripe/account-status');
+        return res || { has_account: false, is_onboarded: false };
+    } catch (e) {
+        return { has_account: false, is_onboarded: false };
+    }
+}
+
 // Initialize
 console.log(`ForgAuto v${VERSION} loaded`);
 // Initialize app
 checkAuth().then(() => {
+    handleStripeReturn();
     const initialData = initFromHash();
     // Set initial state in history
     history.replaceState({ view, data: initialData }, '', window.location.hash || '#home');

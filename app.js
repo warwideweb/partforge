@@ -1,7 +1,7 @@
 // ForgAuto — 3D Marketplace for Cars
 // Version 4.0 - Major Fixes
 
-const VERSION = '5.1';
+const VERSION = '5.2';
 const API_URL = 'https://forgauto-api.warwideweb.workers.dev'; // Cloudflare Worker API
 
 // State
@@ -1278,15 +1278,22 @@ async function partView(id) {
     // FIX 13: Show 3D viewer + images together like Thingiverse
     const hasFile = !!p.file_url;
     
+    // v5.2: Restructured layout - Description under gallery (left), purchase info (right)
     return `<div class="detail">
-        <div class="detail-gallery">
-            <div class="viewer-container" id="viewer3d"></div>
-            <div class="gallery-thumbs">
-                ${hasFile ? `<button class="thumb-3d active" onclick="show3DViewer()">3D</button>` : ''}
-                ${images.map((img, i) => `<img src="${img}" alt="${p.title}" class="thumb" onclick="showGalleryImage('${img}', this)">`).join('')}
+        <div class="detail-left">
+            <div class="detail-gallery">
+                <div class="viewer-container" id="viewer3d"></div>
+                <div class="gallery-thumbs">
+                    ${hasFile ? `<button class="thumb-3d active" onclick="show3DViewer()">3D</button>` : ''}
+                    ${images.map((img, i) => `<img src="${img}" alt="${p.title}" class="thumb" onclick="showGalleryImage('${img}', this)">`).join('')}
+                </div>
             </div>
+            <div class="detail-desc"><h2>Description</h2><p>${p.description || 'No description provided.'}</p></div>
+            <div class="specs"><h2>Specifications</h2><div class="spec-row"><span>Vehicle</span><span>${p.make} ${p.model}</span></div><div class="spec-row"><span>Category</span><span>${p.category}</span></div><div class="spec-row"><span>Format</span><span>${p.file_format || 'STL'}</span></div><div class="spec-row"><span>File Size</span><span>${p.file_size || 'N/A'}</span></div><div class="spec-row"><span>Material</span><span>${p.material || 'PLA'}</span></div><div class="spec-row"><span>Infill</span><span>${p.infill || '25%'}</span></div></div>
+            ${reviews.length ? `<div class="reviews-section"><h2>Reviews (${reviews.length})</h2>${reviews.map(r => `<div class="review"><div class="review-header"><strong>${r.reviewer_name}</strong><span class="review-rating">${'★'.repeat(r.rating)} (${r.rating}/5)</span></div><p>${r.comment || ''}</p></div>`).join('')}</div>` : ''}
+            ${currentUser ? `<div class="write-review"><h3>Write a Review</h3><form onsubmit="handleReview(event, ${p.id})"><div class="field"><label>Rating</label><select id="reviewRating"><option value="5">5 - Excellent</option><option value="4">4 - Good</option><option value="3">3 - Average</option><option value="2">2 - Poor</option><option value="1">1 - Terrible</option></select></div><div class="field"><label>Comment</label><textarea id="reviewComment" rows="3" placeholder="Share your experience..."></textarea></div><button type="submit" class="btn btn-primary">Submit Review</button></form></div>` : ''}
         </div>
-        <div class="detail-info">
+        <div class="detail-right">
             ${p.featured ? '<span class="detail-featured-badge">Featured</span>' : ''}
             <div class="detail-breadcrumb">${p.make} / ${p.model} / ${p.category}</div>
             <h1>${p.title}</h1>
@@ -1331,12 +1338,6 @@ async function partView(id) {
             </div>` : ''}
             ${p.premiered ? '<div class="featured-status">This listing is Featured until ' + new Date(p.premiered_until).toLocaleDateString() + '</div>' : ''}
             <div class="print-ship-cta"><div class="print-ship-header"><div><strong>Print & Ship</strong><span>Don't have a printer? We'll print and ship it to you.</span></div></div><div class="print-ship-options"><button class="btn btn-sm" onclick="go('printshops', ${p.id})">Find Local Shop</button><button class="btn btn-sm btn-primary" onclick="alert('Print & Ship coming soon!')">Get Instant Quote</button></div></div>
-            <div class="detail-desc"><h2>Description</h2><p>${p.description || ''}</p></div>
-            <div class="specs"><h2>Specifications</h2><div class="spec-row"><span>Vehicle</span><span>${p.make} ${p.model}</span></div><div class="spec-row"><span>Category</span><span>${p.category}</span></div><div class="spec-row"><span>Format</span><span>${p.file_format || 'STL'}</span></div><div class="spec-row"><span>File Size</span><span>${p.file_size || 'N/A'}</span></div><div class="spec-row"><span>Material</span><span>${p.material || 'PLA'}</span></div><div class="spec-row"><span>Infill</span><span>${p.infill || '25%'}</span></div></div>
-            
-            ${reviews.length ? `<div class="reviews-section"><h2>Reviews (${reviews.length})</h2>${reviews.map(r => `<div class="review"><div class="review-header"><strong>${r.reviewer_name}</strong><span class="review-rating">${'*'.repeat(r.rating)} (${r.rating}/5)</span></div><p>${r.comment || ''}</p></div>`).join('')}</div>` : ''}
-            
-            ${currentUser ? `<div class="write-review"><h3>Write a Review</h3><form onsubmit="handleReview(event, ${p.id})"><div class="field"><label>Rating</label><select id="reviewRating"><option value="5">5 - Excellent</option><option value="4">4 - Good</option><option value="3">3 - Average</option><option value="2">2 - Poor</option><option value="1">1 - Terrible</option></select></div><div class="field"><label>Comment</label><textarea id="reviewComment" rows="3" placeholder="Share your experience..."></textarea></div><button type="submit" class="btn btn-primary">Submit Review</button></form></div>` : ''}
         </div>
     </div>
     <div class="section"><div class="section-head"><h2>Similar Parts</h2></div><div class="grid">${filterPublicParts(parts).filter(x => x.id !== p.id && (x.make === p.make || x.category === p.category)).slice(0, 4).map(cardHTML).join('')}</div></div>

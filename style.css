@@ -45,7 +45,7 @@ nav {
 }
 
 .logo { font-size: 20px; font-weight: 700; color: var(--text); text-decoration: none; display: flex; align-items: center; }
-.logo-img { height: 32px; width: auto; }
+.logo-img { height: 64px; width: auto; }
 .nav-center { flex: 1; max-width: 400px; margin: 0 40px; }
 .nav-center input { width: 100%; padding: 10px 16px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; background: var(--bg); color: var(--text); }
 .nav-center input:focus { outline: none; border-color: var(--primary); }
@@ -333,8 +333,10 @@ body.dark .upsell-box { background: linear-gradient(135deg, #422006 0%, #78350f 
 .lightbox img { max-width: 90%; max-height: 90%; object-fit: contain; border-radius: 8px; }
 .lightbox-close { position: absolute; top: 20px; right: 20px; background: none; border: none; color: #fff; font-size: 40px; cursor: pointer; }
 
-/* Part Detail */
-.detail { display: grid; grid-template-columns: 1fr 400px; gap: 64px; padding-top: 40px; }
+/* Part Detail - v5.2: Left column has gallery+desc, right has purchase info */
+.detail { display: grid; grid-template-columns: 1fr 400px; gap: 48px; padding-top: 40px; }
+.detail-left { display: flex; flex-direction: column; gap: 32px; }
+.detail-right { position: sticky; top: 100px; align-self: start; }
 .detail-featured-badge { display: inline-block; background: #f59e0b; color: #fff; padding: 4px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; margin-bottom: 12px; }
 .detail-breadcrumb { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
 .detail-info h1 { font-size: 28px; margin-bottom: 16px; }

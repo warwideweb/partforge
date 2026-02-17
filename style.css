@@ -4920,7 +4920,7 @@ main.browse-fullwidth-active {
     }
     
     .logo-img {
-        height: 32px;
+        height: 80px; /* 2.5x bigger on mobile */
     }
     
     /* Browse page mobile */
@@ -4993,5 +4993,59 @@ main.browse-fullwidth-active {
     #search {
         font-size: 14px;
         padding: 8px 12px;
+    }
+}
+
+/* Mobile browse search bar */
+.mobile-browse-search {
+    display: none;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.mobile-browse-search input {
+    flex: 1;
+    padding: 12px 16px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.mobile-browse-search select {
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--card);
+    font-size: 14px;
+}
+
+@media (max-width: 768px) {
+    .mobile-browse-search {
+        display: flex;
+    }
+}
+
+/* Home page New Parts grid - 6 items, 2 per row on mobile */
+.grid-home-new {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+}
+
+@media (max-width: 1024px) {
+    .grid-home-new {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .grid-home-new {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+    
+    /* Only show 6 items on mobile */
+    .grid-home-new .card:nth-child(n+7) {
+        display: none;
     }
 }

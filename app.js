@@ -1866,7 +1866,7 @@ function homeView() {
         </div>` : ''}
         
         <div class="section"><div class="section-head"><h2>New Parts</h2>${validParts.length ? `<a href="#" onclick="go('browse'); return false;">View all</a>` : ''}</div>
-            ${validParts.length ? `<div class="grid">${validParts.slice(0, 8).map(cardHTML).join('')}</div>` : 
+            ${validParts.length ? `<div class="grid grid-home-new">${validParts.slice(0, 6).map(cardHTML).join('')}</div>` : 
             `<div class="empty-cta"><h3>Be the first to list a part</h3><p>Start selling your 3D automotive designs today.</p><a href="#" onclick="go('sell'); return false;" class="btn btn-lg btn-primary">Create Listing - $10</a></div>`}
         </div>
 
@@ -1909,6 +1909,14 @@ function browseView() {
     const paginatedParts = sortedParts.slice(startIdx, startIdx + ITEMS_PER_PAGE);
     
     return `<div class="browse browse-fullwidth">
+        <!-- Mobile search bar -->
+        <div class="mobile-browse-search">
+            <input type="text" placeholder="Search parts..." value="${filter || ''}" onkeyup="if(event.key==='Enter'){filter=this.value;currentPage=1;go('browse');}">
+            <select onchange="filterCat=this.value;currentPage=1;go('browse');">
+                <option value="">All Categories</option>
+                ${categories.map(c => `<option value="${c.name}" ${filterCat===c.name?'selected':''}>${c.name}</option>`).join('')}
+            </select>
+        </div>
         <aside class="sidebar">
             <h3>Category</h3>
             <select class="filter-select" onchange="filterCat=this.value;currentPage=1;go('browse');">

@@ -161,8 +161,8 @@ const categories = [
     { name: "Exterior", img: "images/categories/exterior.jpg" },
     { name: "Gauges", img: "images/categories/gauges.jpg" },
     { name: "Accessories", img: "images/categories/accessories.jpg" },
-    { name: "Performance", img: "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=300&h=300&fit=crop" },
-    { name: "Lighting", img: "https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=300&h=300&fit=crop" }
+    { name: "Performance", img: "images/categories/performance.jpg" },
+    { name: "Lighting", img: "images/categories/lighting.jpg" }
 ];
 
 const carMakes = [

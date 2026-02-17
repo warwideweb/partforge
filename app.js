@@ -61,17 +61,16 @@ function loginWithGoogle() {
 
 async function updateNavAuth() {
     const loginBtn = document.getElementById('loginBtn');
-    if (currentUser && currentUser.name) {
+    if (currentUser) {
         const unreadCount = await getUnreadMessageCount();
-        loginBtn.innerHTML = `<span class="nav-user-wrap">${unreadCount > 0 ? `<span class="nav-badge-top">${unreadCount > 9 ? '9+' : unreadCount}</span>` : ''}${currentUser.name.split(' ')[0]}</span>`;
-        loginBtn.onclick = () => go('dashboard');
-    } else if (currentUser && currentUser.email) {
-        const unreadCount = await getUnreadMessageCount();
-        loginBtn.innerHTML = `<span class="nav-user-wrap">${unreadCount > 0 ? `<span class="nav-badge-top">${unreadCount > 9 ? '9+' : unreadCount}</span>` : ''}${currentUser.email.split('@')[0]}</span>`;
-        loginBtn.onclick = () => go('dashboard');
-    } else if (currentUser) {
-        const unreadCount = await getUnreadMessageCount();
-        loginBtn.innerHTML = `<span class="nav-user-wrap">${unreadCount > 0 ? `<span class="nav-badge-top">${unreadCount > 9 ? '9+' : unreadCount}</span>` : ''}Account</span>`;
+        const name = currentUser.name ? currentUser.name.split(' ')[0] : (currentUser.email ? currentUser.email.split('@')[0] : 'Account');
+        const avatarUrl = currentUser.avatar_url;
+        const initial = name.charAt(0).toUpperCase();
+        
+        loginBtn.innerHTML = `<span class="nav-user-wrap">
+            <span class="nav-avatar">${avatarUrl ? `<img src="${avatarUrl}" alt="${name}">` : initial}</span>
+            ${unreadCount > 0 ? `<span class="nav-badge-top">${unreadCount > 9 ? '9+' : unreadCount}</span>` : ''}
+        </span>`;
         loginBtn.onclick = () => go('dashboard');
     } else {
         loginBtn.textContent = 'Login';

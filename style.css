@@ -5162,12 +5162,16 @@ main.browse-fullwidth-active {
         display: none !important;
     }
     
-    /* Show quote request button on mobile */
+    /* Show contact seller and quote request buttons on mobile */
+    .detail-mobile-actions > button.btn-contact-seller,
     .detail-mobile-actions > button.btn-quote-request {
         display: block !important;
-        width: 100%;
-        margin: 16px 16px;
+        margin: 8px 16px;
         width: calc(100% - 32px);
+    }
+    
+    .detail-mobile-actions > button.btn-contact-seller {
+        margin-top: 16px;
     }
     
     /* Specs section */

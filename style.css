@@ -5049,3 +5049,212 @@ main.browse-fullwidth-active {
         display: none;
     }
 }
+
+/* ========================================
+   v7.3 - CLEAN MOBILE PRODUCT PAGE
+   ======================================== */
+
+@media (max-width: 768px) {
+    /* Remove all padding from detail container */
+    .detail {
+        padding: 0 !important;
+        gap: 0 !important;
+        margin-bottom: 80px; /* Space for sticky bar */
+    }
+    
+    .detail-left {
+        gap: 0 !important;
+    }
+    
+    /* Mobile header - compact, no card styling */
+    .detail-mobile-header {
+        padding: 12px 16px !important;
+        background: transparent !important;
+        border-bottom: 1px solid var(--border);
+    }
+    
+    .detail-mobile-header .detail-featured-badge {
+        font-size: 11px;
+        padding: 2px 8px;
+        margin-bottom: 4px;
+    }
+    
+    .detail-mobile-header h1 {
+        font-size: 18px !important;
+        margin: 0 0 6px 0 !important;
+        line-height: 1.2;
+    }
+    
+    .detail-mobile-header .detail-seller {
+        margin-bottom: 0 !important;
+        font-size: 13px;
+    }
+    
+    /* 3D Viewer - FULL BLEED */
+    .detail-gallery {
+        margin: 0 !important;
+        border-radius: 0 !important;
+    }
+    
+    .viewer-container {
+        border-radius: 0 !important;
+        min-height: 280px !important;
+        aspect-ratio: 4/3 !important;
+    }
+    
+    /* Thumbnail strip - horizontal scroll */
+    .gallery-thumbs {
+        display: flex !important;
+        gap: 8px !important;
+        padding: 10px 16px !important;
+        overflow-x: auto !important;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        background: var(--card);
+        border-bottom: 1px solid var(--border);
+    }
+    
+    .gallery-thumbs::-webkit-scrollbar {
+        display: none;
+    }
+    
+    .gallery-thumbs .thumb,
+    .gallery-thumbs .thumb-3d {
+        flex-shrink: 0 !important;
+        width: 60px !important;
+        height: 60px !important;
+        border-radius: 6px !important;
+    }
+    
+    /* Mobile actions - clean sections with dividers */
+    .detail-mobile-actions {
+        display: block !important;
+        padding: 0 !important;
+        background: transparent !important;
+        border-radius: 0 !important;
+        margin: 0 !important;
+    }
+    
+    .detail-mobile-actions .detail-desc {
+        padding: 16px;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 0 !important;
+    }
+    
+    .detail-mobile-actions .detail-desc h2 {
+        font-size: 12px;
+        margin-bottom: 8px;
+    }
+    
+    .detail-mobile-actions .detail-desc p {
+        font-size: 14px;
+        line-height: 1.5;
+        margin-bottom: 0;
+    }
+    
+    /* Hide old price/actions in mobile-actions (moved to sticky bar) */
+    .detail-mobile-actions .detail-price,
+    .detail-mobile-actions .detail-actions,
+    .detail-mobile-actions > button {
+        display: none !important;
+    }
+    
+    /* Specs section */
+    .specs {
+        padding: 16px !important;
+        margin: 0 !important;
+        border-bottom: 1px solid var(--border);
+    }
+    
+    .specs h2 {
+        font-size: 12px;
+        margin-bottom: 12px;
+    }
+    
+    .spec-row {
+        padding: 8px 0;
+        font-size: 14px;
+    }
+    
+    /* Reviews section */
+    .reviews-section {
+        padding: 16px !important;
+        margin: 0 !important;
+        border-bottom: 1px solid var(--border);
+    }
+    
+    /* Write review */
+    .write-review {
+        padding: 16px !important;
+        margin: 0 !important;
+    }
+    
+    /* Similar parts section - full width with padding */
+    .detail + .section {
+        padding: 16px !important;
+        margin-bottom: 80px;
+    }
+}
+
+/* ========================================
+   STICKY BOTTOM BAR - Mobile Only
+   ======================================== */
+
+.mobile-sticky-buy {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .mobile-sticky-buy {
+        display: flex;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: var(--card);
+        border-top: 1px solid var(--border);
+        padding: 12px 16px;
+        gap: 12px;
+        align-items: center;
+        z-index: 1000;
+        box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+    }
+    
+    .mobile-sticky-buy .sticky-price {
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--primary);
+        white-space: nowrap;
+    }
+    
+    .mobile-sticky-buy .sticky-btn {
+        flex: 1;
+        padding: 14px 20px;
+        font-size: 15px;
+        font-weight: 600;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .mobile-sticky-buy .sticky-btn-primary {
+        background: var(--primary);
+        color: white;
+    }
+    
+    .mobile-sticky-buy .sticky-btn-primary:hover {
+        background: #1d4ed8;
+    }
+    
+    .mobile-sticky-buy .sticky-btn-outline {
+        background: transparent;
+        border: 2px solid var(--border);
+        color: var(--text);
+    }
+    
+    /* Hide sticky bar on non-product pages */
+    body:not(.product-page) .mobile-sticky-buy {
+        display: none;
+    }
+}

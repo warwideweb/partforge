@@ -1,7 +1,7 @@
 // ForgAuto — 3D Marketplace for Cars
 // Version 4.0 - Major Fixes
 
-const VERSION = '7.2';
+const VERSION = '7.3';
 const API_URL = 'https://forgauto-api.warwideweb.workers.dev'; // Cloudflare Worker API
 
 // State
@@ -317,12 +317,23 @@ async function render(data) {
         app.innerHTML = '<div class="loading-state"><div class="loading-spinner"></div></div>';
     }
     
+    // v7.3: Handle sticky buy bar for product pages
+    const existingStickyBar = document.getElementById('mobileStickyBuy');
+    if (existingStickyBar) existingStickyBar.remove();
+    document.body.classList.remove('product-page');
+    
     if (view === 'home') { await loadParts(); app.innerHTML = homeView(); }
     else if (view === 'browse') { await loadParts(); app.innerHTML = browseView(); }
     else if (view === 'designers') { await loadDesigners(); app.innerHTML = designersView(); }
     else if (view === 'sell') app.innerHTML = sellView();
     else if (view === 'edit') app.innerHTML = await editView(data);
-    else if (view === 'part') { app.innerHTML = await partView(data); initViewer(data); }
+    else if (view === 'part') { 
+        app.innerHTML = await partView(data); 
+        initViewer(data);
+        // v7.3: Add sticky buy bar for mobile
+        document.body.classList.add('product-page');
+        addMobileStickyBuyBar(data);
+    }
     else if (view === 'designer') app.innerHTML = await designerView(data);
     else if (view === 'become-designer') app.innerHTML = await becomeDesignerView();
     else if (view === 'printshops') app.innerHTML = await printShopsView(data);
@@ -332,6 +343,31 @@ async function render(data) {
     else if (view === 'dashboard') app.innerHTML = await dashboardView();
     else if (view === 'conversation') app.innerHTML = await conversationView(data);
     else if (view === 'profile') app.innerHTML = await profileView(data);
+}
+
+// v7.3: Mobile sticky buy bar
+async function addMobileStickyBuyBar(partId) {
+    let p = null;
+    try { 
+        p = await api(`/api/parts/${partId}`); 
+    } catch (e) { 
+        p = parts.find(x => x.id === partId);
+    }
+    if (!p) return;
+    
+    const isPurchased = p.purchased || (currentUser && currentUser.id === p.user_id);
+    
+    const stickyBar = document.createElement('div');
+    stickyBar.id = 'mobileStickyBuy';
+    stickyBar.className = 'mobile-sticky-buy';
+    stickyBar.innerHTML = isPurchased ? `
+        <span class="sticky-price">Owned</span>
+        <button class="sticky-btn sticky-btn-primary" onclick="location.href='${p.file_url}'">Download</button>
+    ` : `
+        <span class="sticky-price">$${(p.price || 0).toFixed(2)}</span>
+        <button class="sticky-btn sticky-btn-primary" onclick="handleBuyPart(${p.id})">Buy Now</button>
+    `;
+    document.body.appendChild(stickyBar);
 }
 
 function openLightbox(src) { document.getElementById('lightbox').classList.add('active'); document.getElementById('lightboxImg').src = src; }

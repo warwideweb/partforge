@@ -272,6 +272,14 @@ function updateModels() {
 
 async function render(data) {
     const app = document.getElementById('app');
+    const main = app.parentElement;
+    
+    // v7.2: Handle full-width browse page
+    if (view === 'browse') {
+        main.classList.add('browse-fullwidth-active');
+    } else {
+        main.classList.remove('browse-fullwidth-active');
+    }
     
     // v6.2: Clear content and show loading for views that fetch data (fixes cache glitch)
     if (view === 'home' || view === 'browse') {

@@ -4675,9 +4675,14 @@ body.dark .download-email-notice {
 }
 
 /* Full-width browse page */
+main.browse-fullwidth-active {
+    max-width: 100% !important;
+    padding-left: 24px !important;
+    padding-right: 24px !important;
+}
+
 .browse-fullwidth {
-    max-width: 100%;
-    padding: 0 24px;
+    width: 100%;
 }
 
 .browse-main {
@@ -4685,22 +4690,28 @@ body.dark .download-email-notice {
     min-width: 0;
 }
 
-/* Wider grid for listings */
+/* Wider grid for listings - FIXED: larger cards */
 .grid-wide {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 24px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
 }
 
-@media (min-width: 1400px) {
+@media (min-width: 1600px) {
     .grid-wide {
         grid-template-columns: repeat(5, 1fr);
     }
 }
 
-@media (min-width: 1800px) {
+@media (max-width: 1200px) {
     .grid-wide {
-        grid-template-columns: repeat(6, 1fr);
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 900px) {
+    .grid-wide {
+        grid-template-columns: repeat(2, 1fr);
     }
 }
 

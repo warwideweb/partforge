@@ -993,6 +993,12 @@ async function dashboardView() {
     // v7.4: Check email verification status (skip for Google OAuth users who are auto-verified)
     const needsVerification = currentUser && currentUser.email_verified !== true && currentUser.email_verified !== 1;
     
+    // v7.5: Get Stripe connection status
+    let stripeStatus = { has_account: false, is_onboarded: false };
+    try {
+        stripeStatus = await getStripeStatus();
+    } catch (e) { }
+    
     return `<div class="dashboard">
         ${needsVerification ? `
         <div class="verification-banner">
@@ -1000,6 +1006,31 @@ async function dashboardView() {
             <button onclick="resendVerification()" class="btn btn-sm">Resend Email</button>
         </div>
         ` : ''}
+        
+        ${!stripeStatus.is_onboarded ? `
+        <div class="stripe-banner ${stripeStatus.has_account ? 'stripe-pending' : 'stripe-not-connected'}">
+            <div class="stripe-banner-content">
+                <span class="stripe-icon">💳</span>
+                <div class="stripe-text">
+                    <strong>${stripeStatus.has_account ? 'Complete Stripe Setup' : 'Connect Stripe to Get Paid'}</strong>
+                    <span>${stripeStatus.has_account ? 'Finish setting up your Stripe account to receive payments.' : 'Connect your Stripe account to receive payments when buyers purchase your parts.'}</span>
+                </div>
+            </div>
+            <button onclick="connectStripeAccount()" class="btn btn-stripe">${stripeStatus.has_account ? 'Continue Setup' : 'Connect Stripe'}</button>
+        </div>
+        ` : `
+        <div class="stripe-banner stripe-connected">
+            <div class="stripe-banner-content">
+                <span class="stripe-icon">✅</span>
+                <div class="stripe-text">
+                    <strong>Stripe Connected</strong>
+                    <span>You're all set to receive payments!</span>
+                </div>
+            </div>
+            <button onclick="openStripeDashboard()" class="btn btn-outline">View Dashboard</button>
+        </div>
+        `}
+        
         <div class="dashboard-header">
             <div class="dashboard-user">
                 <div class="user-avatar">${currentUser.avatar_url ? `<img src="${currentUser.avatar_url}">` : (currentUser.printshop?.shop_name || currentUser.name).charAt(0)}</div>

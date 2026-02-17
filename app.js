@@ -1,7 +1,7 @@
 // ForgAuto — 3D Marketplace for Cars
 // Version 4.0 - Major Fixes
 
-const VERSION = '6.2';
+const VERSION = '6.3';
 const API_URL = 'https://forgauto-api.warwideweb.workers.dev'; // Cloudflare Worker API
 
 // State
@@ -160,7 +160,8 @@ const printShops = [
 ];
 
 let view = 'home', filter = '', filterCat = '', filterMake = '', filterModel = '', uploadedPhotos = [], uploadedPhotoFiles = [], uploadedFile = null;
-let parts = demoParts;
+// v6.3: Start with empty array, no demo parts
+let parts = [];
 let designers = demoDesigners;
 
 // Load data from API
@@ -174,17 +175,13 @@ async function loadParts() {
         if (filter) params.set('search', filter);
         
         const data = await api(`/api/parts?${params}`);
-        const realParts = data || [];
-        
-        // FIX 6: Only use demo parts if there are ZERO real parts
-        if (realParts.length === 0) {
-            parts = demoParts.map(p => ({...p, isDemo: true, seller_name: 'ForgAuto Sample'}));
-        } else {
-            parts = realParts;
-        }
+        // v6.3: NO MORE DEMO PARTS - only show real parts from API
+        parts = data || [];
+        console.log(`Loaded ${parts.length} parts from API`);
     } catch (e) {
-        // API error - fall back to demo data
-        parts = demoParts.map(p => ({...p, isDemo: true, seller_name: 'ForgAuto Sample'}));
+        // v6.3: On API error, show empty instead of fake demo data
+        console.error('Failed to load parts:', e);
+        parts = [];
     }
 }
 

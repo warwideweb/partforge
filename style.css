@@ -45,7 +45,7 @@ nav {
 }
 
 .logo { font-size: 20px; font-weight: 700; color: var(--text); text-decoration: none; display: flex; align-items: center; }
-.logo-img { height: 128px; width: auto; }
+.logo-img { height: 90px; width: auto; }
 .nav-center { flex: 1; max-width: 400px; margin: 0 40px; }
 .nav-center input { width: 100%; padding: 10px 16px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; background: var(--bg); color: var(--text); }
 .nav-center input:focus { outline: none; border-color: var(--primary); }

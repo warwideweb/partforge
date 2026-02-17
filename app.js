@@ -83,8 +83,13 @@ async function updateNavAuth() {
 async function getUnreadMessageCount() {
     if (!authToken) return 0;
     try {
-        const data = await api('/api/messages/unread-count');
-        return data.count || 0;
+        // Try dedicated endpoint first, fall back to counting from conversations
+        const data = await api('/api/messages/conversations');
+        if (data && Array.isArray(data)) {
+            // Count total unread from all conversations
+            return data.reduce((sum, m) => sum + (m.unread_count || 0), 0);
+        }
+        return 0;
     } catch (e) {
         return 0;
     }
@@ -1053,7 +1058,7 @@ async function dashboardView() {
                                     <span class="quote-paid-badge">✓ Paid $${(q.total_paid || q.quoted_price || 0).toFixed(2)}</span>
                                     <button class="btn btn-outline btn-sm" onclick="downloadQuoteReceipt(${q.id})">Download Receipt</button>
                                 ` : ''}
-                                <button class="btn btn-outline btn-sm" onclick="go('conversation', ${q.customer_id})">Message Customer</button>
+                                <button class="btn btn-outline btn-sm" onclick="go('conversation', ${q.user_id || q.customer_id})">Message Customer</button>
                                 <a href="mailto:${q.customer_email}" class="btn btn-outline btn-sm">Email</a>
                             </div>
                             <div class="quote-date">Received: ${new Date(q.created_at).toLocaleDateString()}</div>

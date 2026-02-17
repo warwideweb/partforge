@@ -2577,8 +2577,31 @@ async function handleCreateListing(e) {
         submitBtn.textContent = originalText;
         submitBtn.disabled = false;
         
-        alert('Listing created! (Payment integration with Stripe coming soon)');
-        go('dashboard');
+        // v8.1: Redirect to Stripe payment for non-admin users
+        if (isAdmin()) {
+            alert('Listing published! (Admin - no payment required)');
+            go('part', result.partId);
+        } else {
+            // Redirect to Stripe checkout for listing fee
+            submitBtn.textContent = 'Redirecting to payment...';
+            submitBtn.disabled = true;
+            try {
+                const checkout = await api('/api/stripe/checkout/listing', {
+                    method: 'POST',
+                    body: JSON.stringify({ part_id: result.partId })
+                });
+                if (checkout && checkout.url) {
+                    window.location.href = checkout.url;
+                } else {
+                    alert('Listing created! Please pay the listing fee to publish it.');
+                    go('dashboard');
+                }
+            } catch (payErr) {
+                console.error('Payment redirect failed:', payErr);
+                alert('Listing created but payment failed. Go to Dashboard to pay the listing fee.');
+                go('dashboard');
+            }
+        }
     } catch (err) {
         // Reset button
         const submitBtn = e.target.querySelector('button[type="submit"]');

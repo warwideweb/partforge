@@ -3968,3 +3968,72 @@ body.dark .download-email-notice {
     object-fit: cover;
     border-radius: 50%;
 }
+
+/* v6.8: Verified blue star */
+.verified-star {
+    display: inline-block;
+    color: #3b82f6;
+    font-size: 18px;
+    margin-left: 6px;
+    vertical-align: middle;
+}
+
+/* Improve mobile responsiveness */
+@media (max-width: 480px) {
+    .field-row {
+        flex-direction: column;
+        gap: 0;
+    }
+    
+    .dashboard-header {
+        flex-direction: column;
+        gap: 16px;
+        text-align: center;
+    }
+    
+    .dashboard-actions {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .dashboard-nav {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .dash-tab {
+        white-space: nowrap;
+        padding: 10px 12px;
+        font-size: 13px;
+    }
+    
+    .my-quote-header {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .my-quote-actions {
+        flex-direction: column;
+    }
+    
+    .my-quote-actions .btn {
+        width: 100%;
+    }
+    
+    .shop-card-header {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .shop-logo, .shop-logo-placeholder {
+        margin: 0 auto;
+    }
+    
+    .shop-card-actions {
+        flex-direction: column;
+    }
+    
+    .shop-card-actions .btn {
+        width: 100%;
+    }
+}

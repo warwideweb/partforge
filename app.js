@@ -1,7 +1,7 @@
 // ForgAuto — 3D Marketplace for Cars
 // Version 4.0 - Major Fixes
 
-const VERSION = '6.7';
+const VERSION = '6.8';
 const API_URL = 'https://forgauto-api.warwideweb.workers.dev'; // Cloudflare Worker API
 
 // State
@@ -522,7 +522,14 @@ function signupView() {
                         <div class="field"><label>Contact Person *</label><input type="text" id="shopContact" placeholder="Primary Contact Name"></div>
                         <div class="field"><label>Phone *</label><input type="tel" id="shopPhone" placeholder="+1 555 123 4567"></div>
                         <div class="field"><label>Website</label><input type="url" id="shopWebsite" placeholder="https://yourshop.com"></div>
-                        <div class="field"><label>Address / Location *</label><input type="text" id="shopAddress" placeholder="123 Main St, City, Country"></div>
+                        <div class="field-row">
+                            <div class="field"><label>Country *</label><input type="text" id="shopCountry" placeholder="United States, Thailand, etc."></div>
+                            <div class="field"><label>State/Province</label><input type="text" id="shopState" placeholder="California, Bangkok, etc."></div>
+                        </div>
+                        <div class="field-row">
+                            <div class="field"><label>City *</label><input type="text" id="shopCity" placeholder="Los Angeles"></div>
+                            <div class="field"><label>Street Address</label><input type="text" id="shopAddress" placeholder="123 Main St"></div>
+                        </div>
                         <div class="field"><label>Description *</label><textarea id="shopDescription" rows="3" placeholder="Tell customers about your shop, equipment, specialties..."></textarea></div>
                         
                         <div class="field">
@@ -598,7 +605,8 @@ function selectSignupRole(role) {
         document.getElementById('shopName').required = true;
         document.getElementById('shopContact').required = true;
         document.getElementById('shopPhone').required = true;
-        document.getElementById('shopAddress').required = true;
+        document.getElementById('shopCountry').required = true;
+        document.getElementById('shopCity').required = true;
         document.getElementById('shopDescription').required = true;
     } else {
         printshopFields.style.display = 'none';
@@ -607,7 +615,8 @@ function selectSignupRole(role) {
         document.getElementById('shopName').required = false;
         document.getElementById('shopContact').required = false;
         document.getElementById('shopPhone').required = false;
-        document.getElementById('shopAddress').required = false;
+        document.getElementById('shopCountry').required = false;
+        document.getElementById('shopCity').required = false;
         document.getElementById('shopDescription').required = false;
     }
 }
@@ -670,6 +679,9 @@ async function handleSignup(e) {
             contact_name: document.getElementById('shopContact').value,
             phone: document.getElementById('shopPhone').value,
             website: document.getElementById('shopWebsite').value,
+            country: document.getElementById('shopCountry').value,
+            state: document.getElementById('shopState').value,
+            city: document.getElementById('shopCity').value,
             address: document.getElementById('shopAddress').value,
             description: document.getElementById('shopDescription').value,
             technologies: technologies,
@@ -946,7 +958,14 @@ async function dashboardView() {
                     <div class="field"><label>Email</label><input type="email" id="shopProfileEmail" value="${currentUser.printshop?.email || currentUser.email}" readonly></div>
                 </div>
                 <div class="field"><label>Website</label><input type="url" id="shopProfileWebsite" value="${currentUser.printshop?.website || ''}" placeholder="https://yourshop.com"></div>
-                <div class="field"><label>Address / Location *</label><input type="text" id="shopProfileAddress" value="${currentUser.printshop?.address || ''}" required></div>
+                <div class="field-row">
+                    <div class="field"><label>Country *</label><input type="text" id="shopProfileCountry" value="${currentUser.printshop?.country || ''}" required></div>
+                    <div class="field"><label>State/Province</label><input type="text" id="shopProfileState" value="${currentUser.printshop?.state || ''}"></div>
+                </div>
+                <div class="field-row">
+                    <div class="field"><label>City *</label><input type="text" id="shopProfileCity" value="${currentUser.printshop?.city || ''}" required></div>
+                    <div class="field"><label>Street Address</label><input type="text" id="shopProfileAddress" value="${currentUser.printshop?.address || ''}"></div>
+                </div>
                 <div class="field"><label>Description *</label><textarea id="shopProfileDescription" rows="4" required>${currentUser.printshop?.description || ''}</textarea></div>
                 
                 <h3>Capabilities</h3>
@@ -1313,6 +1332,9 @@ async function handleShopProfileUpdate(e) {
         contact_name: document.getElementById('shopProfileContact').value,
         phone: document.getElementById('shopProfilePhone').value,
         website: document.getElementById('shopProfileWebsite').value,
+        country: document.getElementById('shopProfileCountry').value,
+        state: document.getElementById('shopProfileState').value,
+        city: document.getElementById('shopProfileCity').value,
         address: document.getElementById('shopProfileAddress').value,
         description: document.getElementById('shopProfileDescription').value,
         technologies: technologies,
@@ -2496,7 +2518,7 @@ async function printShopsView(partId) {
                         <div class="shop-card-header">
                             ${shop.logo_url ? `<img src="${shop.logo_url}" alt="${shop.shop_name}" class="shop-logo">` : `<div class="shop-logo-placeholder">PS</div>`}
                             <div class="shop-card-title">
-                                <h3>${shop.shop_name} ${shop.verified ? '<span class="verified-badge">✓ Verified</span>' : ''}</h3>
+                                <h3>${shop.shop_name} ${shop.verified ? '<span class="verified-star" title="Verified Print Shop">★</span>' : ''}</h3>
                                 <div class="shop-rating">
                                     ${'★'.repeat(Math.floor(shop.avg_rating || 0))}${'☆'.repeat(5 - Math.floor(shop.avg_rating || 0))}
                                     <span>${(shop.avg_rating || 0).toFixed(1)} (${shop.review_count || 0} reviews)</span>

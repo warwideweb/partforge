@@ -1,113 +1,68 @@
-# ForgAuto v5.3
+# ForgAuto v6.8
 
-The 3D marketplace for automotive parts. Buy and sell STL files for your car.
+The 3D Marketplace for Automotive Parts.
 
-**Live Site:** https://forgauto.com  
-**API:** https://forgauto-api.warwideweb.workers.dev
-
----
-
-## What's New in v5.3
-
-- **Image Compression**: Photos auto-compressed to max 1200px, 80% quality (reduces lag)
-- **3D File Switcher**: View each file in a package in the 3D viewer (click 3D 1, 3D 2, etc.)
-- **Resend API Integrated**: Email notifications now working
-
----
-
-## What's New in v5.2
-
-- **Email Notifications**: Real emails via Resend API
-  - New message notifications with HTML templates
-  - Sale notifications when someone buys your part
-- **Logo 2x Bigger**: 64px height in nav
-- **Better Layout**: Description under gallery on desktop
-
----
-
-## What's New in v5.1
-
-- **Multiple 3D Files**: Upload package of files, download all as ZIP
-- **Package Contents**: See all files in a package on part detail
-- **New Logo**: Custom ForgAuto logo in nav
-
----
+**Live:** https://forgauto.com / https://warwideweb.github.io/forgauto/
 
 ## Features
 
-### For Buyers
-- Browse 3D printable car parts by make, model, and category
-- Thingiverse-style 3D model viewer with toolbar
-- View all files in a package (3D viewer switcher)
-- Instant digital download after payment
-- Download link emailed to your account
-- Find local print shops for Print & Ship service
-- Hire designers for custom parts
+### Users
+- **Buyer/Seller** - Buy parts, sell designs ($10 listing fee, keep 100%)
+- **Designer** - All seller features + public profile, custom commissions
+- **Print Shop** - Listed in directory, receive quote requests ($100 registration)
 
-### For Sellers
-- $10 flat listing fee (keep 100% of sales)
-- No monthly fees, no commission
-- Listings never expire
-- Upload multiple 3D files per listing (package)
-- Images auto-compressed for fast loading
-- Email notification when you make a sale
-- Optional $20 Featured placement (30 days)
+### Print Shop System
+- Full shop profile with logo, portfolio, capabilities
+- Country/State/City location support (international)
+- Technologies: FDM, SLA, SLS, MJF, Metal
+- Services: Instant Quote, Print & Ship, Local Pickup, Rush
+- Rating & review system (verified after 5 reviews)
+- Blue star badge for verified shops
 
-### Platform
-- 70+ car makes supported
-- 6 categories: Interior, Exterior, Gauges, Accessories, Performance, Lighting
+### Quote System
+- Users request quotes from specific print shops
+- Print shops receive requests in dashboard
+- Respond with price, turnaround, message
+- Users see quotes in "My Quotes" tab
+- Pay Now / Message buttons
+
+### Other Features
+- 3D STL viewer on part pages
+- Featured listings ($20/30 days)
+- Messaging system with email notifications
 - Google OAuth login
-- Responsive design (mobile-friendly)
-
----
+- Mobile responsive
 
 ## Tech Stack
+- **Frontend:** Vanilla JS, HTML, CSS
+- **Backend:** Cloudflare Workers (D1 + R2)
+- **API:** https://forgauto-api.warwideweb.workers.dev
 
-**Frontend:**
-- Vanilla JavaScript (no framework)
-- Three.js for 3D STL viewing
-- JSZip for package downloads
-- Client-side image compression
-- CSS custom properties for theming
-- GitHub Pages hosting
+## Deployment
 
-**Backend:**
-- Cloudflare Workers (API)
-- Cloudflare D1 (SQLite database)
-- Cloudflare R2 (file storage)
-- Resend (email notifications)
+### Frontend (GitHub Pages)
+```bash
+cd PartForge
+git add -A
+git commit -m "Update"
+git push origin main
+```
 
----
+### Backend (Cloudflare Workers)
+```bash
+cd worker
+npx wrangler deploy
+```
+
+### Database Migration
+Run migrations in Cloudflare Dashboard or:
+```bash
+npx wrangler d1 execute forgauto-db --file=migrations/003_printshop_quotes.sql
+```
 
 ## Version History
-
-### v5.3 (Feb 17, 2026)
-- Image compression (max 1200px, 80% quality)
-- 3D viewer file switcher for packages
-- Resend API key configured
-
-### v5.2 (Feb 17, 2026)
-- Email notifications via Resend
-- Logo 2x bigger
-- Description under gallery on desktop
-
-### v5.1 (Feb 17, 2026)
-- Multiple 3D file upload
-- ZIP package download
-- New logo
-
-### v5.0 (Feb 17, 2026)
-- Character limits (title/description)
-- Seller info on cards
-- Featured section redesign
-- Download modal
-
-### v4.0 (Feb 17, 2026)
-- Fixed image pipeline
-- Thingiverse-style 3D viewer
-
----
-
-## License
-
-Copyright 2026 ForgAuto. All rights reserved.
+- v6.8 - Country/State fields, verified blue star, mobile fixes, backend updates
+- v6.7 - Quote system, My Quotes tab, seller avatar, print shop fixes
+- v6.6 - Remove emojis, auth bug fixes
+- v6.5 - Complete Print Shop system
+- v6.4 - Designer profile tab

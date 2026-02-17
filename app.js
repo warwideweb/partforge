@@ -1,12 +1,13 @@
 // ForgAuto — 3D Marketplace for Cars
 // Version 4.0 - Major Fixes
 
-const VERSION = '6.5';
+const VERSION = '6.6';
 const API_URL = 'https://forgauto-api.warwideweb.workers.dev'; // Cloudflare Worker API
 
 // State
 let currentUser = null;
 let authToken = localStorage.getItem('authToken');
+let isAuthChecking = true; // Prevents flash while checking auth
 
 // Check auth on load
 async function checkAuth() {
@@ -31,7 +32,10 @@ async function checkAuth() {
         }
     }
     
-    if (!authToken) return;
+    if (!authToken) {
+        isAuthChecking = false;
+        return;
+    }
     try {
         const res = await fetch(`${API_URL}/api/auth/me`, {
             headers: { 'Authorization': `Bearer ${authToken}` }
@@ -47,6 +51,7 @@ async function checkAuth() {
     } catch (e) {
         console.error('Auth check failed:', e);
     }
+    isAuthChecking = false;
 }
 
 // Google OAuth login
@@ -277,6 +282,12 @@ function closeLightbox() { document.getElementById('lightbox').classList.remove(
 // ========== AUTH VIEWS ==========
 
 function loginView() {
+    // Redirect if already logged in
+    if (currentUser) {
+        setTimeout(() => go('dashboard'), 0);
+        return `<div class="auth-container"><div class="auth-box"><p>Redirecting to dashboard...</p></div></div>`;
+    }
+    
     return `<div class="auth-container">
         <div class="auth-box">
             <h1>Login</h1>
@@ -287,13 +298,13 @@ function loginView() {
                 Continue with Google
             </button>
             
-            <div style="text-align:center; margin:15px 0; color:#666;">— or —</div>
+            <div style="text-align:center; margin:15px 0; color:#666;">or login with email</div>
             
             <form onsubmit="handleLogin(event)">
                 <div class="field"><label>Email</label><input type="email" id="loginEmail" required></div>
                 <div class="field"><label>Password</label><input type="password" id="loginPassword" required></div>
                 <div id="loginError" class="error-msg"></div>
-                <button type="submit" class="btn btn-lg btn-primary" style="width:100%">Login with Email</button>
+                <button type="submit" class="btn btn-lg btn-primary" style="width:100%">Login</button>
             </form>
             <p class="auth-switch">Don't have an account? <a href="#" onclick="go('signup'); return false;">Sign up</a></p>
             <p class="auth-switch"><a href="#" onclick="go('forgot-password'); return false;">Forgot your password?</a></p>
@@ -434,6 +445,12 @@ async function sendMessage(e, recipientId) {
 }
 
 function signupView() {
+    // Redirect if already logged in
+    if (currentUser) {
+        setTimeout(() => go('dashboard'), 0);
+        return `<div class="auth-container"><div class="auth-box"><p>Redirecting to dashboard...</p></div></div>`;
+    }
+    
     return `<div class="auth-container">
         <div class="auth-box auth-box-wide">
             <h1>Create Account</h1>
@@ -441,7 +458,7 @@ function signupView() {
             
             <div class="role-selector" id="roleSelector">
                 <div class="role-card" onclick="selectSignupRole('seller')">
-                    <div class="role-icon">🛒</div>
+                    <div class="role-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></div>
                     <h3>Buyer / Seller</h3>
                     <p>Buy parts or sell your 3D designs</p>
                     <ul class="role-features">
@@ -452,7 +469,7 @@ function signupView() {
                     <span class="role-price">Free</span>
                 </div>
                 <div class="role-card" onclick="selectSignupRole('designer')">
-                    <div class="role-icon">✏️</div>
+                    <div class="role-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg></div>
                     <h3>Designer</h3>
                     <p>Offer custom design services</p>
                     <ul class="role-features">
@@ -463,7 +480,7 @@ function signupView() {
                     <span class="role-price">Free (5+ builds required)</span>
                 </div>
                 <div class="role-card" onclick="selectSignupRole('printshop')">
-                    <div class="role-icon">🖨️</div>
+                    <div class="role-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg></div>
                     <h3>Print Shop</h3>
                     <p>Offer printing services to buyers</p>
                     <ul class="role-features">
@@ -536,7 +553,7 @@ function signupView() {
                         </div>
                         
                         <div class="printshop-fee-notice">
-                            <span class="fee-icon">💳</span>
+                            <span class="fee-icon">$</span>
                             <div>
                                 <strong>Registration Fee: $100</strong>
                                 <p>One-time fee to list your shop. Get verified after 5 reviews.</p>
@@ -564,9 +581,9 @@ function selectSignupRole(role) {
     
     // Update label
     const labels = {
-        seller: '🛒 Buyer / Seller Account',
-        designer: '✏️ Designer Account',
-        printshop: '🖨️ Print Shop Account'
+        seller: 'Buyer / Seller Account',
+        designer: 'Designer Account',
+        printshop: 'Print Shop Account'
     };
     document.getElementById('selectedRoleLabel').textContent = labels[role];
     
@@ -695,7 +712,16 @@ async function handleLogout() {
 // ========== DASHBOARD VIEW ==========
 
 async function dashboardView() {
-    if (!currentUser) return loginView();
+    // Show loading while checking auth
+    if (isAuthChecking) {
+        return `<div class="loading-state"><div class="loading-spinner"></div><p style="margin-top:16px;color:#666;">Loading...</p></div>`;
+    }
+    
+    // Redirect to login if not authenticated
+    if (!currentUser) {
+        setTimeout(() => go('login'), 0);
+        return `<div class="loading-state"><p>Redirecting to login...</p></div>`;
+    }
     
     let myParts = [], mySales = [], myPurchases = [], myMessages = [], unreadCount = 0;
     try {
@@ -833,7 +859,7 @@ async function dashboardView() {
             
             <div class="shop-status-box ${(currentUser.printshop?.review_count || 0) >= 5 ? 'status-verified' : 'status-pending'}">
                 <div class="status-header">
-                    <span class="status-icon">${(currentUser.printshop?.review_count || 0) >= 5 ? '✓' : '⏳'}</span>
+                    <span class="status-icon">${(currentUser.printshop?.review_count || 0) >= 5 ? '✓' : '○'}</span>
                     <span class="status-text">${(currentUser.printshop?.review_count || 0) >= 5 ? 'Verified Print Shop' : 'Pending Verification'}</span>
                 </div>
                 <div class="status-progress">
@@ -848,7 +874,7 @@ async function dashboardView() {
                     <label>Shop Logo</label>
                     <div class="avatar-upload">
                         <div class="avatar-preview" id="shopLogoPreview">
-                            ${currentUser.printshop?.logo_url ? `<img src="${currentUser.printshop.logo_url}" alt="Logo">` : `<span>🖨️</span>`}
+                            ${currentUser.printshop?.logo_url ? `<img src="${currentUser.printshop.logo_url}" alt="Logo">` : `<span>PS</span>`}
                         </div>
                         <div class="avatar-actions">
                             <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('shopLogoInput').click()">Change Logo</button>
@@ -956,12 +982,12 @@ async function dashboardView() {
             
             <div class="designer-status-box ${myParts.length >= 5 ? 'status-active' : 'status-pending'}">
                 <div class="status-header">
-                    <span class="status-icon">${myParts.length >= 5 ? '✓' : '⚠'}</span>
+                    <span class="status-icon">${myParts.length >= 5 ? '✓' : '!'}</span>
                     <span class="status-text">${myParts.length >= 5 ? 'Designer Status: Active' : 'Designer Status: Pending'}</span>
                 </div>
                 <div class="status-progress">
                     <span class="progress-count ${myParts.length < 5 ? 'progress-red' : ''}">${myParts.length}/5 uploaded builds</span>
-                    ${myParts.length < 5 ? `<span class="progress-hint">⚠️ Must upload ${5 - myParts.length} more design${5 - myParts.length > 1 ? 's' : ''} on ForgAuto to become a verified designer</span>` : '<span class="progress-hint">✓ You are a verified designer!</span>'}
+                    ${myParts.length < 5 ? `<span class="progress-hint">! Must upload ${5 - myParts.length} more design${5 - myParts.length > 1 ? 's' : ''} on ForgAuto to become a verified designer</span>` : '<span class="progress-hint">✓ You are a verified designer!</span>'}
                 </div>
             </div>
             
@@ -1617,7 +1643,7 @@ function designerCardHTML(d) {
             <img src="${d.avatar_url}" alt="${d.name}" class="designer-avatar-lg" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(d.name)}&background=2563eb&color=fff'">
             <div class="designer-card-title">
                 <h3>${d.name}</h3>
-                ${d.location ? `<span class="designer-location">📍 ${d.location}</span>` : ''}
+                ${d.location ? `<span class="designer-location">Location: ${d.location}</span>` : ''}
                 <div class="designer-rating">
                     <span class="stars">${stars}</span>
                     <span class="rating-text">${rating.toFixed(1)} (${reviewCount} reviews)</span>
@@ -1630,8 +1656,8 @@ function designerCardHTML(d) {
         </div>
         <div class="designer-card-footer">
             <div class="designer-stats-row">
-                <span class="stat">📦 ${partsCount} projects</span>
-                ${d.equipment ? `<span class="stat">🖨️ ${d.equipment.split(',')[0]}</span>` : ''}
+                <span class="stat">${partsCount} projects</span>
+                ${d.equipment ? `<span class="stat">${d.equipment.split(',')[0]}</span>` : ''}
             </div>
             <div class="designer-rate-badge">${d.rate || 'Contact for rate'}</div>
         </div>
@@ -1665,7 +1691,7 @@ function sellView() {
             <div class="field">
                 <label>3D Files <span class="field-hint-inline">(Upload multiple files for a package)</span></label>
                 <div class="files-upload-zone" onclick="document.getElementById('fileInput').click()">
-                    <div class="dropzone-icon">📦</div>
+                    <div class="dropzone-icon">+</div>
                     <p>Drop 3D files here or click to upload</p>
                     <span>STL, STEP, OBJ, 3MF • Multiple files allowed</span>
                 </div>
@@ -1758,7 +1784,7 @@ function renderUploadedFilesList() {
         <div class="uploaded-files-grid">
             ${uploadedFiles.map((f, i) => `
                 <div class="uploaded-file-item">
-                    <div class="file-icon">📄</div>
+                    <div class="file-icon">File</div>
                     <div class="file-info">
                         <span class="file-name">${truncateText(f.name, 30)}</span>
                         <span class="file-size">${(f.size / 1024).toFixed(1)} KB</span>
@@ -2125,18 +2151,18 @@ async function partView(id) {
             <div class="detail-actions">
                 ${p.purchased || (currentUser && currentUser.id === p.user_id) ? 
                     (p.file_urls && p.file_urls.length > 1 ? 
-                        `<button class="btn btn-lg btn-primary" onclick="downloadPackageZip(${p.id}, '${(p.title || 'part').replace(/'/g, "\\'")}')">📦 Download All (${p.file_urls.length} files)</button>` :
+                        `<button class="btn btn-lg btn-primary" onclick="downloadPackageZip(${p.id}, '${(p.title || 'part').replace(/'/g, "\\'")}')">Download All (${p.file_urls.length} files)</button>` :
                         `<a href="${p.file_url}" download class="btn btn-lg btn-primary">Download File</a>`) :
                     `<button class="btn btn-lg btn-primary" onclick="handleBuyPart(${p.id})">Buy Now - $${(p.price || 0).toFixed(2)}</button>`}
                 <button class="btn btn-lg btn-outline" onclick="openContactModal(${p.user_id}, '${(p.seller_name || 'Seller').replace(/'/g, "\\'")}', '${(p.title || '').replace(/'/g, "\\'")}', ${p.id}, '${(p.images && p.images[0] || '').replace(/'/g, "\\'")}')">Contact Seller</button>
             </div>
             ${p.file_urls && p.file_urls.length > 1 ? `
             <div class="package-files-section">
-                <h3>📦 Package Contents (${p.file_urls.length} files)</h3>
+                <h3>Package Contents (${p.file_urls.length} files)</h3>
                 <div class="package-files-list">
                     ${p.file_urls.map((f, i) => `
                         <div class="package-file-item">
-                            <span class="package-file-icon">📄</span>
+                            <span class="package-file-icon">File</span>
                             <span class="package-file-name">${f.name}</span>
                             <span class="package-file-size">${(f.size / 1024).toFixed(1)} KB</span>
                             ${p.purchased || (currentUser && currentUser.id === p.user_id) ? 
@@ -2161,7 +2187,7 @@ async function partView(id) {
             ${p.premiered ? '<div class="featured-status">This listing is Featured until ' + new Date(p.premiered_until).toLocaleDateString() + '</div>' : ''}
             <div class="print-ship-cta">
                 <div class="print-ship-header">
-                    <div class="print-ship-icon">🖨️</div>
+                    <div class="print-ship-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg></div>
                     <div>
                         <strong>Need it printed?</strong>
                         <span>Get quotes from professional print shops</span>
@@ -2169,7 +2195,7 @@ async function partView(id) {
                 </div>
                 <div class="print-ship-options">
                     <button class="btn btn-primary" onclick="openQuoteRequestModal(${p.id}, '${(p.title || '').replace(/'/g, "\\'")}', '${(p.images && p.images[0] || '').replace(/'/g, "\\'")}')">
-                        📝 Request Print Quotes
+                        Request Print Quotes
                     </button>
                     <button class="btn btn-outline" onclick="go('printshops', ${p.id})">
                         Browse Print Shops
@@ -2212,7 +2238,7 @@ function showDownloadModal(purchaseResult) {
             <p class="download-subtitle">Your file is ready to download</p>
             
             <div class="download-file-info">
-                <div class="download-file-icon">📦</div>
+                <div class="download-file-icon">STL</div>
                 <div class="download-file-details">
                     <strong>${purchaseResult.part_title || 'Part File'}</strong>
                     <span>${purchaseResult.file_format || 'STL'} • ${purchaseResult.file_size || 'N/A'}</span>
@@ -2380,7 +2406,7 @@ async function printShopsView(partId) {
     
     return `<div class="printshops-page">
         <div class="printshops-header">
-            <h1>🖨️ Find a Print Shop</h1>
+            <h1>Find a Print Shop</h1>
             <p>Get your parts professionally printed and shipped to you</p>
         </div>
         
@@ -2392,7 +2418,7 @@ async function printShopsView(partId) {
                 <span>${currentPart.make} ${currentPart.model} · ${currentPart.file_format || 'STL'} · ${currentPart.file_size || 'N/A'}</span>
             </div>
             <button class="btn btn-primary" onclick="openQuoteRequestModal(${currentPart.id}, '${(currentPart.title || '').replace(/'/g, "\\'")}', '${(currentPart.images?.[0] || '').replace(/'/g, "\\'")}')">
-                📝 Request Quotes from All Shops
+                Request Quotes from All Shops
             </button>
         </div>
         ` : ''}
@@ -2400,7 +2426,7 @@ async function printShopsView(partId) {
         <div class="location-search">
             <input type="text" id="locationInput" placeholder="Enter your city or zip code...">
             <button class="btn" onclick="searchPrintShops()">Search</button>
-            <button class="btn btn-outline" onclick="useMyLocation()">📍 Use My Location</button>
+            <button class="btn btn-outline" onclick="useMyLocation()">Use My Location</button>
         </div>
         
         ${shops.length === 0 ? `
@@ -2414,7 +2440,7 @@ async function printShopsView(partId) {
                 ${shops.map(shop => `
                     <div class="print-shop-card-v2 ${shop.verified ? 'verified' : ''}">
                         <div class="shop-card-header">
-                            ${shop.logo_url ? `<img src="${shop.logo_url}" alt="${shop.shop_name}" class="shop-logo">` : `<div class="shop-logo-placeholder">🖨️</div>`}
+                            ${shop.logo_url ? `<img src="${shop.logo_url}" alt="${shop.shop_name}" class="shop-logo">` : `<div class="shop-logo-placeholder">PS</div>`}
                             <div class="shop-card-title">
                                 <h3>${shop.shop_name} ${shop.verified ? '<span class="verified-badge">✓ Verified</span>' : ''}</h3>
                                 <div class="shop-rating">
@@ -2424,7 +2450,7 @@ async function printShopsView(partId) {
                             </div>
                         </div>
                         
-                        <p class="shop-address">📍 ${shop.address || 'Location not specified'}</p>
+                        <p class="shop-address">Location: ${shop.address || 'Location not specified'}</p>
                         
                         <div class="shop-tags">
                             ${(shop.technologies || []).map(t => `<span class="tag tech-tag">${t}</span>`).join('')}
@@ -2435,11 +2461,11 @@ async function printShopsView(partId) {
                         ${shop.turnaround ? `<div class="shop-spec"><span>Turnaround:</span> ${shop.turnaround}</div>` : ''}
                         
                         <div class="shop-card-actions">
-                            <a href="tel:${shop.phone}" class="btn btn-sm btn-outline">📞 Call</a>
-                            <a href="mailto:${shop.email || ''}${currentPart ? `?subject=Quote Request: ${currentPart.title}` : ''}" class="btn btn-sm btn-outline">✉️ Email</a>
+                            <a href="tel:${shop.phone}" class="btn btn-sm btn-outline">Call</a>
+                            <a href="mailto:${shop.email || ''}${currentPart ? `?subject=Quote Request: ${currentPart.title}` : ''}" class="btn btn-sm btn-outline">Email</a>
                             ${currentPart ? `
                                 <button class="btn btn-sm btn-primary" onclick="openQuoteRequestModal(${currentPart.id}, '${(currentPart.title || '').replace(/'/g, "\\'")}', '${(currentPart.images?.[0] || '').replace(/'/g, "\\'")}', ${shop.id}, '${(shop.shop_name || '').replace(/'/g, "\\'")}')">
-                                    📝 Request Quote
+                                    Request Quote
                                 </button>
                             ` : `
                                 <button class="btn btn-sm btn-primary" onclick="go('printshop', ${shop.id})">View Shop</button>
@@ -2505,7 +2531,7 @@ async function designerView(id) {
                 <img src="${d.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(d.name) + '&background=2563eb&color=fff'}" alt="${d.name}" class="designer-avatar-xl">
                 <div class="designer-profile-info">
                     <h1>${d.name}</h1>
-                    ${d.location ? `<p class="designer-location-lg">📍 ${d.location}</p>` : ''}
+                    ${d.location ? `<p class="designer-location-lg">Location: ${d.location}</p>` : ''}
                     <div class="designer-rating-lg">
                         <span class="stars-lg">${stars}</span>
                         <span>${rating.toFixed(1)} rating · ${reviewCount} reviews · ${partsCount} projects</span>
@@ -2521,8 +2547,8 @@ async function designerView(id) {
                     <span class="rate-value">${d.rate || 'Contact for quote'}</span>
                     ${d.project_rate ? `<span class="rate-alt">or ${d.project_rate}/project</span>` : ''}
                 </div>
-                <button class="btn btn-lg btn-primary" onclick="openDesignerContact(${d.id}, '${(d.name || '').replace(/'/g, "\\'")}')">💬 Contact Designer</button>
-                <button class="btn btn-lg btn-outline" onclick="document.getElementById('requestForm').scrollIntoView({behavior:'smooth'})">📝 Request Quote</button>
+                <button class="btn btn-lg btn-primary" onclick="openDesignerContact(${d.id}, '${(d.name || '').replace(/'/g, "\\'")}')">Contact Designer</button>
+                <button class="btn btn-lg btn-outline" onclick="document.getElementById('requestForm').scrollIntoView({behavior:'smooth'})">Request Quote</button>
             </div>
         </div>
         
@@ -2636,19 +2662,19 @@ async function designerView(id) {
     </div>`;
 }
 
-// Helper for service icons
+// Helper for service icons - using text abbreviations instead of emojis
 function getServiceIcon(service) {
     const icons = {
-        'CAD Modeling': '🖥️',
-        '3D Scanning': '📷',
-        '3D Editing': '✏️',
-        'Prototyping': '🔧',
-        'Reverse Engineering': '🔍',
-        'Interior Parts': '🚗',
-        'Exterior Parts': '🏎️',
-        'Performance Parts': '⚡'
+        'CAD Modeling': 'CAD',
+        '3D Scanning': 'SCAN',
+        '3D Editing': 'EDIT',
+        'Prototyping': 'PROTO',
+        'Reverse Engineering': 'REV',
+        'Interior Parts': 'INT',
+        'Exterior Parts': 'EXT',
+        'Performance Parts': 'PERF'
     };
-    return icons[service] || '📦';
+    return icons[service] || '';
 }
 
 // v6.0: Contact designer modal
@@ -2706,12 +2732,12 @@ function openQuoteRequestModal(partId, partTitle, partImage, shopId = null, shop
             <button class="modal-close" onclick="closeQuoteRequestModal()">×</button>
             
             <div class="quote-request-header">
-                <h2>📝 Request a Print Quote</h2>
+                <h2>Request a Print Quote</h2>
                 <p>${shopId ? `From: <strong>${shopName}</strong>` : 'Send to all print shops'}</p>
             </div>
             
             <div class="quote-part-preview">
-                ${partImage ? `<img src="${partImage}" alt="${partTitle}">` : '<div class="no-image">📦</div>'}
+                ${partImage ? `<img src="${partImage}" alt="${partTitle}">` : '<div class="no-image">3D</div>'}
                 <div>
                     <strong>${partTitle}</strong>
                     <span>Part ID: #${partId}</span>
@@ -2779,7 +2805,7 @@ function openQuoteRequestModal(partId, partTitle, partImage, shopId = null, shop
                 
                 <div class="quote-submit-section">
                     <button type="submit" class="btn btn-lg btn-primary">
-                        ${shopId ? `📤 Send Quote Request to ${shopName}` : '📤 Send to All Print Shops'}
+                        ${shopId ? `Send Quote Request to ${shopName}` : 'Send to All Print Shops'}
                     </button>
                     <p class="quote-note">Print shops will respond with pricing via email</p>
                 </div>

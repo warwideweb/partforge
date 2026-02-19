@@ -2700,15 +2700,43 @@ function renderEditPhotoGrid() {
     const grid = document.getElementById('editPhotoGrid');
     if (!grid) return;
     grid.innerHTML = editNewPhotos.map((photo, i) => `
-        <div class="photo-item">
+        <div class="photo-item ${i === 0 ? 'thumbnail' : ''}" draggable="true" data-index="${i}"
+             ondragstart="handleEditPhotoDragStart(event, ${i})"
+             ondragover="handlePhotoDragOver(event)"
+             ondrop="handleEditPhotoDrop(event, ${i})"
+             ondragend="handlePhotoDragEnd(event)">
+            ${i === 0 ? '<span class="thumbnail-badge">THUMBNAIL</span>' : ''}
             <img src="${photo}">
             <button type="button" class="photo-remove" onclick="removeEditPhoto(${i})">×</button>
+            <div class="drag-hint">⋮⋮</div>
         </div>
     `).join('') + `
         <div class="photo-add" onclick="document.getElementById('editPhotoInput').click()">
             <span class="photo-add-icon">+</span><span>Add</span>
         </div>
     `;
+}
+
+let draggedEditPhotoIndex = null;
+
+function handleEditPhotoDragStart(e, index) {
+    draggedEditPhotoIndex = index;
+    e.target.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+}
+
+function handleEditPhotoDrop(e, targetIndex) {
+    e.preventDefault();
+    if (draggedEditPhotoIndex === null || draggedEditPhotoIndex === targetIndex) return;
+    
+    const [draggedPhoto] = editNewPhotos.splice(draggedEditPhotoIndex, 1);
+    editNewPhotos.splice(targetIndex, 0, draggedPhoto);
+    
+    const [draggedFile] = editNewPhotoFiles.splice(draggedEditPhotoIndex, 1);
+    editNewPhotoFiles.splice(targetIndex, 0, draggedFile);
+    
+    draggedEditPhotoIndex = null;
+    renderEditPhotoGrid();
 }
 
 function removeEditPhoto(index) {
@@ -4234,7 +4262,57 @@ async function handlePhotoUpload(event) {
         reader.readAsDataURL(compressedFile);
     }
 }
-function renderPhotoGrid() { const grid = document.getElementById('photoGrid'); if (!grid) return; grid.innerHTML = uploadedPhotos.map((photo, i) => `<div class="photo-item"><img src="${photo}"><button class="photo-remove" onclick="removePhoto(${i})">x</button></div>`).join('') + (uploadedPhotos.length < 10 ? `<div class="photo-add" onclick="document.getElementById('photoInput').click()"><span class="photo-add-icon">+</span><span>Add</span></div>` : ''); }
+function renderPhotoGrid() { 
+    const grid = document.getElementById('photoGrid'); 
+    if (!grid) return; 
+    grid.innerHTML = uploadedPhotos.map((photo, i) => `
+        <div class="photo-item ${i === 0 ? 'thumbnail' : ''}" draggable="true" data-index="${i}" 
+             ondragstart="handlePhotoDragStart(event, ${i})" 
+             ondragover="handlePhotoDragOver(event)" 
+             ondrop="handlePhotoDrop(event, ${i})"
+             ondragend="handlePhotoDragEnd(event)">
+            ${i === 0 ? '<span class="thumbnail-badge">THUMBNAIL</span>' : ''}
+            <img src="${photo}">
+            <button class="photo-remove" onclick="removePhoto(${i})">×</button>
+            <div class="drag-hint">⋮⋮</div>
+        </div>
+    `).join('') + (uploadedPhotos.length < 10 ? `<div class="photo-add" onclick="document.getElementById('photoInput').click()"><span class="photo-add-icon">+</span><span>Add</span></div>` : ''); 
+}
+
+let draggedPhotoIndex = null;
+
+function handlePhotoDragStart(e, index) {
+    draggedPhotoIndex = index;
+    e.target.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+}
+
+function handlePhotoDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+}
+
+function handlePhotoDrop(e, targetIndex) {
+    e.preventDefault();
+    if (draggedPhotoIndex === null || draggedPhotoIndex === targetIndex) return;
+    
+    // Reorder photos array
+    const [draggedPhoto] = uploadedPhotos.splice(draggedPhotoIndex, 1);
+    uploadedPhotos.splice(targetIndex, 0, draggedPhoto);
+    
+    // Reorder files array
+    const [draggedFile] = uploadedPhotoFiles.splice(draggedPhotoIndex, 1);
+    uploadedPhotoFiles.splice(targetIndex, 0, draggedFile);
+    
+    draggedPhotoIndex = null;
+    renderPhotoGrid();
+}
+
+function handlePhotoDragEnd(e) {
+    e.target.classList.remove('dragging');
+    draggedPhotoIndex = null;
+}
+
 function removePhoto(index) { uploadedPhotos.splice(index, 1); uploadedPhotoFiles.splice(index, 1); renderPhotoGrid(); }
 function useMyLocation() { if (navigator.geolocation) { navigator.geolocation.getCurrentPosition(pos => { document.getElementById('locationInput').value = `${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`; }); } }
 
